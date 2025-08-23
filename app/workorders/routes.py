@@ -8,6 +8,26 @@ from flask_login import login_required, current_user
 from sqlalchemy import desc, asc
 from app import db
 from app.workorders import bp
+
+# API endpoint to get product owner details by product ID
+@bp.route('/api/product_owner/<int:product_id>', methods=['GET'])
+def get_product_owner(product_id):
+    from app.models import Product, Company
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({'owner': ''})
+    owner = product.owner_company.name if product.owner_company else ''
+    return jsonify({'owner': owner})
+"""
+Work Order Routes
+"""
+
+from datetime import datetime, timezone
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify
+from flask_login import login_required, current_user
+from sqlalchemy import desc, asc
+from app import db
+from app.workorders import bp
 from app.workorders.forms import WorkOrderForm, WorkOrderUpdateForm, WorkOrderFilterForm
 from app.models import WorkOrder, User, Priority, Status, Category, Product, Company
 
@@ -92,6 +112,10 @@ def create_workorder():
     form.assigned_to_id.choices = [(0, 'Unassigned')] + [
         (u.id, u.full_name) for u in User.query.filter_by(is_active=True).all()
     ]
+    from app.models import Product
+    form.product_name.choices = [(0, 'Select Product')] + [
+        (p.id, p.product_name) for p in Product.query.filter_by(is_active=True).all()
+    ]
     
     if form.validate_on_submit():
         # Get initial status (should be "Open" or similar)
@@ -99,11 +123,15 @@ def create_workorder():
         if not initial_status:
             initial_status = Status.query.first()
         
+        # Get product name from selected product ID
+        selected_product = None
+        if form.product_name.data and form.product_name.data > 0:
+            selected_product = Product.query.get(form.product_name.data)
         workorder = WorkOrder(
             title=form.title.data,
             description=form.description.data,
             address=form.address.data,
-            product_name=form.product_name.data,
+            product_name=selected_product.product_name if selected_product else None,
             owner_name=form.owner_name.data,
             # ...existing code...
             category_id=form.category_id.data if form.category_id.data > 0 else None,
@@ -132,7 +160,19 @@ def create_workorder():
             )
         
         db.session.commit()
-        
+
+        # Generate Gate Pass PDF and save to Desktop
+        try:
+            import os
+            from app.workorders.pdf_utils import generate_gate_pass_pdf
+            desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+            pdf_filename = f"GatePass_WorkOrder_{workorder.id}.pdf"
+            pdf_path = os.path.join(desktop_path, pdf_filename)
+            generate_gate_pass_pdf(workorder, pdf_path)
+            flash(f'Gate Pass PDF saved to your Desktop as {pdf_filename}.', 'info')
+        except Exception as e:
+            flash(f'Work order created, but failed to generate Gate Pass PDF: {e}', 'warning')
+
         flash(f'Work order #{workorder.id} has been created successfully.', 'success')
         return redirect(url_for('workorders.view_workorder', id=workorder.id))
     
@@ -150,7 +190,8 @@ def view_workorder(id):
             abort(403)
     
     # Get activity history
-    activities = workorder.activities.order_by(desc(WorkOrder.created_at)).all()
+    from app.models import WorkOrderActivity
+    activities = workorder.activities.order_by(desc(WorkOrderActivity.timestamp)).all()
     
     return render_template('workorders/view.html',
                          title=f'Work Order #{workorder.id}',

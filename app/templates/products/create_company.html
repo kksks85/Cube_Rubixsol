@@ -13,13 +13,13 @@
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-0 small">
                             <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                            <li class="breadcrumb-item"><a href="{{ url_for('products.companies') }}" class="text-decoration-none">Companies</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('products.list_companies') }}" class="text-decoration-none">Companies</a></li>
                             <li class="breadcrumb-item active">Add Company</li>
                         </ol>
                     </nav>
                 </div>
                 <div>
-                    <a href="{{ url_for('products.companies') }}" class="btn btn-sm btn-outline-secondary">
+                    <a href="{{ url_for('products.list_companies') }}" class="btn btn-sm btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i>Back to Companies
                     </a>
                 </div>
@@ -90,16 +90,77 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="{{ form.address.id }}" class="form-label small fw-medium text-muted">Address</label>
-                            {{ form.address(class="form-control form-control-sm", rows="3", placeholder="Street address, city, state, postal code, country") }}
-                            {% if form.address.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.address.errors %}
-                                        <small>{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.address_line1.id }}" class="form-label small fw-medium text-muted">Address Line 1</label>
+                                {{ form.address_line1(class="form-control form-control-sm", placeholder="Street address") }}
+                                {% if form.address_line1.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.address_line1.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.address_line2.id }}" class="form-label small fw-medium text-muted">Address Line 2</label>
+                                {{ form.address_line2(class="form-control form-control-sm", placeholder="Apartment, suite, etc.") }}
+                                {% if form.address_line2.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.address_line2.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.city.id }}" class="form-label small fw-medium text-muted">City</label>
+                                {{ form.city(class="form-control form-control-sm") }}
+                                {% if form.city.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.city.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.state.id }}" class="form-label small fw-medium text-muted">State/Province</label>
+                                {{ form.state(class="form-control form-control-sm") }}
+                                {% if form.state.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.state.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.postal_code.id }}" class="form-label small fw-medium text-muted">Postal Code</label>
+                                {{ form.postal_code(class="form-control form-control-sm") }}
+                                {% if form.postal_code.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.postal_code.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.country.id }}" class="form-label small fw-medium text-muted">Country</label>
+                                {{ form.country(class="form-control form-control-sm") }}
+                                {% if form.country.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.country.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
 
                         <div class="mb-4">
@@ -118,7 +179,7 @@
                             <button type="submit" class="btn btn-primary btn-sm px-4">
                                 <i class="fas fa-save me-1"></i>Save Company
                             </button>
-                            <a href="{{ url_for('products.companies') }}" class="btn btn-outline-secondary btn-sm px-4">
+                            <a href="{{ url_for('products.list_companies') }}" class="btn btn-outline-secondary btn-sm px-4">
                                 <i class="fas fa-times me-1"></i>Cancel
                             </a>
                         </div>

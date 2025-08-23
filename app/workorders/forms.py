@@ -11,7 +11,7 @@ from datetime import datetime
 class WorkOrderForm(FlaskForm):
     """Work order creation/edit form"""
     title = StringField('Title', validators=[DataRequired()])
-    product_name = StringField('Product name', validators=[Optional()])
+    product_name = SelectField('Product name', coerce=int, validators=[Optional()])
     owner_name = StringField('Owner Name', validators=[Optional()])
     description = TextAreaField('Description', validators=[DataRequired()])
     address = StringField('Address', validators=[Optional()])

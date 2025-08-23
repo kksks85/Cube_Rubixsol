@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block content %}
@@ -10,6 +11,8 @@
             <div class="card-body">
                 <form method="POST">
                     {{ form.hidden_tag() }}
+
+                    <!-- Group 1: Basic Info -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -26,6 +29,23 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
+                                {{ form.description.label(class="form-label") }}
+                                {{ form.description(class="form-control", rows="2") }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.description.errors %}
+                                            <small>{{ error }}</small %}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Group 2: Product & Owner -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 {{ form.product_name.label(class="form-label") }}
                                 {{ form.product_name(class="form-control") }}
                                 {% if form.product_name.errors %}
@@ -37,8 +57,6 @@
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 {{ form.owner_name.label(class="form-label") }}
@@ -52,31 +70,9 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.priority_id.label(class="form-label") }}
-                                {{ form.priority_id(class="form-select") }}
-                                {% if form.priority_id.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.priority_id.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
                     </div>
-                    <div class="mb-3">
-                        {{ form.description.label(class="form-label") }}
-                        {{ form.description(class="form-control", rows="4") }}
-                        {% if form.description.errors %}
-                            <div class="text-danger">
-                                {% for error in form.description.errors %}
-                                    <small>{{ error }}</small %}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
+
+                    <!-- Group 3: Address & Category -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -105,8 +101,23 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Group 4: Priority, Assignment, Due Date -->
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.priority_id.label(class="form-label") }}
+                                {{ form.priority_id(class="form-select") }}
+                                {% if form.priority_id.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.priority_id.errors %}
+                                            <small>{{ error }}</small %}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 {{ form.assigned_to_id.label(class="form-label") }}
                                 {{ form.assigned_to_id(class="form-select") }}
@@ -119,7 +130,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 {{ form.due_date.label(class="form-label") }}
                                 {{ form.due_date(class="form-control") }}
@@ -133,6 +144,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Group 5: Estimates -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -164,17 +177,24 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        {{ form.notes.label(class="form-label") }}
-                        {{ form.notes(class="form-control", rows="3") }}
-                        {% if form.notes.errors %}
-                            <div class="text-danger">
-                                {% for error in form.notes.errors %}
-                                    <small>{{ error }}</small %}
-                                {% endfor %}
+
+                    <!-- Group 6: Notes -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control", rows="3") }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.notes.errors %}
+                                            <small>{{ error }}</small %}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
-                        {% endif %}
+                        </div>
                     </div>
+
                     <div class="d-flex justify-content-between">
                         <a href="{{ url_for('workorders.list_workorders') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Cancel

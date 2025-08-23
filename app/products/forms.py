@@ -11,6 +11,7 @@ from app.models import ProductCategory, Company, User
 
 
 class CompanyForm(FlaskForm):
+    description = TextAreaField('Description', validators=[Optional()], widget=TextArea())
     """Form for creating/editing companies"""
     name = StringField('Company Name', validators=[DataRequired(), Length(min=2, max=200)])
     registration_number = StringField('Registration Number', validators=[Optional(), Length(max=100)])

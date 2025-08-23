@@ -156,7 +156,7 @@
                                         </div>
                                         <div class="mb-2">
                                             <strong>Products:</strong> 
-                                            <span class="badge bg-primary">{{ company.products|length }}</span>
+                                            <span class="badge bg-primary">{{ company.products|list|length }}</span>
                                         </div>
                                         {% if company.website %}
                                             <div class="mb-2">
@@ -176,7 +176,7 @@
                                                class="btn btn-outline-success btn-sm">
                                                 <i class="fas fa-edit me-1"></i>Edit
                                             </a>
-                                            <a href="{{ url_for('products.delete_company', id=company.id) }}" 
+                                            <a href="{{ url_for('products.edit_company', id=company.id) }}" 
                                                class="btn btn-outline-danger btn-sm"
                                                onclick="return confirm('Are you sure you want to delete this company?')">
                                                 <i class="fas fa-trash me-1"></i>Delete
@@ -226,7 +226,7 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <span class="badge bg-primary">{{ company.products|length }}</span>
+                                            <span class="badge bg-primary">{{ company.products|list|length }}</span>
                                         </td>
                                         <td>
                                             {% if company.is_active %}
@@ -245,7 +245,7 @@
                                                    class="btn btn-outline-success btn-sm">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <a href="{{ url_for('products.delete_company', id=company.id) }}" 
+                                                <a href="{{ url_for('products.edit_company', id=company.id) }}" 
                                                    class="btn btn-outline-danger btn-sm"
                                                    onclick="return confirm('Are you sure you want to delete this company?')">
                                                     <i class="fas fa-trash"></i>

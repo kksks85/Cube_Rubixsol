@@ -319,19 +319,19 @@
                                 {% for workorder in recent_workorders %}
                                 <tr>
                                     <td class="px-3 py-2">
-                                        <a href="{{ url_for('workorders.view', id=workorder.id) }}" class="text-decoration-none small fw-medium">
+                                        <a href="{{ url_for('workorders.view_workorder', id=workorder.id) }}" class="text-decoration-none small fw-medium">
                                             #{{ workorder.id }}
                                         </a>
                                     </td>
                                     <td class="px-3 py-2 small">{{ workorder.title[:30] }}{% if workorder.title|length > 30 %}...{% endif %}</td>
                                     <td class="px-3 py-2">
                                         <span class="badge badge-sm bg-{{ 'success' if workorder.status == 'completed' else 'warning' if workorder.status == 'in_progress' else 'secondary' }}">
-                                            {{ workorder.status.replace('_', ' ').title() }}
+                                            {{ workorder.status.name.replace('_', ' ').title() if workorder.status else '' }}
                                         </span>
                                     </td>
                                     <td class="px-3 py-2">
                                         <span class="badge badge-sm bg-{{ 'danger' if workorder.priority == 'high' else 'warning' if workorder.priority == 'medium' else 'info' }}">
-                                            {{ workorder.priority.title() }}
+                                            {{ workorder.priority.name if workorder.priority else '' }}
                                         </span>
                                     </td>
                                     <td class="px-3 py-2 small text-muted">
