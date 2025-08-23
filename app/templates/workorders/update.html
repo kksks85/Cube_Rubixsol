@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="fas fa-tasks"></i> Update Work Order #{{ workorder.id }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>{{ workorder.title }}</strong><br>
+                    <small class="text-muted">{{ workorder.description[:100] }}{% if workorder.description|length > 100 %}...{% endif %}</small>
+                </div>
+                
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.status_id.label(class="form-label") }}
+                        {{ form.status_id(class="form-select") }}
+                        {% if form.status_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.status_id.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.actual_hours.label(class="form-label") }}
+                                {{ form.actual_hours(class="form-control") }}
+                                {% if form.actual_hours.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.actual_hours.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if workorder.estimated_hours %}
+                                <small class="text-muted">Estimated: {{ workorder.estimated_hours }} hours</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.actual_cost.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.actual_cost(class="form-control") }}
+                                </div>
+                                {% if form.actual_cost.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.actual_cost.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if workorder.cost_estimate %}
+                                <small class="text-muted">Estimated: ${{ "%.2f"|format(workorder.cost_estimate) }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows="4", placeholder="Add notes about this update...") }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger">
+                                {% for error in form.notes.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('workorders.view_workorder', id=workorder.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        {{ form.submit(class="btn btn-info") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Company{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3">
+    <!-- Page Header -->
+    <div class="row mb-3">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1 text-dark fw-semibold">Add New Company</h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0 small">
+                            <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('products.companies') }}" class="text-decoration-none">Companies</a></li>
+                            <li class="breadcrumb-item active">Add Company</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{{ url_for('products.companies') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Companies
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Company Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="mb-0 fw-semibold">Company Information</h6>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('products.create_company') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id }}" class="form-label small fw-medium text-muted">Company Name *</label>
+                                {{ form.name(class="form-control form-control-sm") }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.website.id }}" class="form-label small fw-medium text-muted">Website</label>
+                                {{ form.website(class="form-control form-control-sm", placeholder="https://example.com") }}
+                                {% if form.website.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.website.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id }}" class="form-label small fw-medium text-muted">Email</label>
+                                {{ form.email(class="form-control form-control-sm", placeholder="contact@company.com") }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.email.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.phone.id }}" class="form-label small fw-medium text-muted">Phone</label>
+                                {{ form.phone(class="form-control form-control-sm", placeholder="+1 (555) 123-4567") }}
+                                {% if form.phone.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.phone.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.address.id }}" class="form-label small fw-medium text-muted">Address</label>
+                            {{ form.address(class="form-control form-control-sm", rows="3", placeholder="Street address, city, state, postal code, country") }}
+                            {% if form.address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.address.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.description.id }}" class="form-label small fw-medium text-muted">Description</label>
+                            {{ form.description(class="form-control form-control-sm", rows="4", placeholder="Brief description of the company and its business") }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-sm px-4">
+                                <i class="fas fa-save me-1"></i>Save Company
+                            </button>
+                            <a href="{{ url_for('products.companies') }}" class="btn btn-outline-secondary btn-sm px-4">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom py-3">
+                    <h6 class="mb-0 fw-semibold">Guidelines</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="small text-muted">
+                        <div class="mb-3">
+                            <h6 class="fw-semibold text-dark mb-2">Required Fields</h6>
+                            <ul class="mb-0 ps-3">
+                                <li>Company Name is required</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-semibold text-dark mb-2">Best Practices</h6>
+                            <ul class="mb-0 ps-3">
+                                <li>Use the official company name</li>
+                                <li>Include country code in phone numbers</li>
+                                <li>Provide complete address for accuracy</li>
+                                <li>Keep description concise and professional</li>
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-info alert-sm py-2 px-3 mb-0">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <small>Companies can be associated with multiple products for better organization.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-format phone number input
+    document.getElementById('{{ form.phone.id }}').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 10) {
+            value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+        }
+        e.target.value = value;
+    });
+
+    // Validate website URL format
+    document.getElementById('{{ form.website.id }}').addEventListener('blur', function(e) {
+        let value = e.target.value.trim();
+        if (value && !value.startsWith('http://') && !value.startsWith('https://')) {
+            e.target.value = 'https://' + value;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,863 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('products.list_products') }}">Products</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('products.view_product', id=product.id) }}">{{ product.product_name }}</a></li>
+                <li class="breadcrumb-item active">Edit</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-edit me-2"></i>Edit UAV Product</h2>
+        <p class="text-muted">Update product details and specifications</p>
+    </div>
+</div>
+
+<form method="POST" novalidate>
+    {{ form.hidden_tag() }}
+    
+    <!-- Product Status Alert -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-info-circle me-2"></i>
+                <div>
+                    <strong>Current Status:</strong> 
+                    {% if product.is_active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                    &nbsp;|&nbsp;
+                    <strong>Availability:</strong> 
+                    <span class="badge bg-primary">{{ product.availability_status|title }}</span>
+                    &nbsp;|&nbsp;
+                    <strong>Last Updated:</strong> {{ product.updated_at.strftime('%Y-%m-%d %H:%M') if product.updated_at else 'Never' }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Basic Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.product_code.label(class="form-label") }}
+                                {{ form.product_code(class="form-control") }}
+                                {% if form.product_code.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.product_code.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.product_name.label(class="form-label") }}
+                                {{ form.product_name(class="form-control") }}
+                                {% if form.product_name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.product_name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.category_id.label(class="form-label") }}
+                                {{ form.category_id(class="form-select") }}
+                                {% if form.category_id.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.category_id.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.owner_company_id.label(class="form-label") }}
+                                {{ form.owner_company_id(class="form-select") }}
+                                {% if form.owner_company_id.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.owner_company_id.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows="3") }}
+                        {% if form.description.errors %}
+                            <div class="text-danger">
+                                {% for error in form.description.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flight Performance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-plane me-2"></i>Flight Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.max_flight_time.label(class="form-label") }}
+                                {{ form.max_flight_time(class="form-control") }}
+                                {% if form.max_flight_time.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.max_flight_time.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.max_range.label(class="form-label") }}
+                                {{ form.max_range(class="form-control") }}
+                                {% if form.max_range.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.max_range.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.max_altitude.label(class="form-label") }}
+                                {{ form.max_altitude(class="form-control") }}
+                                {% if form.max_altitude.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.max_altitude.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.max_speed.label(class="form-label") }}
+                                {{ form.max_speed(class="form-control") }}
+                                {% if form.max_speed.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.max_speed.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Physical Specifications -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cube me-2"></i>Physical Specifications</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.weight.label(class="form-label") }}
+                                {{ form.weight(class="form-control") }}
+                                {% if form.weight.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.weight.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.dimensions_length.label(class="form-label") }}
+                                {{ form.dimensions_length(class="form-control") }}
+                                {% if form.dimensions_length.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.dimensions_length.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.dimensions_width.label(class="form-label") }}
+                                {{ form.dimensions_width(class="form-control") }}
+                                {% if form.dimensions_width.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.dimensions_width.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.dimensions_height.label(class="form-label") }}
+                                {{ form.dimensions_height(class="form-control") }}
+                                {% if form.dimensions_height.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.dimensions_height.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera & Payload -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-camera me-2"></i>Camera & Payload</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.camera_resolution.label(class="form-label") }}
+                                {{ form.camera_resolution(class="form-control") }}
+                                {% if form.camera_resolution.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.camera_resolution.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.payload_capacity.label(class="form-label") }}
+                                {{ form.payload_capacity(class="form-control") }}
+                                {% if form.payload_capacity.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.payload_capacity.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Battery & Power -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-battery-three-quarters me-2"></i>Battery & Power</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.battery_type.label(class="form-label") }}
+                                {{ form.battery_type(class="form-control") }}
+                                {% if form.battery_type.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.battery_type.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.battery_capacity.label(class="form-label") }}
+                                {{ form.battery_capacity(class="form-control") }}
+                                {% if form.battery_capacity.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.battery_capacity.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.charging_time.label(class="form-label") }}
+                                {{ form.charging_time(class="form-control") }}
+                                {% if form.charging_time.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.charging_time.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation & Control -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-satellite me-2"></i>Navigation & Control</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.gps_enabled(class="form-check-input") }}
+                                    {{ form.gps_enabled.label(class="form-check-label") }}
+                                </div>
+                                {% if form.gps_enabled.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.gps_enabled.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.control_range.label(class="form-label") }}
+                                {{ form.control_range(class="form-control") }}
+                                {% if form.control_range.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.control_range.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                {{ form.autopilot_features.label(class="form-label") }}
+                                {{ form.autopilot_features(class="form-control", rows="2") }}
+                                {% if form.autopilot_features.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.autopilot_features.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connectivity -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-wifi me-2"></i>Connectivity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.wifi_enabled(class="form-check-input") }}
+                                    {{ form.wifi_enabled.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.bluetooth_enabled(class="form-check-input") }}
+                                    {{ form.bluetooth_enabled.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.cellular_enabled(class="form-check-input") }}
+                                    {{ form.cellular_enabled.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Environmental -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-thermometer-half me-2"></i>Environmental Specifications</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.operating_temperature_min.label(class="form-label") }}
+                                {{ form.operating_temperature_min(class="form-control") }}
+                                {% if form.operating_temperature_min.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.operating_temperature_min.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.operating_temperature_max.label(class="form-label") }}
+                                {{ form.operating_temperature_max(class="form-control") }}
+                                {% if form.operating_temperature_max.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.operating_temperature_max.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.wind_resistance.label(class="form-label") }}
+                                {{ form.wind_resistance(class="form-control") }}
+                                {% if form.wind_resistance.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.wind_resistance.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.water_resistance_rating.label(class="form-label") }}
+                                {{ form.water_resistance_rating(class="form-control") }}
+                                {% if form.water_resistance_rating.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.water_resistance_rating.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Commercial Details & Status -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-dollar-sign me-2"></i>Commercial Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form.manufacturer.label(class="form-label") }}
+                        {{ form.manufacturer(class="form-control") }}
+                        {% if form.manufacturer.errors %}
+                            <div class="text-danger">
+                                {% for error in form.manufacturer.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.model_year.label(class="form-label") }}
+                                {{ form.model_year(class="form-control") }}
+                                {% if form.model_year.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.model_year.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.warranty_period.label(class="form-label") }}
+                                {{ form.warranty_period(class="form-control") }}
+                                {% if form.warranty_period.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.warranty_period.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.price.label(class="form-label") }}
+                        {{ form.price(class="form-control") }}
+                        {% if form.price.errors %}
+                            <div class="text-danger">
+                                {% for error in form.price.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Operational & Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form.intended_use.label(class="form-label") }}
+                        {{ form.intended_use(class="form-control") }}
+                        {% if form.intended_use.errors %}
+                            <div class="text-danger">
+                                {% for error in form.intended_use.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.skill_level_required.label(class="form-label") }}
+                        {{ form.skill_level_required(class="form-select") }}
+                        {% if form.skill_level_required.errors %}
+                            <div class="text-danger">
+                                {% for error in form.skill_level_required.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.availability_status.label(class="form-label") }}
+                        {{ form.availability_status(class="form-select") }}
+                        {% if form.availability_status.errors %}
+                            <div class="text-danger">
+                                {% for error in form.availability_status.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.is_active(class="form-check-input") }}
+                            {{ form.is_active.label(class="form-check-label") }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.requires_license(class="form-check-input") }}
+                            {{ form.requires_license.label(class="form-check-label") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Servicing History -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Servicing History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.last_serviced.label(class="form-label") }}
+                                {{ form.last_serviced(class="form-control", id="last_serviced") }}
+                                {% if form.last_serviced.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.last_serviced.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Enter the date when this UAV was last serviced</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.next_service_due.label(class="form-label") }}
+                                {{ form.next_service_due(class="form-control", id="next_service_due", readonly=True) }}
+                                {% if form.next_service_due.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.next_service_due.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Automatically calculated as 90 days from last serviced date</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Service Status Display -->
+                    {% if product.last_serviced or product.next_service_due %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Current Service Status</h6>
+                                {% if product.last_serviced %}
+                                    <p class="mb-1"><strong>Last Serviced:</strong> {{ product.last_serviced.strftime('%B %d, %Y') }}</p>
+                                {% endif %}
+                                {% if product.next_service_due %}
+                                    <p class="mb-1"><strong>Next Service Due:</strong> 
+                                        <span class="{{ product.service_status_class }}">
+                                            {{ product.next_service_due.strftime('%B %d, %Y') }} ({{ product.service_status }})
+                                        </span>
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Regulatory Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Regulatory & Compliance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.certification_level.label(class="form-label") }}
+                                {{ form.certification_level(class="form-control") }}
+                                {% if form.certification_level.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.certification_level.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.flight_zone_restrictions.label(class="form-label") }}
+                                {{ form.flight_zone_restrictions(class="form-control", rows="3") }}
+                                {% if form.flight_zone_restrictions.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.flight_zone_restrictions.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary btn-lg me-3">
+                                <i class="fas fa-save me-2"></i>Update Product
+                            </button>
+                            <a href="{{ url_for('products.view_product', id=product.id) }}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('products.delete_product', id=product.id) }}" 
+                               class="btn btn-danger btn-lg"
+                               onclick="return confirm('Are you sure you want to delete this product? This action cannot be undone.')">
+                                <i class="fas fa-trash me-2"></i>Delete Product
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation feedback
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+    
+    // Show unsaved changes warning
+    let originalFormData = new FormData(form);
+    window.addEventListener('beforeunload', function(e) {
+        const currentFormData = new FormData(form);
+        let hasChanges = false;
+        
+        for (let [key, value] of currentFormData.entries()) {
+            if (originalFormData.get(key) !== value) {
+                hasChanges = true;
+                break;
+            }
+        }
+        
+        if (hasChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    });
+</script>
+
+<!-- Servicing History Automation -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lastServicedInput = document.getElementById('last_serviced');
+        const nextServiceDueInput = document.getElementById('next_service_due');
+        
+        function updateNextServiceDue() {
+            if (lastServicedInput.value) {
+                const lastServicedDate = new Date(lastServicedInput.value);
+                const nextServiceDate = new Date(lastServicedDate);
+                nextServiceDate.setDate(nextServiceDate.getDate() + 90);
+                
+                // Format date as YYYY-MM-DD for the input
+                const formattedDate = nextServiceDate.toISOString().split('T')[0];
+                nextServiceDueInput.value = formattedDate;
+                
+                // Add visual feedback based on service status
+                const today = new Date();
+                const daysUntilService = Math.ceil((nextServiceDate - today) / (1000 * 60 * 60 * 24));
+                
+                // Remove existing classes
+                nextServiceDueInput.classList.remove('border-success', 'border-warning', 'border-danger');
+                
+                if (daysUntilService > 30) {
+                    nextServiceDueInput.classList.add('border-success');
+                } else if (daysUntilService > 0) {
+                    nextServiceDueInput.classList.add('border-warning');
+                } else {
+                    nextServiceDueInput.classList.add('border-danger');
+                }
+            } else {
+                nextServiceDueInput.value = '';
+                nextServiceDueInput.classList.remove('border-success', 'border-warning', 'border-danger');
+            }
+        }
+        
+        // Update next service due when last serviced date changes
+        lastServicedInput.addEventListener('change', updateNextServiceDue);
+        
+        // Initialize on page load if there's already a value
+        if (lastServicedInput.value) {
+            updateNextServiceDue();
+        }
+    });
+</script>
+{% endblock %}

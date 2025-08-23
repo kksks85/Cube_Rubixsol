@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Professional Header -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-1">Dashboard</h4>
+                <p class="text-muted mb-0 small">Welcome back, {{ current_user.first_name }} • {{ current_user.role.name|title if current_user.role else 'User' }}</p>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-primary">Today</span>
+                <small class="text-muted d-block">{{ moment().format('MMMM DD, YYYY') if moment else '' }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compact Statistics Cards -->
+<div class="row mb-4 g-3">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card card">
+            <div class="card-body text-center">
+                <i class="fas fa-clipboard-list stat-icon text-primary"></i>
+                <div class="stat-number">{{ stats.total_workorders if stats else 0 }}</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card card">
+            <div class="card-body text-center">
+                <i class="fas fa-clock stat-icon text-warning"></i>
+                <div class="stat-number text-warning">{{ stats.open_workorders if stats else 0 }}</div>
+                <div class="stat-label">Open Orders</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card card">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-circle stat-icon text-danger"></i>
+                <div class="stat-number text-danger">{{ stats.overdue_workorders if stats else 0 }}</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card card">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle stat-icon text-success"></i>
+                <div class="stat-number text-success">{{ stats.completed_this_week if stats else 0 }}</div>
+                <div class="stat-label">Completed This Week</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    {% if current_user.has_role('admin') or current_user.has_role('manager') %}
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{{ url_for('workorders.create_workorder') }}" class="btn btn-primary w-100 d-flex align-items-center justify-content-center p-2">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            <span>Create Work Order</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{{ url_for('products.list_products') }}" class="btn btn-success w-100 d-flex align-items-center justify-content-center p-2">
+                            <i class="fas fa-cubes me-2"></i>
+                            <span>View Products</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{{ url_for('users.list_users') }}" class="btn btn-info w-100 d-flex align-items-center justify-content-center p-2">
+                            <i class="fas fa-users me-2"></i>
+                            <span>Manage Team</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{{ url_for('reports.dashboard') }}" class="btn btn-warning w-100 d-flex align-items-center justify-content-center p-2">
+                            <i class="fas fa-chart-line me-2"></i>
+                            <span>View Reports</span>
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="col-lg-4 col-md-6">
+                        <a href="{{ url_for('workorders.list_workorders') }}" class="btn btn-primary w-100 d-flex align-items-center justify-content-center p-2">
+                            <i class="fas fa-clipboard-list me-2"></i>
+                            <span>My Work Orders</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <a href="{{ url_for('products.list_products') }}" class="btn btn-success w-100 d-flex align-items-center justify-content-center p-2">
+                            <i class="fas fa-cubes me-2"></i>
+                            <span>Browse Products</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <a href="{{ url_for('main.profile') }}" class="btn btn-info w-100 d-flex align-items-center justify-content-center p-2">
+                            <i class="fas fa-user me-2"></i>
+                            <span>My Profile</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Work Orders -->
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Recent Work Orders
+                </h6>
+                <a href="{{ url_for('workorders.list_workorders') }}" class="btn btn-sm btn-outline-primary">
+                    View All <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_workorders %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for wo in recent_workorders %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('workorders.view_workorder', id=wo.id) }}" class="fw-medium text-decoration-none">
+                                        #{{ wo.id }} - {{ wo.title|truncate(30) }}
+                                    </a>
+                                    <br><small class="text-muted">{{ wo.description|truncate(50) if wo.description }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge badge-priority-{{ wo.priority }}">
+                                        {{ wo.priority|title }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-status-{{ wo.status.replace(' ', '-') if wo.status else 'open' }}">
+                                        {{ wo.status|title if wo.status else 'Open' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ wo.created_at.strftime('%m/%d/%Y') if wo.created_at }}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('workorders.view_workorder', id=wo.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-clipboard-list fa-2x text-muted mb-3"></i>
+                    <h6 class="text-muted">No Work Orders Yet</h6>
+                    <p class="text-muted small">Get started by creating your first work order.</p>
+                    {% if current_user.has_role('admin') or current_user.has_role('manager') %}
+                    <a href="{{ url_for('workorders.create_workorder') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Create Work Order
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Activity Feed -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>Recent Activity
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="activity-feed">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                        <div class="activity-item d-flex mb-3">
+                            <div class="activity-icon me-3">
+                                <i class="fas fa-{{ activity.icon if activity.icon else 'info-circle' }} text-primary"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="mb-1 small">{{ activity.description }}</p>
+                                <small class="text-muted">{{ activity.created_at.strftime('%m/%d/%Y %I:%M %p') if activity.created_at }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-bell-slash fa-2x text-muted mb-3"></i>
+                        <h6 class="text-muted">No Recent Activity</h6>
+                        <p class="text-muted small">Activity will appear here as you use the system.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update the current date
+    const today = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const dateElements = document.querySelectorAll('.current-date');
+    dateElements.forEach(element => {
+        element.textContent = today.toLocaleDateString('en-US', options);
+    });
+});
+</script>
+{% endblock %}

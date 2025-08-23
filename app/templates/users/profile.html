@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-circle"></i> {{ user.full_name }}
+                </h4>
+                {% if current_user.has_role('admin') and user.id != current_user.id %}
+                <div class="btn-group">
+                    <a href="{{ url_for('users.edit_user', id=user.id) }}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <form method="POST" action="{{ url_for('users.toggle_user_status', id=user.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-{% if user.is_active %}danger{% else %}success{% endif %} btn-sm">
+                            <i class="fas fa-{% if user.is_active %}ban{% else %}check{% endif %}"></i>
+                            {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Username:</strong></td>
+                                <td>{{ user.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>{{ user.email }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phone:</strong></td>
+                                <td>{{ user.phone or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Role:</strong></td>
+                                <td>
+                                    <span class="badge bg-primary">{{ user.role.name.title() }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Member Since:</strong></td>
+                                <td>{{ user.created_at.strftime('%m/%d/%Y') }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Last Login:</strong></td>
+                                <td>
+                                    {% if user.last_login %}
+                                        {{ user.last_login.strftime('%m/%d/%Y %I:%M %p') }}
+                                    {% else %}
+                                        <span class="text-muted">Never</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-chart-bar"></i> Work Order Statistics</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4>{{ stats.total_assigned }}</h4>
+                        <small class="text-muted">Total Assigned</small>
+                    </div>
+                    <div class="col-6">
+                        <h4>{{ stats.completed }}</h4>
+                        <small class="text-muted">Completed</small>
+                    </div>
+                </div>
+                <div class="row text-center mt-3">
+                    <div class="col-6">
+                        <h4>{{ stats.open }}</h4>
+                        <small class="text-muted">Open</small>
+                    </div>
+                    <div class="col-6">
+                        <h4>{{ stats.completion_rate }}%</h4>
+                        <small class="text-muted">Completion Rate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if current_user.has_role('admin') and user.id != current_user.id %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6><i class="fas fa-cog"></i> Admin Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <form method="POST" action="{{ url_for('users.reset_user_password', id=user.id) }}"
+                          onsubmit="return confirm('Are you sure you want to reset this user\'s password?')">
+                        <button type="submit" class="btn btn-warning btn-sm w-100">
+                            <i class="fas fa-key"></i> Reset Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if recent_workorders %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Recent Work Orders</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for wo in recent_workorders %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('workorders.view_workorder', id=wo.id) }}">#{{ wo.id }}</a>
+                                </td>
+                                <td>{{ wo.title[:50] }}{% if wo.title|length > 50 %}...{% endif %}</td>
+                                <td>
+                                    <span class="badge" style="background-color: {{ wo.priority.color }};">
+                                        {{ wo.priority.name }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background-color: {{ wo.status.color }};">
+                                        {{ wo.status.name }}
+                                    </span>
+                                </td>
+                                <td>{{ wo.created_at.strftime('%m/%d/%Y') }}</td>
+                                <td>
+                                    {% if wo.due_date %}
+                                        {{ wo.due_date.strftime('%m/%d/%Y') }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-3">
+    <div class="col-12 text-end">
+        <a href="{{ url_for('users.list_users') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Users
+        </a>
+    </div>
+</div>
+{% endblock %}

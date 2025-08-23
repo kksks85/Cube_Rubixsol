@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3">
+    <!-- Compact Header -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1 text-dark fw-semibold">Dashboard</h4>
+                    <p class="text-muted mb-0 small">Welcome back, {{ current_user.first_name }} • {{ current_user.role.name|title if current_user.role else 'User' }}</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary small">Today</span>
+                    <small class="text-muted d-block">{{ moment().format('MMMM DD, YYYY') if moment else '' }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact Statistics Cards -->
+    <div class="row mb-4 g-3">
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-3">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-clipboard-list fa-lg text-primary me-2"></i>
+                        <h5 class="mb-0 fw-semibold">{{ stats.total_workorders if stats else 0 }}</h5>
+                    </div>
+                    <p class="text-muted mb-0 small">Total Orders</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-3">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-clock fa-lg text-warning me-2"></i>
+                        <h5 class="mb-0 fw-semibold text-warning">{{ stats.open_workorders if stats else 0 }}</h5>
+                    </div>
+                    <p class="text-muted mb-0 small">Open Orders</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-3">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-exclamation-triangle fa-lg text-danger me-2"></i>
+                        <h5 class="mb-0 fw-semibold text-danger">{{ stats.overdue_workorders if stats else 0 }}</h5>
+                    </div>
+                    <p class="text-muted mb-0 small">Overdue</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-3">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-check-circle fa-lg text-success me-2"></i>
+                        <h5 class="mb-0 fw-semibold text-success">{{ stats.completed_workorders if stats else 0 }}</h5>
+                    </div>
+                    <p class="text-muted mb-0 small">Completed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UAV Service Statistics -->
+    <div class="row mb-4 g-3">
+        <div class="col-lg-6 col-md-6">
+            <div class="card border-0 shadow-sm border-warning border-opacity-25">
+                <div class="card-body text-center py-3">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-calendar-alt fa-lg text-warning me-2"></i>
+                        <h5 class="mb-0 fw-semibold text-warning">{{ stats.uavs_service_due_soon if stats else 0 }}</h5>
+                    </div>
+                    <p class="text-muted mb-0 small">UAVs Service Due (30 days)</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 col-md-6">
+            <div class="card border-0 shadow-sm border-danger border-opacity-25">
+                <div class="card-body text-center py-3">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-exclamation-circle fa-lg text-danger me-2"></i>
+                        <h5 class="mb-0 fw-semibold text-danger">{{ stats.uavs_service_overdue if stats else 0 }}</h5>
+                    </div>
+                    <p class="text-muted mb-0 small">UAVs Service Overdue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="fas fa-bolt me-2 text-primary"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-2">
+                        <div class="col-lg-3 col-md-6">
+                            <a href="{{ url_for('workorders.create_workorder') }}" class="btn btn-sm btn-primary w-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <i class="fas fa-plus-circle fa-lg mb-2"></i>
+                                <span class="small">New Work Order</span>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <a href="{{ url_for('workorders.list_workorders') }}" class="btn btn-sm btn-outline-secondary w-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <i class="fas fa-list fa-lg mb-2"></i>
+                                <span class="small">View Orders</span>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <a href="{{ url_for('products.list_products') }}" class="btn btn-sm btn-outline-info w-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <i class="fas fa-cubes fa-lg mb-2"></i>
+                                <span class="small">UAV Products</span>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <a href="{{ url_for('reports.dashboard') }}" class="btn btn-sm btn-outline-warning w-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <i class="fas fa-chart-line fa-lg mb-2"></i>
+                                <span class="small">Reports</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UAV Service Reports -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="fas fa-tools me-2 text-primary"></i>UAV Service Reports
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-3">
+                        <!-- Service Due Within One Month -->
+                        <div class="col-lg-6">
+                            <div class="card bg-warning bg-opacity-10 border-warning">
+                                <div class="card-header bg-warning bg-opacity-20 border-warning py-2">
+                                    <h6 class="mb-0 fw-semibold text-warning-emphasis">
+                                        <i class="fas fa-calendar-alt me-2"></i>Service Due Within 30 Days
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <h4 class="mb-0 text-warning-emphasis fw-bold">{{ stats.uavs_service_due_soon if stats else 0 }}</h4>
+                                            <p class="text-muted mb-0 small">UAVs requiring service soon</p>
+                                        </div>
+                                        <i class="fas fa-exclamation-triangle fa-2x text-warning opacity-50"></i>
+                                    </div>
+                                    
+                                    {% if uavs_service_due_soon %}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-0 small fw-semibold text-muted">UAV</th>
+                                                    <th class="border-0 small fw-semibold text-muted">Service Due</th>
+                                                    <th class="border-0 small fw-semibold text-muted">Days Left</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for uav in uavs_service_due_soon[:5] %}
+                                                <tr>
+                                                    <td class="border-0 py-1">
+                                                        <a href="{{ url_for('products.view_product', id=uav.id) }}" class="text-decoration-none small fw-medium">
+                                                            {{ uav.product_code }}
+                                                        </a>
+                                                        <div class="text-muted small">{{ uav.product_name[:25] }}{% if uav.product_name|length > 25 %}...{% endif %}</div>
+                                                    </td>
+                                                    <td class="border-0 py-1 small">{{ uav.next_service_due.strftime('%b %d, %Y') if uav.next_service_due else '-' }}</td>
+                                                    <td class="border-0 py-1">
+                                                        {% if uav.next_service_due %}
+                                                        {% set days_left = (uav.next_service_due | days_until) %}
+                                                        <span class="badge bg-warning text-dark">{{ days_left }} days</span>
+                                                        {% else %}
+                                                        <span class="text-muted small">-</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                                {% if uavs_service_due_soon|length > 5 %}
+                                                <tr>
+                                                    <td colspan="3" class="border-0 py-1 text-center">
+                                                        <a href="{{ url_for('products.list_products') }}?filter=service_due_soon" class="small text-warning-emphasis text-decoration-none">
+                                                            View all {{ uavs_service_due_soon|length }} UAVs →
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center py-2">
+                                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                        <p class="text-muted mb-0 small">No UAVs require service in the next 30 days</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Service Overdue -->
+                        <div class="col-lg-6">
+                            <div class="card bg-danger bg-opacity-10 border-danger">
+                                <div class="card-header bg-danger bg-opacity-20 border-danger py-2">
+                                    <h6 class="mb-0 fw-semibold text-danger-emphasis">
+                                        <i class="fas fa-exclamation-circle me-2"></i>Service Overdue
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <h4 class="mb-0 text-danger-emphasis fw-bold">{{ stats.uavs_service_overdue if stats else 0 }}</h4>
+                                            <p class="text-muted mb-0 small">UAVs with overdue service</p>
+                                        </div>
+                                        <i class="fas fa-ban fa-2x text-danger opacity-50"></i>
+                                    </div>
+                                    
+                                    {% if uavs_service_overdue %}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-0 small fw-semibold text-muted">UAV</th>
+                                                    <th class="border-0 small fw-semibold text-muted">Service Due</th>
+                                                    <th class="border-0 small fw-semibold text-muted">Overdue By</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for uav in uavs_service_overdue[:5] %}
+                                                <tr>
+                                                    <td class="border-0 py-1">
+                                                        <a href="{{ url_for('products.view_product', id=uav.id) }}" class="text-decoration-none small fw-medium">
+                                                            {{ uav.product_code }}
+                                                        </a>
+                                                        <div class="text-muted small">{{ uav.product_name[:25] }}{% if uav.product_name|length > 25 %}...{% endif %}</div>
+                                                    </td>
+                                                    <td class="border-0 py-1 small">{{ uav.next_service_due.strftime('%b %d, %Y') if uav.next_service_due else '-' }}</td>
+                                                    <td class="border-0 py-1">
+                                                        {% if uav.next_service_due %}
+                                                        {% set days_overdue = (uav.next_service_due | days_until) | abs %}
+                                                        <span class="badge bg-danger">{{ days_overdue }} days</span>
+                                                        {% else %}
+                                                        <span class="text-muted small">-</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                                {% if uavs_service_overdue|length > 5 %}
+                                                <tr>
+                                                    <td colspan="3" class="border-0 py-1 text-center">
+                                                        <a href="{{ url_for('products.list_products') }}?filter=service_overdue" class="small text-danger-emphasis text-decoration-none">
+                                                            View all {{ uavs_service_overdue|length }} UAVs →
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center py-2">
+                                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                        <p class="text-muted mb-0 small">No UAVs have overdue service</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity and Charts -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="fas fa-history me-2 text-primary"></i>Recent Work Orders
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_workorders %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0 px-3 py-2 small fw-semibold text-muted">Order #</th>
+                                    <th class="border-0 px-3 py-2 small fw-semibold text-muted">Title</th>
+                                    <th class="border-0 px-3 py-2 small fw-semibold text-muted">Status</th>
+                                    <th class="border-0 px-3 py-2 small fw-semibold text-muted">Priority</th>
+                                    <th class="border-0 px-3 py-2 small fw-semibold text-muted">Due Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for workorder in recent_workorders %}
+                                <tr>
+                                    <td class="px-3 py-2">
+                                        <a href="{{ url_for('workorders.view', id=workorder.id) }}" class="text-decoration-none small fw-medium">
+                                            #{{ workorder.id }}
+                                        </a>
+                                    </td>
+                                    <td class="px-3 py-2 small">{{ workorder.title[:30] }}{% if workorder.title|length > 30 %}...{% endif %}</td>
+                                    <td class="px-3 py-2">
+                                        <span class="badge badge-sm bg-{{ 'success' if workorder.status == 'completed' else 'warning' if workorder.status == 'in_progress' else 'secondary' }}">
+                                            {{ workorder.status.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <span class="badge badge-sm bg-{{ 'danger' if workorder.priority == 'high' else 'warning' if workorder.priority == 'medium' else 'info' }}">
+                                            {{ workorder.priority.title() }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2 small text-muted">
+                                        {{ workorder.due_date.strftime('%b %d') if workorder.due_date else '-' }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No recent work orders</p>
+                        <a href="{{ url_for('workorders.create_workorder') }}" class="btn btn-sm btn-primary mt-2">Create First Order</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="fas fa-chart-pie me-2 text-primary"></i>Priority Distribution
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div style="height: 200px;">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Priority Distribution Chart
+    const priorityCtx = document.getElementById('priorityChart');
+    if (priorityCtx) {
+        new Chart(priorityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Low', 'Medium', 'High', 'Critical'],
+                datasets: [{
+                    data: [5, 10, 8, 2],
+                    backgroundColor: ['#20c997', '#ffc107', '#fd7e14', '#dc3545'],
+                    borderWidth: 0,
+                    cutout: '60%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true,
+                            font: { size: 11, weight: '500' }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Add animation to cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('animate-fade-in-up');
+    });
+});
+</script>
+{% endblock %}
