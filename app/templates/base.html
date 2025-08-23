@@ -21,8 +21,8 @@
     {% if current_user.is_authenticated %}
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid px-3">
-            <a class="navbar-brand fw-semibold" href="{{ url_for('main.dashboard') }}">
-                <i class="fas fa-cube me-2"></i> 
+            <a class="navbar-brand fw-semibold d-flex align-items-center" href="{{ url_for('main.dashboard') }}">
+                <img src="{{ url_for('static', filename='img/cube.svg') }}" alt="Cube Logo" style="height:32px;width:32px;object-fit:contain;" class="me-2">
                 CUBE - PRO
             </a>
             
@@ -158,7 +158,7 @@
         {% endwith %}
         
         <!-- Page content -->
-        <div class="{% if current_user.is_authenticated %}container-fluid{% else %}{% endif %}">
+    <div class="container-fluid">
             {% block content %}{% endblock %}
         </div>
     </main>
@@ -166,7 +166,7 @@
     <!-- Footer -->
     {% if current_user.is_authenticated %}
     <footer class="footer mt-auto">
-        <div class="container-fluid">
+    <div class="{% if current_user.is_authenticated %}container-fluid{% else %}container d-flex align-items-center justify-content-center min-vh-100{% endif %}">
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <p class="mb-0">&copy; 2025 CUBE - PRO. All rights reserved.</p>

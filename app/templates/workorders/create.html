@@ -1,18 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <div class="card">
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-sm">
             <div class="card-header bg-success text-white">
                 <h4 class="mb-0"><i class="fas fa-plus"></i> Create Work Order</h4>
             </div>
             <div class="card-body">
                 <form method="POST">
                     {{ form.hidden_tag() }}
-                    
                     <div class="row">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <div class="mb-3">
                                 {{ form.title.label(class="form-label") }}
                                 {{ form.title(class="form-control") }}
@@ -24,6 +23,8 @@
                                     </div>
                                 {% endif %}
                             </div>
+                        </div>
+                        <div class="col-md-6">
                             <div class="mb-3">
                                 {{ form.product_name.label(class="form-label") }}
                                 {{ form.product_name(class="form-control") }}
@@ -36,42 +37,55 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="col-md-4">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.owner_name.label(class="form-label") }}
+                                {{ form.owner_name(class="form-control") }}
+                                {% if form.owner_name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.owner_name.errors %}
+                                            <small>{{ error }}</small %}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <div class="mb-3">
                                 {{ form.priority_id.label(class="form-label") }}
                                 {{ form.priority_id(class="form-select") }}
                                 {% if form.priority_id.errors %}
                                     <div class="text-danger">
                                         {% for error in form.priority_id.errors %}
-                                            <small>{{ error }}</small>
+                                            <small>{{ error }}</small %}
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
-                    
                     <div class="mb-3">
                         {{ form.description.label(class="form-label") }}
                         {{ form.description(class="form-control", rows="4") }}
                         {% if form.description.errors %}
                             <div class="text-danger">
                                 {% for error in form.description.errors %}
-                                    <small>{{ error }}</small>
+                                    <small>{{ error }}</small %}
                                 {% endfor %}
                             </div>
                         {% endif %}
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                {{ form.location.label(class="form-label") }}
-                                {{ form.location(class="form-control") }}
-                                {% if form.location.errors %}
+                                {{ form.address.label(class="form-label") }}
+                                {{ form.address(class="form-control") }}
+                                {% if form.address.errors %}
                                     <div class="text-danger">
-                                        {% for error in form.location.errors %}
-                                            <small>{{ error }}</small>
+                                        {% for error in form.address.errors %}
+                                            <small>{{ error }}</small %}
                                         {% endfor %}
                                     </div>
                                 {% endif %}
@@ -84,14 +98,13 @@
                                 {% if form.category_id.errors %}
                                     <div class="text-danger">
                                         {% for error in form.category_id.errors %}
-                                            <small>{{ error }}</small>
+                                            <small>{{ error }}</small %}
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -100,7 +113,7 @@
                                 {% if form.assigned_to_id.errors %}
                                     <div class="text-danger">
                                         {% for error in form.assigned_to_id.errors %}
-                                            <small>{{ error }}</small>
+                                            <small>{{ error }}</small %}
                                         {% endfor %}
                                     </div>
                                 {% endif %}
@@ -113,14 +126,13 @@
                                 {% if form.due_date.errors %}
                                     <div class="text-danger">
                                         {% for error in form.due_date.errors %}
-                                            <small>{{ error }}</small>
+                                            <small>{{ error }}</small %}
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -129,7 +141,7 @@
                                 {% if form.estimated_hours.errors %}
                                     <div class="text-danger">
                                         {% for error in form.estimated_hours.errors %}
-                                            <small>{{ error }}</small>
+                                            <small>{{ error }}</small %}
                                         {% endfor %}
                                     </div>
                                 {% endif %}
@@ -145,26 +157,24 @@
                                 {% if form.cost_estimate.errors %}
                                     <div class="text-danger">
                                         {% for error in form.cost_estimate.errors %}
-                                            <small>{{ error }}</small>
+                                            <small>{{ error }}</small %}
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
-                    
                     <div class="mb-3">
                         {{ form.notes.label(class="form-label") }}
                         {{ form.notes(class="form-control", rows="3") }}
                         {% if form.notes.errors %}
                             <div class="text-danger">
                                 {% for error in form.notes.errors %}
-                                    <small>{{ error }}</small>
+                                    <small>{{ error }}</small %}
                                 {% endfor %}
                             </div>
                         {% endif %}
                     </div>
-                    
                     <div class="d-flex justify-content-between">
                         <a href="{{ url_for('workorders.list_workorders') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Cancel

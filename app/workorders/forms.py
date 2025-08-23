@@ -12,8 +12,9 @@ class WorkOrderForm(FlaskForm):
     """Work order creation/edit form"""
     title = StringField('Title', validators=[DataRequired()])
     product_name = StringField('Product name', validators=[Optional()])
+    owner_name = StringField('Owner Name', validators=[Optional()])
     description = TextAreaField('Description', validators=[DataRequired()])
-    location = StringField('Location')
+    address = StringField('Address', validators=[Optional()])
     category_id = SelectField('Category', coerce=int, validators=[Optional()])
     priority_id = SelectField('Priority', coerce=int, validators=[DataRequired()])
     assigned_to_id = SelectField('Assigned To', coerce=int, validators=[Optional()])

@@ -102,8 +102,9 @@ def create_workorder():
         workorder = WorkOrder(
             title=form.title.data,
             description=form.description.data,
-            location=form.location.data,
+            address=form.address.data,
             product_name=form.product_name.data,
+            owner_name=form.owner_name.data,
             # ...existing code...
             category_id=form.category_id.data if form.category_id.data > 0 else None,
             priority_id=form.priority_id.data,
