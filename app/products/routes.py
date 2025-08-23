@@ -1,3 +1,10 @@
+@bp.route('/get_owner/<int:product_id>')
+def get_owner(product_id):
+    """Return owner_name for a given product (AJAX)"""
+    product = Product.query.get(product_id)
+    if product and product.owner_name:
+        return jsonify({'owner_name': product.owner_name})
+    return jsonify({'owner_name': ''})
 """
 Product Management Routes
 """

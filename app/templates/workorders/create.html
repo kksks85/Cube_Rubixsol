@@ -1,3 +1,26 @@
+{% block scripts %}
+    {{ super() }}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var productSelect = document.getElementById('product_name');
+        var ownerInput = document.getElementById('owner_name');
+        if (productSelect && ownerInput) {
+            productSelect.addEventListener('change', function() {
+                var productId = this.value;
+                if (productId) {
+                    fetch('/products/get_owner/' + productId)
+                        .then(response => response.json())
+                        .then(data => {
+                            ownerInput.value = data.owner_name || '';
+                        });
+                } else {
+                    ownerInput.value = '';
+                }
+            });
+        }
+    });
+    </script>
+{% endblock %}
 
 {% extends "base.html" %}
 
