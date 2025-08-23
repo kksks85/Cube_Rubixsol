@@ -55,11 +55,11 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                {{ form.location.label(class="form-label") }}
-                                {{ form.location(class="form-control") }}
-                                {% if form.location.errors %}
+                                {{ form.address.label(class="form-label") }}
+                                {{ form.address(class="form-control") }}
+                                {% if form.address.errors %}
                                     <div class="text-danger">
-                                        {% for error in form.location.errors %}
+                                        {% for error in form.address.errors %}
                                             <small>{{ error }}</small>
                                         {% endfor %}
                                     </div>

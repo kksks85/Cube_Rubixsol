@@ -3,9 +3,9 @@ Work Order Forms
 """
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SelectField, DateTimeField, FloatField, DecimalField, SubmitField
+from wtforms import StringField, TextAreaField, SelectField, DateTimeField, DateField, FloatField, DecimalField, SubmitField
 from wtforms.validators import DataRequired, Optional, NumberRange
-from wtforms.widgets import DateTimeLocalInput
+from wtforms.widgets import DateInput, DateTimeLocalInput
 from datetime import datetime
 
 class WorkOrderForm(FlaskForm):
@@ -20,7 +20,7 @@ class WorkOrderForm(FlaskForm):
     assigned_to_id = SelectField('Assigned To', coerce=int, validators=[Optional()])
     estimated_hours = FloatField('Estimated Hours', validators=[Optional(), NumberRange(min=0)])
     cost_estimate = DecimalField('Cost Estimate', validators=[Optional(), NumberRange(min=0)], places=2)
-    due_date = DateTimeField('Due Date', validators=[Optional()], widget=DateTimeLocalInput())
+    due_date = DateField('Due Date', validators=[Optional()], widget=DateInput())
     notes = TextAreaField('Notes')
     submit = SubmitField('Save Work Order')
 
@@ -38,6 +38,6 @@ class WorkOrderFilterForm(FlaskForm):
     priority_id = SelectField('Priority', coerce=int, validators=[Optional()])
     category_id = SelectField('Category', coerce=int, validators=[Optional()])
     assigned_to_id = SelectField('Assigned To', coerce=int, validators=[Optional()])
-    date_from = DateTimeField('From Date', validators=[Optional()], widget=DateTimeLocalInput())
-    date_to = DateTimeField('To Date', validators=[Optional()], widget=DateTimeLocalInput())
+    date_from = DateField('From Date', validators=[Optional()], widget=DateInput())
+    date_to = DateField('To Date', validators=[Optional()], widget=DateInput())
     submit = SubmitField('Apply Filters')

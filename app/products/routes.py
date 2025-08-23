@@ -1,10 +1,25 @@
+"""
+Product Management Routes
+"""
+
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify
+from flask_login import login_required, current_user
+from sqlalchemy import desc, or_, and_
+from app import db
+from app.products import bp
+from app.products.forms import ProductForm, CompanyForm, ProductCategoryForm, ProductSearchForm, ProductSpecificationForm
+from app.models import Product, Company, ProductCategory, ProductSpecification, ProductImage
+
+
+# AJAX endpoint to get owner_name for a given product
 @bp.route('/get_owner/<int:product_id>')
 def get_owner(product_id):
-    """Return owner_name for a given product (AJAX)"""
+    """Return owner company name for a given product (AJAX)"""
     product = Product.query.get(product_id)
-    if product and product.owner_name:
-        return jsonify({'owner_name': product.owner_name})
-    return jsonify({'owner_name': ''})
+    owner_name = ""
+    if product and product.owner_company:
+        owner_name = product.owner_company.name
+    return jsonify({'owner_name': owner_name})
 """
 Product Management Routes
 """
@@ -328,6 +343,29 @@ def edit_company(id):
         return redirect(url_for('products.view_company', id=company.id))
     
     return render_template('products/edit_company.html', form=form, company=company)
+
+
+@bp.route('/companies/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_company(id):
+    """Delete company (admin only)"""
+    if not current_user.has_role('admin'):
+        flash('You do not have permission to delete companies.', 'error')
+        return redirect(url_for('products.view_company', id=id))
+    
+    company = Company.query.get_or_404(id)
+    
+    # Check if company has associated products
+    if company.products.count() > 0:
+        flash('Cannot delete company with associated products. Please remove or transfer products first.', 'error')
+        return redirect(url_for('products.view_company', id=id))
+    
+    company_name = company.name
+    db.session.delete(company)
+    db.session.commit()
+    
+    flash(f'Company "{company_name}" has been deleted successfully.', 'success')
+    return redirect(url_for('products.list_companies'))
 
 
 # Category Management Routes

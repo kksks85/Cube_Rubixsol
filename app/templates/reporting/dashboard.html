@@ -1,0 +1,604 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+.welcome-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.feature-card {
+    background: white;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.quick-action-btn {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+    color: white;
+}
+
+.secondary-btn {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+}
+
+.secondary-btn:hover {
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+}
+
+.stats-card {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    border: none;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.recent-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.recent-item:hover {
+    border-color: #007bff;
+    transform: translateX(5px);
+}
+</style>
+
+<div class="container-fluid py-4">
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h2 mb-3">
+                    <i class="fas fa-magic me-2"></i>
+                    Welcome to Smart Reporting
+                </h1>
+                <p class="h5 mb-3">Create powerful reports in minutes, not hours!</p>
+                <p class="mb-0">Our new user-friendly report builder makes it easy to analyze your data without any technical knowledge.</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('reporting.report_builder') }}" class="quick-action-btn">
+                    <i class="fas fa-rocket me-2"></i>
+                    Start Building
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Features -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="feature-card card">
+                <div class="card-body text-center">
+                    <div class="feature-icon bg-primary text-white mx-auto">
+                        <i class="fas fa-mouse-pointer"></i>
+                    </div>
+                    <h5>Point & Click Interface</h5>
+                    <p class="text-muted">No coding required! Simply click to select data sources, columns, and filters.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card card">
+                <div class="card-body text-center">
+                    <div class="feature-icon bg-success text-white mx-auto">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <h5>Smart Templates</h5>
+                    <p class="text-muted">Get started instantly with pre-built templates for common reporting needs.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card card">
+                <div class="card-body text-center">
+                    <div class="feature-icon bg-info text-white mx-auto">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <h5>Export Anywhere</h5>
+                    <p class="text-muted">Download your reports as Excel, CSV, or save them for future use.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="d-flex gap-3 flex-wrap">
+                <a href="{{ url_for('reporting.report_builder') }}" class="quick-action-btn">
+                    <i class="fas fa-plus me-2"></i>
+                    Create New Report
+                </a>
+                <a href="{{ url_for('reporting.saved_reports') }}" class="quick-action-btn secondary-btn">
+                    <i class="fas fa-folder-open me-2"></i>
+                    My Saved Reports
+                </a>
+                {% if current_user.has_role('admin') %}
+                <a href="{{ url_for('reporting.report_schedules') }}" class="quick-action-btn secondary-btn">
+                    <i class="fas fa-clock me-2"></i>
+                    Scheduled Reports
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-end">
+                <button type="button" class="btn btn-outline-secondary" onclick="showTutorial()">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Need Help?
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ stats.total_reports or 0 }}</div>
+                <div class="text-muted">My Reports</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ stats.public_reports or 0 }}</div>
+                <div class="text-muted">Shared Reports</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ stats.total_executions or 0 }}</div>
+                <div class="text-muted">Reports Generated</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ stats.scheduled_reports or 0 }}</div>
+                <div class="text-muted">Scheduled</div>
+            </div>
+        </div>
+    </div>
+
+    {% if saved_reports %}
+    <!-- Recent Reports -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card feature-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Recent Reports
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for report in saved_reports[:5] %}
+                    <div class="recent-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ report.name }}</h6>
+                                <small class="text-muted">{{ report.description or 'No description' }}</small>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('reporting.view_saved_report', report_id=report.id) }}" class="btn btn-sm btn-outline-primary me-2">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{{ url_for('reporting.report_builder') }}?load={{ report.id }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function showTutorial() {
+    const tutorial = `
+📊 How to Create Reports in 4 Easy Steps:
+
+1️⃣ CHOOSE TEMPLATE
+   • Select from pre-built templates
+   • Or start with a custom report
+
+2️⃣ PICK DATA SOURCE  
+   • Choose which table has your data
+   • Examples: Work Orders, Products, Users
+
+3️⃣ SELECT COLUMNS
+   • Click on columns you want to see
+   • Drag and drop to reorder
+
+4️⃣ ADD FILTERS (Optional)
+   • Filter by date, status, etc.
+   • Use simple operators like "equals" or "contains"
+
+🚀 Then click "Generate Report" and you're done!
+
+💡 Tips:
+   • Save reports for future use
+   • Export to Excel or CSV
+   • Schedule automatic generation
+
+Need more help? Contact your system administrator.
+    `;
+    
+    alert(tutorial);
+}
+
+// Add some interactive animations
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate cards on scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    });
+
+    // Observe all feature cards
+    document.querySelectorAll('.feature-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'all 0.6s ease';
+        observer.observe(card);
+    });
+});
+</script>
+
+<style>
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+</style>
+
+    <!-- Statistics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.total_reports }}</h5>
+                            <p class="card-text">My Reports</p>
+                        </div>
+                        <i class="fas fa-chart-bar fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.public_reports }}</h5>
+                            <p class="card-text">Public Reports</p>
+                        </div>
+                        <i class="fas fa-share-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.total_executions }}</h5>
+                            <p class="card-text">Total Executions</p>
+                        </div>
+                        <i class="fas fa-play fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.scheduled_reports }}</h5>
+                            <p class="card-text">Scheduled Reports</p>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Reports -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">My Recent Reports</h5>
+                    <a href="{{ url_for('reporting.saved_reports') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_reports %}
+                        <div class="list-group list-group-flush">
+                            {% for report in recent_reports %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <a href="{{ url_for('reporting.view_saved_report', report_id=report.id) }}" 
+                                           class="text-decoration-none">{{ report.name }}</a>
+                                    </h6>
+                                    <small class="text-muted">
+                                        Updated {{ report.updated_at.strftime('%B %d, %Y') }}
+                                        {% if report.is_public %}
+                                        <span class="badge bg-success ms-1">Public</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-light text-dark">{{ report.view_count }} views</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No reports created yet.</p>
+                            <a href="{{ url_for('reporting.report_builder') }}" class="btn btn-primary">Create Your First Report</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Public Reports -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Popular Public Reports</h5>
+                </div>
+                <div class="card-body">
+                    {% if public_reports %}
+                        <div class="list-group list-group-flush">
+                            {% for report in public_reports %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <a href="{{ url_for('reporting.view_saved_report', report_id=report.id) }}" 
+                                           class="text-decoration-none">{{ report.name }}</a>
+                                    </h6>
+                                    <small class="text-muted">
+                                        By {{ report.created_by.first_name }} {{ report.created_by.last_name }}
+                                        • {{ report.updated_at.strftime('%B %d, %Y') }}
+                                    </small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-primary">{{ report.view_count }} views</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-share-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No public reports available yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Executions -->
+    {% if recent_executions %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Executions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Report</th>
+                                    <th>Status</th>
+                                    <th>Execution Time</th>
+                                    <th>Row Count</th>
+                                    <th>Executed At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for execution in recent_executions %}
+                                <tr>
+                                    <td>
+                                        {% if execution.report %}
+                                            <a href="{{ url_for('reporting.view_saved_report', report_id=execution.report.id) }}" 
+                                               class="text-decoration-none">{{ execution.report.name }}</a>
+                                        {% else %}
+                                            <span class="text-muted">Ad-hoc Report</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if execution.status == 'success' %}
+                                            <span class="badge bg-success">Success</span>
+                                        {% elif execution.status == 'error' %}
+                                            <span class="badge bg-danger">Error</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ execution.status|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if execution.execution_time %}
+                                            {{ "%.3f"|format(execution.execution_time) }}s
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if execution.row_count is not none %}
+                                            {{ "{:,}".format(execution.row_count) }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ execution.started_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Stats Widget -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">System Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div id="quick-stats-loading" class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Loading system statistics...
+                    </div>
+                    <div id="quick-stats-content" style="display: none;">
+                        <!-- Content will be loaded via AJAX -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load quick statistics
+    fetch('{{ url_for("reporting.api_quick_stats") }}')
+        .then(response => response.json())
+        .then(data => {
+            const loadingDiv = document.getElementById('quick-stats-loading');
+            const contentDiv = document.getElementById('quick-stats-content');
+            
+            if (data.error) {
+                contentDiv.innerHTML = '<div class="alert alert-warning">Unable to load system statistics.</div>';
+            } else {
+                contentDiv.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-primary mb-1">${data.workorders.total.toLocaleString()}</h4>
+                                <p class="text-muted mb-0">Total Work Orders</p>
+                                <small class="text-success">${data.workorders.recent} today</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-success mb-1">${data.users.total}</h4>
+                                <p class="text-muted mb-0">Total Users</p>
+                                <small class="text-info">${data.users.active} active</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-info mb-1">${data.companies}</h4>
+                                <p class="text-muted mb-0">Companies</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-warning mb-1">${data.products}</h4>
+                                <p class="text-muted mb-0">Active Products</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            loadingDiv.style.display = 'none';
+            contentDiv.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error loading quick stats:', error);
+            document.getElementById('quick-stats-loading').innerHTML = 
+                '<div class="alert alert-warning">Unable to load system statistics.</div>';
+        });
+});
+</script>
+
+{% endblock %}

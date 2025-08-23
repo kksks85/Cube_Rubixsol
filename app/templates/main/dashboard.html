@@ -4,7 +4,10 @@
 
 {% block content %}
 <div class="container-fluid px-3">
-    <!-- Compact Header -->
+                            <a href="{{ url_for('reporting.dashboard') }}" class="btn btn-sm btn-outline-warning w-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                                <span class="fw-bold">Reports</span>
+                            </a><!-- Compact Header -->
     <div class="row mb-3">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
@@ -128,7 +131,7 @@
                             </a>
                         </div>
                         <div class="col-lg-3 col-md-6">
-                            <a href="{{ url_for('reports.dashboard') }}" class="btn btn-sm btn-outline-warning w-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <a href="{{ url_for('reporting.dashboard') }}" class="btn btn-sm btn-outline-warning w-100 d-flex flex-column align-items-center justify-content-center py-3">
                                 <i class="fas fa-chart-line fa-lg mb-2"></i>
                                 <span class="small">Reports</span>
                             </a>

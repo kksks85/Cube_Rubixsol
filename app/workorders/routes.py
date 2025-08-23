@@ -8,26 +8,6 @@ from flask_login import login_required, current_user
 from sqlalchemy import desc, asc
 from app import db
 from app.workorders import bp
-
-# API endpoint to get product owner details by product ID
-@bp.route('/api/product_owner/<int:product_id>', methods=['GET'])
-def get_product_owner(product_id):
-    from app.models import Product, Company
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({'owner': ''})
-    owner = product.owner_company.name if product.owner_company else ''
-    return jsonify({'owner': owner})
-"""
-Work Order Routes
-"""
-
-from datetime import datetime, timezone
-from flask import render_template, redirect, url_for, flash, request, abort, jsonify
-from flask_login import login_required, current_user
-from sqlalchemy import desc, asc
-from app import db
-from app.workorders import bp
 from app.workorders.forms import WorkOrderForm, WorkOrderUpdateForm, WorkOrderFilterForm
 from app.models import WorkOrder, User, Priority, Status, Category, Product, Company
 
@@ -229,25 +209,21 @@ def edit_workorder(id):
             workorder.description = form.description.data
             changes.append('Description updated')
         
-        if workorder.location != form.location.data:
-            if workorder.location:
-                changes.append(f'Location changed from "{workorder.location}" to "{form.location.data}"')
+        if workorder.address != form.address.data:
+            if workorder.address:
+                changes.append(f'Address changed from "{workorder.address}" to "{form.address.data}"')
             else:
-                changes.append(f'Location set to "{form.location.data}"')
-            workorder.location = form.location.data
+                changes.append(f'Address set to "{form.address.data}"')
+            workorder.address = form.address.data
         
         # Update product-related fields
         if workorder.product_name != form.product_name.data:
             workorder.product_name = form.product_name.data
             changes.append('Product name updated')
         
-        if workorder.owner_company_name != form.owner_company_name.data:
-            workorder.owner_company_name = form.owner_company_name.data
-            changes.append('Owner company name updated')
-        
-        if workorder.owner_company_address != form.owner_company_address.data:
-            workorder.owner_company_address = form.owner_company_address.data
-            changes.append('Owner company address updated')
+        if workorder.owner_name != form.owner_name.data:
+            workorder.owner_name = form.owner_name.data
+            changes.append('Owner name updated')
         
         # Track assignment changes
         if workorder.assigned_to_id != (form.assigned_to_id.data if form.assigned_to_id.data > 0 else None):
@@ -279,10 +255,9 @@ def edit_workorder(id):
     # Pre-populate form
     form.title.data = workorder.title
     form.description.data = workorder.description
-    form.location.data = workorder.location
+    form.address.data = workorder.address
     form.product_name.data = workorder.product_name
-    form.owner_company_name.data = workorder.owner_company_name
-    form.owner_company_address.data = workorder.owner_company_address
+    form.owner_name.data = workorder.owner_name
     form.category_id.data = workorder.category_id or 0
     form.priority_id.data = workorder.priority_id
     form.assigned_to_id.data = workorder.assigned_to_id or 0
@@ -371,6 +346,36 @@ def delete_workorder(id):
 
 # API Endpoints for autocomplete functionality
 
+@bp.route('/<int:id>/copy', methods=['POST'])
+@login_required
+def copy_workorder(id):
+    """Copy an existing work order and redirect to the new work order's view page"""
+    original = WorkOrder.query.get_or_404(id)
+    if not (current_user.has_role('admin') or current_user.has_role('manager')):
+        flash('You do not have permission to copy work orders.', 'error')
+        return redirect(url_for('workorders.view_workorder', id=id))
+
+    # Create a new WorkOrder instance with copied fields
+    new_workorder = WorkOrder(
+        title=original.title + ' (Copy)',
+        description=original.description,
+        address=original.address,
+        product_name=original.product_name,
+        owner_name=original.owner_name,
+        category_id=original.category_id,
+        priority_id=original.priority_id,
+        assigned_to_id=original.assigned_to_id,
+        estimated_hours=original.estimated_hours,
+        cost_estimate=original.cost_estimate,
+        due_date=original.due_date,
+        notes=original.notes,
+        created_by_id=current_user.id,
+        status_id=original.status_id
+    )
+    db.session.add(new_workorder)
+    db.session.commit()
+    flash(f'Work order copied successfully as #{new_workorder.id}.', 'success')
+    return redirect(url_for('workorders.view_workorder', id=new_workorder.id))
 @bp.route('/api/search_products')
 @login_required
 def search_products():

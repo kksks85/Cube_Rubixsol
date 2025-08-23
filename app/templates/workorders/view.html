@@ -61,8 +61,8 @@
                     <div class="col-md-6">
                         <table class="table table-sm">
                             <tr>
-                                <td><strong>Location:</strong></td>
-                                <td>{{ workorder.location or '-' }}</td>
+                                <td><strong>Address:</strong></td>
+                                <td>{{ workorder.address or '-' }}</td>
                             </tr>
                             <tr>
                                 <td><strong>Category:</strong></td>
@@ -198,6 +198,11 @@
         <a href="{{ url_for('workorders.list_workorders') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Work Orders
         </a>
+        <form method="POST" action="{{ url_for('workorders.copy_workorder', id=workorder.id) }}" class="d-inline">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-copy"></i> Copy Work Order
+            </button>
+        </form>
     </div>
 </div>
 {% endblock %}

@@ -72,11 +72,11 @@
             <div class="card-body text-center">
                 <div class="row">
                     <div class="col-6">
-                        <h4>{{ current_user.assigned_workorders.count() }}</h4>
+                        <h4>{{ workorder_stats.total_assigned if workorder_stats else 0 }}</h4>
                         <small class="text-muted">Total Assigned</small>
                     </div>
                     <div class="col-6">
-                        <h4>{{ current_user.assigned_workorders.join(Status).filter(~Status.is_closed).count() }}</h4>
+                        <h4>{{ workorder_stats.open_assigned if workorder_stats else 0 }}</h4>
                         <small class="text-muted">Open</small>
                     </div>
                 </div>

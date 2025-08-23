@@ -160,7 +160,23 @@ def dashboard():
 @login_required
 def profile():
     """User profile page"""
-    return render_template('main/profile.html', title='My Profile')
+    # Calculate work order statistics for the current user
+    total_assigned = current_user.assigned_workorders.count()
+    
+    # Get open work orders (not closed status)
+    open_assigned = db.session.query(WorkOrder).join(Status).filter(
+        WorkOrder.assigned_to_id == current_user.id,
+        ~Status.is_closed
+    ).count()
+    
+    workorder_stats = {
+        'total_assigned': total_assigned,
+        'open_assigned': open_assigned
+    }
+    
+    return render_template('main/profile.html', 
+                         title='My Profile',
+                         workorder_stats=workorder_stats)
 
 @bp.route('/help')
 @login_required

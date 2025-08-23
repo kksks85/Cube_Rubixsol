@@ -31,7 +31,7 @@ def generate_gate_pass_pdf(workorder, file_path):
     y -= 8 * mm
     c.drawString(30 * mm, y, f"Cost Estimate: {workorder.cost_estimate}")
     y -= 8 * mm
-    c.drawString(30 * mm, y, f"Due Date: {workorder.due_date.strftime('%Y-%m-%d %H:%M') if workorder.due_date else ''}")
+    c.drawString(30 * mm, y, f"Due Date: {workorder.due_date.strftime('%Y-%m-%d') if workorder.due_date else ''}")
     y -= 8 * mm
     c.drawString(30 * mm, y, f"Created By: {workorder.creator.full_name if workorder.creator else ''}")
     y -= 8 * mm

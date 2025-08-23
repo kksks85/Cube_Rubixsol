@@ -1,0 +1,853 @@
+{% extends "base_new.html" %}
+
+{% block title %}Report Builder{% endblock %}
+
+{% block head %}
+<style>
+.table-column-item {
+    cursor: move;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: #f8f9fa;
+    transition: all 0.2s;
+}
+
+.table-column-item:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.table-column-item.selected {
+    background: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.filter-group {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+}
+
+.operator-select {
+    width: 120px;
+}
+
+.value-input {
+    min-width: 200px;
+}
+
+.table-selector {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.columns-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.selected-columns {
+    min-height: 100px;
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+}
+
+.selected-columns.drag-over {
+    border-color: #007bff;
+    background: #f0f8ff;
+}
+
+.query-preview {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.results-table {
+    max-height: 400px;
+    overflow: auto;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Report Builder</h1>
+                <div>
+                    <button type="button" class="btn btn-outline-secondary me-2" onclick="clearBuilder()">
+                        <i class="fas fa-eraser"></i> Clear
+                    </button>
+                    <button type="button" class="btn btn-success me-2" onclick="executeReport()" id="execute-btn">
+                        <i class="fas fa-play"></i> Execute
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="showSaveModal()" id="save-btn" disabled>
+                        <i class="fas fa-save"></i> Save Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Panel - Configuration -->
+        <div class="col-md-4">
+            <!-- Table Selection -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">1. Select Primary Table</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-selector">
+                        {% for table in available_tables %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="primary_table" 
+                                   id="table_{{ loop.index }}" value="{{ table }}" 
+                                   onchange="selectPrimaryTable('{{ table }}')">
+                            <label class="form-check-label" for="table_{{ loop.index }}">
+                                {{ table.replace('_', ' ').title() }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column Selection -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">2. Select Columns</h6>
+                </div>
+                <div class="card-body">
+                    <div id="columns-section" style="display: none;">
+                        <div class="columns-list mb-3" id="available-columns">
+                            <!-- Columns will be loaded here -->
+                        </div>
+                        <div class="selected-columns" id="selected-columns" 
+                             ondrop="dropColumn(event)" ondragover="allowDrop(event)">
+                            <p class="text-muted text-center mb-0">Drag columns here or click to add</p>
+                        </div>
+                    </div>
+                    <div id="no-table-message" class="text-muted text-center py-3">
+                        Please select a primary table first
+                    </div>
+                </div>
+            </div>
+
+            <!-- Joins -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0">3. Add Joins (Optional)</h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addJoin()" id="add-join-btn" disabled>
+                        <i class="fas fa-plus"></i> Add Join
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="joins-section">
+                        <div class="text-muted text-center py-3">
+                            No joins configured
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Panel - Filters and Query -->
+        <div class="col-md-4">
+            <!-- Filters -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0">4. Add Filters (Optional)</h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addFilter()" id="add-filter-btn" disabled>
+                        <i class="fas fa-plus"></i> Add Filter
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="filters-section">
+                        <div class="text-muted text-center py-3">
+                            No filters configured
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sorting -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">5. Sorting (Optional)</h6>
+                </div>
+                <div class="card-body">
+                    <div id="sorting-section" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Sort by Column</label>
+                            <select class="form-select" id="sort-column">
+                                <option value="">Select column...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Sort Order</label>
+                            <select class="form-select" id="sort-order">
+                                <option value="ASC">Ascending</option>
+                                <option value="DESC">Descending</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="no-columns-message" class="text-muted text-center py-3">
+                        Please select columns first
+                    </div>
+                </div>
+            </div>
+
+            <!-- Query Preview -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Query Preview</h6>
+                </div>
+                <div class="card-body">
+                    <div id="query-preview" class="query-preview">
+                        <span class="text-muted">Query will appear here...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Results -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0">Results</h6>
+                    <div id="export-buttons" style="display: none;">
+                        <button type="button" class="btn btn-sm btn-outline-success me-1" onclick="exportResults('csv')">
+                            <i class="fas fa-file-csv"></i> CSV
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportResults('excel')">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body position-relative">
+                    <div id="results-section">
+                        <div class="text-muted text-center py-5">
+                            <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                            <p>Execute a report to see results here</p>
+                        </div>
+                    </div>
+                    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 mb-0">Executing report...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Report Modal -->
+<div class="modal fade" id="saveReportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Save Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="save-report-form">
+                    <div class="mb-3">
+                        <label for="report-name" class="form-label">Report Name *</label>
+                        <input type="text" class="form-control" id="report-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="report-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="report-description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="report-tags" class="form-label">Tags</label>
+                        <input type="text" class="form-control" id="report-tags" 
+                               placeholder="Enter tags separated by commas">
+                        <div class="form-text">e.g., workorders, monthly, status</div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="report-public">
+                        <label class="form-check-label" for="report-public">
+                            Make this report public (visible to all users)
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveReport()">Save Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let currentConfig = {
+    primary_table: null,
+    columns: [],
+    joins: [],
+    filters: [],
+    sorting: {},
+    limit: null
+};
+
+let lastResults = null;
+let filterCounter = 0;
+let joinCounter = 0;
+
+// Initialize the report builder
+document.addEventListener('DOMContentLoaded', function() {
+    updateQueryPreview();
+});
+
+function selectPrimaryTable(tableName) {
+    currentConfig.primary_table = tableName;
+    loadTableColumns(tableName);
+    document.getElementById('add-join-btn').disabled = false;
+    document.getElementById('add-filter-btn').disabled = false;
+    updateQueryPreview();
+}
+
+function loadTableColumns(tableName) {
+    fetch(`/reporting/api/columns/${tableName}`)
+        .then(response => response.json())
+        .then(columns => {
+            const container = document.getElementById('available-columns');
+            container.innerHTML = '';
+            
+            columns.forEach(column => {
+                const item = document.createElement('div');
+                item.className = 'table-column-item';
+                item.draggable = true;
+                item.onclick = () => addColumn(column);
+                item.ondragstart = (e) => e.dataTransfer.setData('text/plain', JSON.stringify(column));
+                
+                item.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${column.display_name}</strong>
+                            <small class="text-muted d-block">${column.name}</small>
+                        </div>
+                        <span class="badge bg-secondary">${column.type}</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+            
+            document.getElementById('columns-section').style.display = 'block';
+            document.getElementById('no-table-message').style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error loading columns:', error);
+            alert('Error loading table columns');
+        });
+}
+
+function addColumn(column) {
+    if (currentConfig.columns.find(col => col.name === column.name)) {
+        return; // Column already added
+    }
+    
+    currentConfig.columns.push(column);
+    updateSelectedColumns();
+    updateSortingOptions();
+    updateQueryPreview();
+}
+
+function removeColumn(columnName) {
+    currentConfig.columns = currentConfig.columns.filter(col => col.name !== columnName);
+    updateSelectedColumns();
+    updateSortingOptions();
+    updateQueryPreview();
+}
+
+function updateSelectedColumns() {
+    const container = document.getElementById('selected-columns');
+    
+    if (currentConfig.columns.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center mb-0">Drag columns here or click to add</p>';
+        document.getElementById('sorting-section').style.display = 'none';
+        document.getElementById('no-columns-message').style.display = 'block';
+        return;
+    }
+    
+    container.innerHTML = '';
+    currentConfig.columns.forEach(column => {
+        const item = document.createElement('div');
+        item.className = 'table-column-item selected d-flex justify-content-between align-items-center';
+        item.innerHTML = `
+            <div>
+                <strong>${column.display_name}</strong>
+                <small class="text-muted d-block">${column.name}</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeColumn('${column.name}')">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+    
+    document.getElementById('sorting-section').style.display = 'block';
+    document.getElementById('no-columns-message').style.display = 'none';
+}
+
+function updateSortingOptions() {
+    const select = document.getElementById('sort-column');
+    select.innerHTML = '<option value="">Select column...</option>';
+    
+    currentConfig.columns.forEach(column => {
+        const option = document.createElement('option');
+        option.value = column.name;
+        option.textContent = column.display_name;
+        select.appendChild(option);
+    });
+}
+
+// Drag and drop handlers
+function allowDrop(ev) {
+    ev.preventDefault();
+    ev.target.classList.add('drag-over');
+}
+
+function dropColumn(ev) {
+    ev.preventDefault();
+    ev.target.classList.remove('drag-over');
+    
+    const column = JSON.parse(ev.dataTransfer.getData('text/plain'));
+    addColumn(column);
+}
+
+function addFilter() {
+    filterCounter++;
+    const filterId = `filter_${filterCounter}`;
+    
+    const filterDiv = document.createElement('div');
+    filterDiv.className = 'filter-group';
+    filterDiv.id = filterId;
+    
+    filterDiv.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Filter ${filterCounter}</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFilter('${filterId}')">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="row g-2">
+            <div class="col-4">
+                <select class="form-select" onchange="updateFilter('${filterId}')">
+                    <option value="">Select column...</option>
+                    ${currentConfig.columns.map(col => `<option value="${col.name}">${col.display_name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="col-3">
+                <select class="form-select operator-select" onchange="updateFilter('${filterId}')">
+                    <option value="eq">Equals</option>
+                    <option value="ne">Not Equals</option>
+                    <option value="gt">Greater Than</option>
+                    <option value="ge">Greater or Equal</option>
+                    <option value="lt">Less Than</option>
+                    <option value="le">Less or Equal</option>
+                    <option value="like">Contains</option>
+                    <option value="ilike">Contains (case-insensitive)</option>
+                    <option value="starts_with">Starts With</option>
+                    <option value="ends_with">Ends With</option>
+                    <option value="in">In List</option>
+                    <option value="not_in">Not In List</option>
+                    <option value="between">Between</option>
+                    <option value="is_null">Is Null</option>
+                    <option value="is_not_null">Is Not Null</option>
+                </select>
+            </div>
+            <div class="col-5">
+                <input type="text" class="form-control value-input" placeholder="Value..." onchange="updateFilter('${filterId}')">
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('filters-section').appendChild(filterDiv);
+    
+    // Remove the "no filters" message
+    const noFiltersMsg = document.querySelector('#filters-section .text-muted');
+    if (noFiltersMsg) {
+        noFiltersMsg.remove();
+    }
+}
+
+function removeFilter(filterId) {
+    document.getElementById(filterId).remove();
+    
+    // Update the config
+    const filterIndex = currentConfig.filters.findIndex(f => f.id === filterId);
+    if (filterIndex > -1) {
+        currentConfig.filters.splice(filterIndex, 1);
+    }
+    
+    // Add back "no filters" message if needed
+    if (currentConfig.filters.length === 0) {
+        const filtersSection = document.getElementById('filters-section');
+        if (filtersSection.children.length === 0) {
+            filtersSection.innerHTML = '<div class="text-muted text-center py-3">No filters configured</div>';
+        }
+    }
+    
+    updateQueryPreview();
+}
+
+function updateFilter(filterId) {
+    const filterDiv = document.getElementById(filterId);
+    const selects = filterDiv.querySelectorAll('select');
+    const input = filterDiv.querySelector('input');
+    
+    const column = selects[0].value;
+    const operator = selects[1].value;
+    const value = input.value;
+    
+    if (!column || !operator) return;
+    
+    // Update or add filter to config
+    const existingIndex = currentConfig.filters.findIndex(f => f.id === filterId);
+    const filterConfig = {
+        id: filterId,
+        column: column,
+        operator: operator,
+        value: value
+    };
+    
+    if (existingIndex > -1) {
+        currentConfig.filters[existingIndex] = filterConfig;
+    } else {
+        currentConfig.filters.push(filterConfig);
+    }
+    
+    updateQueryPreview();
+}
+
+function updateQueryPreview() {
+    const preview = document.getElementById('query-preview');
+    
+    if (!currentConfig.primary_table || currentConfig.columns.length === 0) {
+        preview.innerHTML = '<span class="text-muted">Query will appear here...</span>';
+        return;
+    }
+    
+    // Build a simplified query preview
+    let query = `SELECT\n  ${currentConfig.columns.map(col => col.name).join(',\n  ')}\nFROM ${currentConfig.primary_table}`;
+    
+    if (currentConfig.joins.length > 0) {
+        query += '\n' + currentConfig.joins.map(join => `${join.type} ${join.table} ON ${join.condition}`).join('\n');
+    }
+    
+    if (currentConfig.filters.length > 0) {
+        const conditions = currentConfig.filters
+            .filter(f => f.column && f.operator)
+            .map(f => `${f.column} ${f.operator} ${f.value ? `'${f.value}'` : ''}`);
+        
+        if (conditions.length > 0) {
+            query += `\nWHERE ${conditions.join('\n  AND ')}`;
+        }
+    }
+    
+    const sortColumn = document.getElementById('sort-column')?.value;
+    const sortOrder = document.getElementById('sort-order')?.value;
+    
+    if (sortColumn) {
+        query += `\nORDER BY ${sortColumn} ${sortOrder || 'ASC'}`;
+    }
+    
+    preview.textContent = query;
+}
+
+function executeReport() {
+    if (!currentConfig.primary_table || currentConfig.columns.length === 0) {
+        alert('Please select a primary table and at least one column');
+        return;
+    }
+    
+    // Update sorting from form
+    const sortColumn = document.getElementById('sort-column').value;
+    const sortOrder = document.getElementById('sort-order').value;
+    
+    if (sortColumn) {
+        currentConfig.sorting = {
+            column: sortColumn,
+            order: sortOrder || 'ASC'
+        };
+    } else {
+        currentConfig.sorting = {};
+    }
+    
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const executeBtn = document.getElementById('execute-btn');
+    
+    loadingOverlay.style.display = 'flex';
+    executeBtn.disabled = true;
+    
+    fetch('/reporting/api/execute', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(currentConfig)
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadingOverlay.style.display = 'none';
+        executeBtn.disabled = false;
+        
+        if (data.success) {
+            displayResults(data);
+            lastResults = data;
+            document.getElementById('save-btn').disabled = false;
+            document.getElementById('export-buttons').style.display = 'block';
+        } else {
+            alert('Error executing report: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        loadingOverlay.style.display = 'none';
+        executeBtn.disabled = false;
+        console.error('Error:', error);
+        alert('Error executing report: ' + error.message);
+    });
+}
+
+function displayResults(data) {
+    const container = document.getElementById('results-section');
+    
+    if (!data.data || data.data.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                <p class="text-muted">No results found</p>
+                <small class="text-muted">Execution time: ${data.execution_time?.toFixed(3)}s</small>
+            </div>
+        `;
+        return;
+    }
+    
+    const columns = data.columns || Object.keys(data.data[0]);
+    
+    let html = `
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                    ${data.row_count.toLocaleString()} rows • ${data.execution_time?.toFixed(3)}s
+                </span>
+            </div>
+        </div>
+        <div class="results-table">
+            <table class="table table-sm table-striped table-hover">
+                <thead class="table-dark sticky-top">
+                    <tr>
+                        ${columns.map(col => `<th>${col.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    // Limit displayed rows to prevent browser lag
+    const displayRows = data.data.slice(0, 1000);
+    
+    displayRows.forEach(row => {
+        html += '<tr>';
+        columns.forEach(col => {
+            let value = row[col];
+            if (value === null || value === undefined) {
+                value = '<span class="text-muted">NULL</span>';
+            } else if (typeof value === 'string' && value.length > 100) {
+                value = value.substring(0, 100) + '...';
+            }
+            html += `<td>${value}</td>`;
+        });
+        html += '</tr>';
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    if (data.data.length > 1000) {
+        html += `
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle"></i>
+                Showing first 1,000 rows of ${data.row_count.toLocaleString()} total results.
+                Use export functionality to get all results.
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+function showSaveModal() {
+    if (!lastResults) {
+        alert('Please execute the report first');
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('saveReportModal'));
+    modal.show();
+}
+
+function saveReport() {
+    const name = document.getElementById('report-name').value.trim();
+    if (!name) {
+        alert('Please enter a report name');
+        return;
+    }
+    
+    const reportData = {
+        config: currentConfig,
+        metadata: {
+            name: name,
+            description: document.getElementById('report-description').value.trim(),
+            tags: document.getElementById('report-tags').value.trim(),
+            is_public: document.getElementById('report-public').checked
+        }
+    };
+    
+    fetch('/reporting/api/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reportData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('saveReportModal')).hide();
+            alert('Report saved successfully!');
+            
+            // Clear form
+            document.getElementById('save-report-form').reset();
+        } else {
+            alert('Error saving report: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving report: ' + error.message);
+    });
+}
+
+function exportResults(format) {
+    if (!lastResults) {
+        alert('Please execute the report first');
+        return;
+    }
+    
+    fetch(`/reporting/api/export/${format}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(currentConfig)
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        } else {
+            throw new Error('Export failed');
+        }
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        a.download = `custom_report_${timestamp}.${format === 'excel' ? 'xlsx' : format}`;
+        
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error exporting report: ' + error.message);
+    });
+}
+
+function clearBuilder() {
+    if (confirm('Are you sure you want to clear the report builder? This will reset all configurations.')) {
+        // Reset configuration
+        currentConfig = {
+            primary_table: null,
+            columns: [],
+            joins: [],
+            filters: [],
+            sorting: {},
+            limit: null
+        };
+        
+        // Reset UI
+        document.querySelectorAll('input[name="primary_table"]').forEach(input => input.checked = false);
+        document.getElementById('columns-section').style.display = 'none';
+        document.getElementById('no-table-message').style.display = 'block';
+        document.getElementById('selected-columns').innerHTML = '<p class="text-muted text-center mb-0">Drag columns here or click to add</p>';
+        document.getElementById('filters-section').innerHTML = '<div class="text-muted text-center py-3">No filters configured</div>';
+        document.getElementById('joins-section').innerHTML = '<div class="text-muted text-center py-3">No joins configured</div>';
+        document.getElementById('results-section').innerHTML = `
+            <div class="text-muted text-center py-5">
+                <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                <p>Execute a report to see results here</p>
+            </div>
+        `;
+        
+        // Reset buttons
+        document.getElementById('add-join-btn').disabled = true;
+        document.getElementById('add-filter-btn').disabled = true;
+        document.getElementById('save-btn').disabled = true;
+        document.getElementById('export-buttons').style.display = 'none';
+        
+        // Reset counters
+        filterCounter = 0;
+        joinCounter = 0;
+        lastResults = null;
+        
+        updateQueryPreview();
+    }
+}
+
+// Update query preview on sort changes
+document.getElementById('sort-column')?.addEventListener('change', updateQueryPreview);
+document.getElementById('sort-order')?.addEventListener('change', updateQueryPreview);
+</script>
+
+{% endblock %}

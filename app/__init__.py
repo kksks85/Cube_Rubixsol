@@ -62,11 +62,11 @@ def create_app():
     from app.users import bp as users_bp
     app.register_blueprint(users_bp, url_prefix='/users')
     
-    from app.reports import bp as reports_bp
-    app.register_blueprint(reports_bp, url_prefix='/reports')
-    
     from app.products import bp as products_bp
     app.register_blueprint(products_bp, url_prefix='/products')
+    
+    from app.reporting import bp as reporting_bp
+    app.register_blueprint(reporting_bp, url_prefix='/reporting')
     
     # Create database tables
     with app.app_context():

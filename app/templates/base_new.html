@@ -76,7 +76,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-2" href="{{ url_for('reports.dashboard') }}">
+                        <a class="nav-link px-2" href="{{ url_for('reporting.dashboard') }}">
                             <i class="fas fa-chart-line me-1"></i> Analytics
                         </a>
                     </li>
@@ -84,7 +84,7 @@
                 </ul>
                 
                 <!-- Theme Toggle -->
-                <button class="btn btn-outline-light btn-sm me-2" onclick="toggleTheme()" id="themeToggle">
+                <button class="btn btn-outline-light btn-sm me-2" id="themeToggle">
                     <i class="fas fa-moon"></i>
                 </button>
                 
@@ -194,31 +194,7 @@
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/modern.js') }}"></script>
     
-    <!-- Theme Toggle Script -->
-    <script>
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-bs-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            const themeIcon = document.querySelector('#themeToggle i');
-            
-            html.setAttribute('data-bs-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            
-            themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
-        
-        // Load saved theme
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            const themeIcon = document.querySelector('#themeToggle i');
-            
-            document.documentElement.setAttribute('data-bs-theme', savedTheme);
-            if (themeIcon) {
-                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            }
-        });
-    </script>
+    <!-- Theme Toggle Script handled by modern.js -->
     
     {% block scripts %}{% endblock %}
 </body>
