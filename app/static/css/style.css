@@ -30,7 +30,81 @@
     --spacing-xl: 1.5rem;   /* 24px */
     
     /* Enterprise typography - smaller, more professional */
-    --font-size-xs: 0.6875rem;  /* 11px */
+    --font-size/* Print styles */
+@media print {
+    .navbar,
+    .btn,
+    .card-header,
+    .pagination {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+    }
+}
+
+/* Concise Analytics Layout */
+.analytics-container {
+    padding: var(--spacing-sm) 0;
+}
+
+.analytics-row {
+    margin-bottom: var(--spacing-md);
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.compact-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-sm);
+    min-height: 70px;
+}
+
+.compact-card .card-header {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    color: var(--gray-700);
+}
+
+.compact-card .card-body {
+    padding: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.compact-number {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.compact-label {
+    font-size: var(--font-size-xs);
+    color: var(--gray-600);
+    font-weight: 500;
+    margin: 0;
+}
+
+.compact-icon {
+    font-size: 0.875rem;
+    color: var(--gray-400);
+};  /* 11px */
     --font-size-sm: 0.75rem;    /* 12px */
     --font-size-base: 0.8125rem; /* 13px */
     --font-size-lg: 0.875rem;    /* 14px */
@@ -231,14 +305,15 @@ html[data-bs-theme="dark"] .card-header {
     color: white;
 }
 
-/* Compact Statistics Cards */
+/* Compact Analytics Tiles */
 .stat-card {
-    border-radius: var(--border-radius-md);
+    border-radius: var(--border-radius-sm);
     background-color: white;
     border: var(--border-width) solid var(--gray-200);
     box-shadow: var(--shadow-sm);
     transition: all 0.2s ease;
     position: relative;
+    min-height: 80px;
 }
 
 .stat-card:hover {
@@ -247,15 +322,18 @@ html[data-bs-theme="dark"] .card-header {
 }
 
 .stat-card .card-body {
-    padding: var(--spacing-lg);
+    padding: var(--spacing-sm) var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .stat-number {
-    font-size: 1.75rem;
-    font-weight: 700;
+    font-size: 1.25rem;
+    font-weight: 600;
     color: var(--primary-color);
-    line-height: 1;
-    margin-bottom: var(--spacing-xs);
+    line-height: 1.2;
+    margin-bottom: 2px;
 }
 
 .stat-label {
@@ -263,15 +341,16 @@ html[data-bs-theme="dark"] .card-header {
     font-weight: 500;
     font-size: var(--font-size-xs);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.025em;
+    line-height: 1.3;
 }
 
 .stat-icon {
-    font-size: 1.5rem;
+    font-size: 1rem;
     color: var(--gray-300);
     position: absolute;
-    right: var(--spacing-lg);
-    top: var(--spacing-lg);
+    right: var(--spacing-sm);
+    top: var(--spacing-sm);
 }
 
 /* Enterprise Tables */
@@ -982,7 +1061,68 @@ html[data-bs-theme="dark"] .chart-container {
     }
     
     .card {
-        border: none !important;
+        border: 1px solid #ddd !important;
         box-shadow: none !important;
     }
+}
+
+/* Concise Analytics Layout */
+.analytics-container {
+    padding: var(--spacing-sm) 0;
+}
+
+.analytics-row {
+    margin-bottom: var(--spacing-md);
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.compact-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-sm);
+    min-height: 70px;
+}
+
+.compact-card .card-header {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    color: var(--gray-700);
+}
+
+.compact-card .card-body {
+    padding: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.compact-number {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.compact-label {
+    font-size: var(--font-size-xs);
+    color: var(--gray-600);
+    font-weight: 500;
+    margin: 0;
+}
+
+.compact-icon {
+    font-size: 0.875rem;
+    color: var(--gray-400);
 }

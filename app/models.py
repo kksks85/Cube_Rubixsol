@@ -565,3 +565,48 @@ class EmailConfig(db.Model):
     
     def __repr__(self):
         return f'<EmailConfig {self.sender_email}>'
+
+
+class EmailLog(db.Model):
+    """Email sending log for tracking statistics"""
+    __tablename__ = 'email_log'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    recipient_email = db.Column(db.String(255), nullable=False)
+    subject = db.Column(db.String(500))
+    status = db.Column(db.String(50), default='sent')  # sent, failed, pending
+    error_message = db.Column(db.Text)
+    template_type = db.Column(db.String(100))  # work_order, user_welcome, password_reset, etc.
+    sent_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    work_order_id = db.Column(db.Integer, db.ForeignKey('workorders.id'))
+    
+    # Relationships
+    user = db.relationship('User', backref='email_logs')
+    work_order = db.relationship('WorkOrder', backref='email_logs')
+    
+    def __repr__(self):
+        return f'<EmailLog {self.recipient_email} - {self.status}>'
+
+
+class EmailTemplate(db.Model):
+    """Email templates for different types of notifications"""
+    __tablename__ = 'email_template'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    template_type = db.Column(db.String(100), nullable=False)  # work_order_assigned, user_welcome, etc.
+    subject = db.Column(db.String(500), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    is_html = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), 
+                          onupdate=lambda: datetime.now(timezone.utc))
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    
+    # Relationships
+    created_by = db.relationship('User', backref='created_email_templates')
+    
+    def __repr__(self):
+        return f'<EmailTemplate {self.name}>'

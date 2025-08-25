@@ -109,21 +109,19 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Companies ({{ companies.total }} found)</h5>
-                <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="view" id="grid-view" checked>
-                    <label class="btn btn-outline-secondary btn-sm" for="grid-view">
-                        <i class="fas fa-th"></i>
-                    </label>
-                    <input type="radio" class="btn-check" name="view" id="list-view">
-                    <label class="btn btn-outline-secondary btn-sm" for="list-view">
-                        <i class="fas fa-list"></i>
-                    </label>
+                <div class="btn-group" role="group" aria-label="View toggle">
+                    <button type="button" class="btn btn-outline-primary btn-sm active" id="tilesView" onclick="toggleCompanyView('tiles')">
+                        <i class="fas fa-th me-1"></i>Tiles
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="tableView" onclick="toggleCompanyView('table')">
+                        <i class="fas fa-table me-1"></i>Table
+                    </button>
                 </div>
             </div>
             <div class="card-body">
                 {% if companies.items %}
-                    <!-- Grid View -->
-                    <div id="grid-container" class="row">
+                    <!-- Tiles View -->
+                    <div id="tilesViewContainer" class="row">
                         {% for company in companies.items %}
                             <div class="col-lg-4 col-md-6 mb-4">
                                 <div class="card h-100 company-card">
@@ -188,8 +186,8 @@
                         {% endfor %}
                     </div>
 
-                    <!-- List View -->
-                    <div id="list-container" class="table-responsive" style="display: none;">
+                    <!-- Table View -->
+                    <div id="tableViewContainer" class="table-responsive" style="display: none;">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
@@ -315,26 +313,32 @@
 
 {% block scripts %}
 <script>
+// Company view toggle functionality
+function toggleCompanyView(view) {
+    const tilesContainer = document.getElementById('tilesViewContainer');
+    const tableContainer = document.getElementById('tableViewContainer');
+    const tilesBtn = document.getElementById('tilesView');
+    const tableBtn = document.getElementById('tableView');
+    
+    if (view === 'tiles') {
+        tilesContainer.style.display = 'flex';
+        tableContainer.style.display = 'none';
+        tilesBtn.classList.add('active');
+        tableBtn.classList.remove('active');
+        localStorage.setItem('companiesView', 'tiles');
+    } else {
+        tilesContainer.style.display = 'none';
+        tableContainer.style.display = 'block';
+        tableBtn.classList.add('active');
+        tilesBtn.classList.remove('active');
+        localStorage.setItem('companiesView', 'table');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // View toggle functionality
-    const gridView = document.getElementById('grid-view');
-    const listView = document.getElementById('list-view');
-    const gridContainer = document.getElementById('grid-container');
-    const listContainer = document.getElementById('list-container');
-    
-    gridView.addEventListener('change', function() {
-        if (this.checked) {
-            gridContainer.style.display = 'block';
-            listContainer.style.display = 'none';
-        }
-    });
-    
-    listView.addEventListener('change', function() {
-        if (this.checked) {
-            gridContainer.style.display = 'none';
-            listContainer.style.display = 'block';
-        }
-    });
+    // Restore saved view preference
+    const savedView = localStorage.getItem('companiesView') || 'tiles';
+    toggleCompanyView(savedView);
     
     // Animate company cards
     const companyCards = document.querySelectorAll('.company-card');

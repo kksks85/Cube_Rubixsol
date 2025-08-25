@@ -1,33 +1,25 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header Section -->
+<div class="container-fluid px-3">
+    <!-- Professional Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="page-header p-4 rounded-3 position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); color: white;">
-                <div class="position-relative z-index-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="display-6 fw-bold mb-2 animate__animated animate__fadeInLeft">
-                                <i class="fas fa-envelope me-3"></i>Email Management
-                            </h1>
-                            <p class="lead mb-0 animate__animated animate__fadeInLeft" style="animation-delay: 0.2s;">
-                                Comprehensive email system administration and automation
-                            </p>
-                        </div>
-                        <div class="animate__animated animate__fadeInRight">
-                            <button class="btn btn-light btn-lg shadow-sm me-2" id="toggleEmailSidebar">
-                                <i class="fas fa-bars me-2"></i>Menu
-                            </button>
-                            <button class="btn btn-success btn-lg shadow-sm" onclick="sendTestEmail()">
-                                <i class="fas fa-paper-plane me-2"></i>Test Email
-                            </button>
-                        </div>
-                    </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1 text-dark fw-semibold">
+                        <i class="fas fa-envelope me-2 text-primary"></i>
+                        Email Management System
+                    </h4>
+                    <p class="text-muted mb-0 small">Comprehensive email system administration and automation</p>
                 </div>
-                <div class="position-absolute top-0 end-0 w-100 h-100 opacity-10">
-                    <i class="fas fa-envelope" style="font-size: 15rem; color: white; position: absolute; top: -2rem; right: -5rem; transform: rotate(15deg);"></i>
+                <div class="text-end">
+                    <button class="btn btn-outline-primary btn-sm me-2" id="toggleEmailSidebar">
+                        <i class="fas fa-bars me-1"></i>Menu
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="sendTestEmail()">
+                        <i class="fas fa-paper-plane me-1"></i>Test Email
+                    </button>
                 </div>
             </div>
         </div>
@@ -234,8 +226,11 @@
                     <div class="stat-card card h-100">
                         <div class="card-body text-center">
                             <i class="fas fa-envelope stat-icon text-primary"></i>
-                            <div class="stat-number text-primary">1,247</div>
+                            <div class="stat-number text-primary">{{ stats.emails_sent_today }}</div>
                             <div class="stat-label">Emails Sent Today</div>
+                            {% if stats.emails_sent_yesterday %}
+                            <small class="text-muted">Yesterday: {{ stats.emails_sent_yesterday }}</small>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -243,8 +238,9 @@
                     <div class="stat-card card h-100">
                         <div class="card-body text-center">
                             <i class="fas fa-check-circle stat-icon text-success"></i>
-                            <div class="stat-number text-success">98.5%</div>
+                            <div class="stat-number text-success">{{ stats.delivery_rate }}%</div>
                             <div class="stat-label">Delivery Rate</div>
+                            <small class="text-muted">Last 7 days</small>
                         </div>
                     </div>
                 </div>
@@ -252,7 +248,7 @@
                     <div class="stat-card card h-100">
                         <div class="card-body text-center">
                             <i class="fas fa-file-alt stat-icon text-info"></i>
-                            <div class="stat-number text-info">{{ stats.email_templates if stats else 12 }}</div>
+                            <div class="stat-number text-info">{{ stats.active_templates }}</div>
                             <div class="stat-label">Active Templates</div>
                         </div>
                     </div>
@@ -261,8 +257,9 @@
                     <div class="stat-card card h-100">
                         <div class="card-body text-center">
                             <i class="fas fa-exclamation-triangle stat-icon text-warning"></i>
-                            <div class="stat-number text-warning">3</div>
+                            <div class="stat-number text-warning">{{ stats.failed_emails_today }}</div>
                             <div class="stat-label">Failed Emails</div>
+                            <small class="text-muted">Today</small>
                         </div>
                     </div>
                 </div>
@@ -538,7 +535,66 @@ document.getElementById('toggleEmailSidebar').addEventListener('click', function
 // Show different sections
 function showSection(section) {
     console.log('Showing section:', section);
-    // Implement section switching logic here
+    
+    // Define section mappings to actual pages or functionalities
+    const sectionMappings = {
+        'sender-config': () => {
+            window.location.href = "{{ url_for('email_management.email_settings') }}";
+        },
+        'security-config': () => {
+            alert('Security configuration section will be available in the settings page.');
+            window.location.href = "{{ url_for('email_management.email_settings') }}";
+        },
+        'connection-test': () => {
+            sendTestEmail();
+        },
+        'work-order-templates': () => {
+            window.location.href = "{{ url_for('email_management.email_templates') }}";
+        },
+        'user-templates': () => {
+            window.location.href = "{{ url_for('email_management.email_templates') }}";
+        },
+        'system-templates': () => {
+            window.location.href = "{{ url_for('email_management.email_templates') }}";
+        },
+        'auto-notifications': () => {
+            window.location.href = "{{ url_for('email_management.email_notifications') }}";
+        },
+        'scheduled-emails': () => {
+            window.location.href = "{{ url_for('email_management.email_notifications') }}";
+        },
+        'notification-rules': () => {
+            window.location.href = "{{ url_for('email_management.email_notifications') }}";
+        },
+        'delivery-status': () => {
+            window.location.href = "{{ url_for('email_management.email_logs') }}";
+        },
+        'failed-emails': () => {
+            window.location.href = "{{ url_for('email_management.email_logs') }}";
+        },
+        'email-analytics': () => {
+            window.location.href = "{{ url_for('email_management.email_logs') }}";
+        },
+        'queue-management': () => {
+            alert('Queue management functionality coming soon!');
+        },
+        'cleanup-tools': () => {
+            alert('Cleanup tools functionality coming soon!');
+        },
+        'backup-restore': () => {
+            alert('Backup & restore functionality coming soon!');
+        },
+        'system-health': () => {
+            alert('System health monitoring coming soon!');
+        }
+    };
+    
+    // Execute the mapped function
+    if (sectionMappings[section]) {
+        sectionMappings[section]();
+    } else {
+        alert('Section "' + section + '" functionality is not yet implemented.');
+    }
 }
 
 // Send test email
@@ -584,7 +640,8 @@ function sendTestEmailAction() {
 }
 
 function createTemplate() {
-    alert('Template creation functionality would be implemented here');
+    // Redirect to email templates page where template creation would be implemented
+    window.location.href = "{{ url_for('email_management.email_templates') }}";
 }
 
 // Email Performance Chart
@@ -592,16 +649,16 @@ const ctx = document.getElementById('emailPerformanceChart').getContext('2d');
 const emailChart = new Chart(ctx, {
     type: 'line',
     data: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        labels: {{ chart_data.labels | safe }},
         datasets: [{
             label: 'Emails Sent',
-            data: [120, 190, 300, 250, 220, 180, 160],
+            data: {{ chart_data.emails_sent | safe }},
             borderColor: 'rgb(75, 192, 192)',
             backgroundColor: 'rgba(75, 192, 192, 0.1)',
             tension: 0.1
         }, {
             label: 'Emails Delivered',
-            data: [118, 187, 295, 245, 215, 175, 155],
+            data: {{ chart_data.emails_delivered | safe }},
             borderColor: 'rgb(54, 162, 235)',
             backgroundColor: 'rgba(54, 162, 235, 0.1)',
             tension: 0.1

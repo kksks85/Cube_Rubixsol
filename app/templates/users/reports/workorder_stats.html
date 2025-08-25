@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header p-4 rounded-3 position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); color: white;">
+                <div class="position-relative z-index-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="display-6 fw-bold mb-2">
+                                <i class="fas fa-tasks me-3"></i>Work Order Statistics by User
+                            </h1>
+                            <p class="lead mb-0">
+                                Performance metrics and work order distribution
+                            </p>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('users.list_users') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Users
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Order Statistics -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>User Performance Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>User</th>
+                                    <th class="text-center">Total Orders</th>
+                                    <th class="text-center">Completed</th>
+                                    <th class="text-center">In Progress</th>
+                                    <th class="text-center">Pending</th>
+                                    <th class="text-center">Completion Rate</th>
+                                    <th class="text-center">Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in user_stats %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ stat.username }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary fs-6">{{ stat.total_orders or 0 }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success fs-6">{{ stat.completed_orders or 0 }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-warning fs-6">{{ stat.in_progress_orders or 0 }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info fs-6">{{ stat.pending_orders or 0 }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if stat.total_orders and stat.total_orders > 0 %}
+                                            {% set completion_rate = ((stat.completed_orders or 0) / stat.total_orders * 100)|round(1) %}
+                                            <div class="d-flex align-items-center justify-content-center">
+                                                <div class="progress" style="width: 60px; height: 8px;">
+                                                    <div class="progress-bar 
+                                                        {% if completion_rate >= 80 %}bg-success
+                                                        {% elif completion_rate >= 60 %}bg-warning
+                                                        {% else %}bg-danger{% endif %}"
+                                                        style="width: {{ completion_rate }}%"></div>
+                                                </div>
+                                                <span class="ms-2 small">{{ completion_rate }}%</span>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if stat.total_orders and stat.total_orders > 0 %}
+                                            {% set completion_rate = ((stat.completed_orders or 0) / stat.total_orders * 100)|round(1) %}
+                                            {% if completion_rate >= 80 %}
+                                                <span class="badge bg-success">Excellent</span>
+                                            {% elif completion_rate >= 60 %}
+                                                <span class="badge bg-warning">Good</span>
+                                            {% elif completion_rate >= 40 %}
+                                                <span class="badge bg-info">Average</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Needs Improvement</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">No Data</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Summary Statistics -->
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-primary">{{ user_stats|selectattr("total_orders")|sum(attribute="total_orders") or 0 }}</h4>
+                                <small class="text-muted">Total Work Orders</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-success">{{ user_stats|selectattr("completed_orders")|sum(attribute="completed_orders") or 0 }}</h4>
+                                <small class="text-muted">Completed Orders</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-warning">{{ user_stats|selectattr("in_progress_orders")|sum(attribute="in_progress_orders") or 0 }}</h4>
+                                <small class="text-muted">In Progress</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-info">{{ user_stats|selectattr("pending_orders")|sum(attribute="pending_orders") or 0 }}</h4>
+                                <small class="text-muted">Pending Orders</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="text-muted mb-3">
+                            <i class="fas fa-chart-bar" style="font-size: 4rem;"></i>
+                        </div>
+                        <h5 class="text-muted">No work order statistics available</h5>
+                        <p class="text-muted">Statistics will appear here once work orders are assigned to users.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Chart -->
+    {% if user_stats %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>User Performance Chart
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if user_stats %}
+<script>
+// Performance Chart
+const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+new Chart(performanceCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for stat in user_stats %}'{{ stat.username }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Completed',
+            data: [{% for stat in user_stats %}{{ stat.completed_orders or 0 }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: '#28a745',
+            borderColor: '#28a745',
+            borderWidth: 1
+        }, {
+            label: 'In Progress',
+            data: [{% for stat in user_stats %}{{ stat.in_progress_orders or 0 }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: '#ffc107',
+            borderColor: '#ffc107',
+            borderWidth: 1
+        }, {
+            label: 'Pending',
+            data: [{% for stat in user_stats %}{{ stat.pending_orders or 0 }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: '#17a2b8',
+            borderColor: '#17a2b8',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            x: {
+                stacked: true
+            },
+            y: {
+                stacked: true,
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

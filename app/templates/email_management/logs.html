@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-3">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1 text-dark fw-semibold">
+                        <i class="fas fa-list-alt me-2 text-primary"></i>
+                        Email Logs
+                    </h4>
+                    <p class="text-muted mb-0 small">View email sending history and delivery status</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('email_management.dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                    <button class="btn btn-primary btn-sm" onclick="refreshLogs()">
+                        <i class="fas fa-refresh me-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form class="row g-3">
+                        <div class="col-md-3">
+                            <label for="statusFilter" class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="sent">Sent</option>
+                                <option value="failed">Failed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="typeFilter" class="form-label">Type</label>
+                            <select class="form-select" id="typeFilter">
+                                <option value="">All Types</option>
+                                <option value="Assignment">Assignment</option>
+                                <option value="Completion">Completion</option>
+                                <option value="Test">Test</option>
+                                <option value="Welcome">Welcome</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="dateFilter" class="form-label">Date Range</label>
+                            <select class="form-select" id="dateFilter">
+                                <option value="today">Today</option>
+                                <option value="week">Last 7 days</option>
+                                <option value="month">Last 30 days</option>
+                                <option value="all">All time</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-outline-primary" onclick="applyFilters()">
+                                    <i class="fas fa-filter me-1"></i>Apply Filters
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Logs Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-envelope me-2"></i>Email History
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Recipient</th>
+                                    <th>Subject</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr>
+                                    <td>
+                                        <small class="text-muted">{{ log.timestamp }}</small>
+                                    </td>
+                                    <td>{{ log.recipient }}</td>
+                                    <td>{{ log.subject }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ log.type }}</span>
+                                    </td>
+                                    <td>
+                                        {% if log.status == 'Sent' %}
+                                            <span class="badge bg-success">{{ log.status }}</span>
+                                        {% elif log.status == 'Failed' %}
+                                            <span class="badge bg-danger">{{ log.status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ log.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="viewLogDetails({{ log.id }})">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            {% if log.status == 'Failed' %}
+                                                <button class="btn btn-outline-warning btn-sm" onclick="retryEmail({{ log.id }})">
+                                                    <i class="fas fa-redo"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshLogs() {
+    location.reload();
+}
+
+function applyFilters() {
+    const status = document.getElementById('statusFilter').value;
+    const type = document.getElementById('typeFilter').value;
+    const date = document.getElementById('dateFilter').value;
+    
+    console.log('Applying filters:', { status, type, date });
+    // Implement filtering logic here
+    alert('Filter functionality would be implemented here');
+}
+
+function viewLogDetails(id) {
+    alert('View email log details for ID: ' + id);
+}
+
+function retryEmail(id) {
+    if (confirm('Are you sure you want to retry sending this email?')) {
+        alert('Retry email functionality would be implemented here for ID: ' + id);
+    }
+}
+</script>
+{% endblock %}

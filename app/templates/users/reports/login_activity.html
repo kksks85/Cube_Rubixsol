@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header p-4 rounded-3 position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); color: white;">
+                <div class="position-relative z-index-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="display-6 fw-bold mb-2">
+                                <i class="fas fa-clock me-3"></i>Login Activity Report
+                            </h1>
+                            <p class="lead mb-0">
+                                User login patterns and activity tracking
+                            </p>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('users.list_users') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Users
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Summary -->
+    <div class="row mb-4 g-3">
+        <div class="col-lg-4 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="text-success mb-3">
+                        <i class="fas fa-user-clock" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h3 class="text-success mb-1">{{ stats.active_today }}</h3>
+                    <p class="text-muted mb-0">Active Today</p>
+                    <small class="text-muted">Last 24 hours</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="text-info mb-3">
+                        <i class="fas fa-calendar-week" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h3 class="text-info mb-1">{{ stats.active_this_week }}</h3>
+                    <p class="text-muted mb-0">Active This Week</p>
+                    <small class="text-muted">Last 7 days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="text-primary mb-3">
+                        <i class="fas fa-users" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h3 class="text-primary mb-1">{{ stats.users_activity|length }}</h3>
+                    <p class="text-muted mb-0">Total Users</p>
+                    <small class="text-muted">All registered</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Activity Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>User Login Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if stats.users_activity %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Last Seen</th>
+                                    <th>Status</th>
+                                    <th>Activity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in stats.users_activity %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ user.username }}</strong>
+                                    </td>
+                                    <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                    <td>
+                                        {% if user.role %}
+                                        <span class="badge 
+                                            {% if user.role.name == 'admin' %}bg-danger
+                                            {% elif user.role.name == 'manager' %}bg-warning
+                                            {% else %}bg-info{% endif %}">
+                                            {{ user.role.name|title }}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">No Role</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_seen %}
+                                        <small>{{ user.last_seen.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        {% else %}
+                                        <small class="text-muted">Never</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_seen %}
+                                            {% set time_diff = (moment().utc() - user.last_seen).total_seconds() %}
+                                            {% if time_diff < 3600 %}
+                                                <span class="badge bg-success">Online</span>
+                                            {% elif time_diff < 86400 %}
+                                                <span class="badge bg-warning">Today</span>
+                                            {% elif time_diff < 604800 %}
+                                                <span class="badge bg-info">This Week</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        {% else %}
+                                        <span class="badge bg-secondary">Never Logged In</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div class="text-muted mb-3">
+                            <i class="fas fa-users" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="text-muted">No user activity data available</h5>
+                        <p class="text-muted">Users will appear here once they start logging in.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

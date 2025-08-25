@@ -15,16 +15,38 @@
                     <p class="text-muted mb-0 small">Comprehensive UAV product catalog with detailed specifications</p>
                 </div>
                 {% if current_user.has_role('admin') or current_user.has_role('manager') %}
-                <div class="btn-group">
-                    <a href="{{ url_for('products.create_product') }}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-plus me-1"></i>Add Product
-                    </a>
-                    <a href="{{ url_for('products.create_company') }}" class="btn btn-sm btn-success">
-                        <i class="fas fa-building me-1"></i>Add Company
-                    </a>
-                    <a href="{{ url_for('products.create_category') }}" class="btn btn-sm btn-info">
-                        <i class="fas fa-tags me-1"></i>Add Category
-                    </a>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- View Toggle -->
+                    <div class="btn-group" role="group" aria-label="View Toggle">
+                        <button type="button" class="btn btn-sm btn-outline-secondary active" id="tilesView" onclick="toggleView('tiles')">
+                            <i class="fas fa-th-large me-1"></i>Tiles
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="tableView" onclick="toggleView('table')">
+                            <i class="fas fa-table me-1"></i>Table
+                        </button>
+                    </div>
+                    <!-- Action Buttons -->
+                    <div class="btn-group">
+                        <a href="{{ url_for('products.create_product') }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-1"></i>Add Product
+                        </a>
+                        <a href="{{ url_for('products.create_company') }}" class="btn btn-sm btn-success">
+                            <i class="fas fa-building me-1"></i>Add Company
+                        </a>
+                        <a href="{{ url_for('products.create_category') }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-tags me-1"></i>Add Category
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <!-- View Toggle for non-admin users -->
+                <div class="btn-group" role="group" aria-label="View Toggle">
+                    <button type="button" class="btn btn-sm btn-outline-secondary active" id="tilesView" onclick="toggleView('tiles')">
+                        <i class="fas fa-th-large me-1"></i>Tiles
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="tableView" onclick="toggleView('table')">
+                        <i class="fas fa-table me-1"></i>Table
+                    </button>
                 </div>
                 {% endif %}
             </div>
@@ -55,7 +77,6 @@
                 </div>
             </div>
         </div>
-    </div>
         <div class="col-lg-3 col-md-6">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body text-center py-3">
@@ -77,6 +98,7 @@
                     <p class="text-muted mb-0 small">Companies</p>
                 </div>
             </div>
+        </div>
     </div>
 
     <!-- Search and Filter -->
@@ -122,8 +144,8 @@
         </div>
     </div>
 
-    <!-- Products Grid -->
-    <div class="row">
+    <!-- Products Grid (Tiles View) -->
+    <div class="row" id="tilesViewContainer">
         {% for product in products.items %}
         <div class="col-xl-4 col-lg-6 col-md-6 mb-3">
             <div class="card h-100 border-0 shadow-sm hover-shadow">
@@ -226,6 +248,91 @@
         </div>
     </div>
     {% endfor %}
+</div>
+
+<!-- Table View (Hidden by default) -->
+<div id="tableViewContainer" style="display: none;">
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Product Code</th>
+                    <th>Product Name</th>
+                    <th>Company</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Specifications</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products.items %}
+                <tr>
+                    <td>
+                        <strong>{{ product.product_code }}</strong>
+                    </td>
+                    <td>{{ product.product_name }}</td>
+                    <td>
+                        <i class="fas fa-building me-1 text-muted"></i>
+                        {{ product.owner_company.name }}
+                    </td>
+                    <td>
+                        {% if product.product_category %}
+                        <span class="badge bg-secondary">{{ product.product_category.name }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">{{ product.availability_status }}</span>
+                    </td>
+                    <td>
+                        <small class="text-muted">
+                            {% if product.max_flight_time %}Flight: {{ product.max_flight_time }}min<br>{% endif %}
+                            {% if product.max_range %}Range: {{ product.max_range }}km<br>{% endif %}
+                            {% if product.weight %}Weight: {{ product.weight }}g{% endif %}
+                        </small>
+                    </td>
+                    <td>
+                        {% if product.price %}
+                        <strong class="text-primary">${{ product.price }}</strong>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('products.view_product', id=product.id) }}" 
+                               class="btn btn-outline-primary btn-sm" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if current_user.has_role('admin') or current_user.has_role('manager') %}
+                            <a href="{{ url_for('products.edit_product', id=product.id) }}" 
+                               class="btn btn-outline-warning btn-sm" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <i class="fas fa-drone fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No products found</h5>
+                        <p class="text-muted">Try adjusting your search criteria or add a new product.</p>
+                        {% if current_user.has_role('admin') or current_user.has_role('manager') %}
+                        <a href="{{ url_for('products.create_product') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add First Product
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Pagination -->
@@ -336,7 +443,33 @@
 
 {% block scripts %}
 <script>
+// View toggle functionality
+function toggleView(view) {
+    const tilesContainer = document.getElementById('tilesViewContainer');
+    const tableContainer = document.getElementById('tableViewContainer');
+    const tilesBtn = document.getElementById('tilesView');
+    const tableBtn = document.getElementById('tableView');
+    
+    if (view === 'tiles') {
+        tilesContainer.style.display = 'flex';
+        tableContainer.style.display = 'none';
+        tilesBtn.classList.add('active');
+        tableBtn.classList.remove('active');
+        localStorage.setItem('productsView', 'tiles');
+    } else {
+        tilesContainer.style.display = 'none';
+        tableContainer.style.display = 'block';
+        tableBtn.classList.add('active');
+        tilesBtn.classList.remove('active');
+        localStorage.setItem('productsView', 'table');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Restore saved view preference
+    const savedView = localStorage.getItem('productsView') || 'tiles';
+    toggleView(savedView);
+    
     // Add animation to cards
     const cards = document.querySelectorAll('.card');
     cards.forEach((card, index) => {
