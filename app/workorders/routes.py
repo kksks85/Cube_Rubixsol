@@ -9,7 +9,7 @@ from sqlalchemy import desc, asc
 from app import db
 from app.workorders import bp
 from app.workorders.forms import WorkOrderForm, WorkOrderUpdateForm, WorkOrderFilterForm
-from app.models import WorkOrder, User, Priority, Status, Category, Product, Company
+from app.models import WorkOrder, User, Priority, Category, Product, Company, WorkOrderStatus
 
 @bp.route('/test')
 def test_route():
@@ -28,7 +28,7 @@ def list_workorders():
     filter_form = WorkOrderFilterForm()
     
     # Populate form choices
-    filter_form.status_id.choices = [(0, 'All Statuses')] + [(s.id, s.name) for s in Status.query.all()]
+    filter_form.status_id.choices = [(0, 'All Statuses')] + [(s.id, s.name) for s in WorkOrderStatus.query.all()]
     filter_form.priority_id.choices = [(0, 'All Priorities')] + [(p.id, p.name) for p in Priority.query.all()]
     filter_form.category_id.choices = [(0, 'All Categories')] + [(c.id, c.name) for c in Category.query.all()]
     
@@ -92,16 +92,17 @@ def create_workorder():
     form.assigned_to_id.choices = [(0, 'Unassigned')] + [
         (u.id, u.full_name) for u in User.query.filter_by(is_active=True).all()
     ]
+    form.status_id.choices = [(s.id, s.name) for s in WorkOrderStatus.query.order_by(WorkOrderStatus.id).all()]
     from app.models import Product
     form.product_name.choices = [(0, 'Select Product')] + [
         (p.id, p.product_name) for p in Product.query.filter_by(is_active=True).all()
     ]
     
     if form.validate_on_submit():
-        # Get initial status (should be "Open" or similar)
-        initial_status = Status.query.filter_by(name='Open').first()
+        # Get initial status (should be "Draft")
+        initial_status = WorkOrderStatus.query.filter_by(name='Draft').first()
         if not initial_status:
-            initial_status = Status.query.first()
+            initial_status = WorkOrderStatus.query.first()
         
         # Get product name from selected product ID
         selected_product = None
@@ -122,7 +123,7 @@ def create_workorder():
             due_date=form.due_date.data,
             notes=form.notes.data,
             created_by_id=current_user.id,
-            status_id=initial_status.id
+            status_id=form.status_id.data if form.status_id.data else initial_status.id
         )
         
         db.session.add(workorder)
@@ -285,12 +286,12 @@ def update_workorder(id):
     form = WorkOrderUpdateForm()
     
     # Populate status choices
-    form.status_id.choices = [(s.id, s.name) for s in Status.query.all()]
+    form.status_id.choices = [(s.id, s.name) for s in WorkOrderStatus.query.all()]
     
     if form.validate_on_submit():
         # Track status change
-        old_status = workorder.status.name
-        new_status = Status.query.get(form.status_id.data).name
+        old_status = workorder.status_detail.name if workorder.status_detail else "None"
+        new_status = WorkOrderStatus.query.get(form.status_id.data).name
         
         workorder.status_id = form.status_id.data
         
@@ -302,8 +303,8 @@ def update_workorder(id):
             workorder.actual_cost = form.actual_cost.data
         
         # Set completion date if status is closed
-        new_status_obj = Status.query.get(form.status_id.data)
-        if new_status_obj.is_closed and not workorder.completed_date:
+        new_status_obj = WorkOrderStatus.query.get(form.status_id.data)
+        if new_status_obj.is_final and not workorder.completed_date:
             workorder.completed_date = datetime.now(timezone.utc)
         
         workorder.updated_at = datetime.now(timezone.utc)

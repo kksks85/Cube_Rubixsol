@@ -1,230 +1,378 @@
+{% extends "base_new.html" %}
 
-{% extends "base.html" %}
-{% block scripts %}
-    {{ super() }}
+{% block title %}Create Work Order - {{ super() }}{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .section-header {
+            border-left: 4px solid #0d6efd;
+            padding-left: 15px;
+            margin-bottom: 20px;
+        }
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #e9ecef;
+        }
+        .input-group-text {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var productSelect = document.getElementById('product_name');
-        var ownerInput = document.getElementById('owner_name');
-        if (productSelect && ownerInput) {
-            productSelect.addEventListener('change', function() {
-                var productId = this.value;
-                if (productId) {
-                    fetch('/products/get_owner/' + productId)
-                        .then(response => response.json())
-                        .then(data => {
-                            ownerInput.value = data.owner_name || '';
-                        });
+    $(document).ready(function() {
+        // Set minimum date to today for due date
+        var today = new Date().toISOString().split('T')[0];
+        $('#due_date').attr('min', today);
+        
+        // Auto-calculate estimated cost based on hours
+        $('#estimated_hours').on('input', function() {
+            var hours = parseFloat($(this).val()) || 0;
+            var hourlyRate = 50; // Default hourly rate
+            var estimatedCost = hours * hourlyRate;
+            $('#cost_estimate').val(estimatedCost.toFixed(2));
+        });
+        
+        // Form validation feedback
+        $('form').on('submit', function(e) {
+            var isValid = true;
+            $('.required').each(function() {
+                if (!$(this).val()) {
+                    isValid = false;
+                    $(this).addClass('is-invalid');
                 } else {
-                    ownerInput.value = '';
+                    $(this).removeClass('is-invalid');
                 }
             });
-        }
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
     });
     </script>
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-        <div class="card shadow-sm">
-            <div class="card-header bg-success text-white">
-                <h4 class="mb-0"><i class="fas fa-plus"></i> Create Work Order</h4>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    {{ form.hidden_tag() }}
-
-                    <!-- Group 1: Basic Info -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.title.label(class="form-label") }}
-                                {{ form.title(class="form-control") }}
-                                {% if form.title.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.title.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.description.label(class="form-label") }}
-                                {{ form.description(class="form-control", rows="2") }}
-                                {% if form.description.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.description.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        <h4 class="mb-0">Create New Work Order</h4>
                     </div>
-
-                    <!-- Group 2: Product & Owner -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.product_name.label(class="form-label") }}
-                                {{ form.product_name(class="form-control") }}
-                                {% if form.product_name.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.product_name.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Basic Information Section -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h5 class="text-primary mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>Basic Information
+                                </h5>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.owner_name.label(class="form-label") }}
-                                {{ form.owner_name(class="form-control") }}
-                                {% if form.owner_name.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.owner_name.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
+                            
+                            <!-- Title (Full Width) -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        {{ form.title.label(class="form-label required fw-bold") }}
+                                        {{ form.title(class="form-control form-control-lg", placeholder="Enter a descriptive title for the work order...") }}
+                                        {% if form.title.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.title.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
                                     </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Group 3: Address & Category -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.address.label(class="form-label") }}
-                                {{ form.address(class="form-control") }}
-                                {% if form.address.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.address.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.category_id.label(class="form-label") }}
-                                {{ form.category_id(class="form-select") }}
-                                {% if form.category_id.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.category_id.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Group 4: Priority, Assignment, Due Date -->
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.priority_id.label(class="form-label") }}
-                                {{ form.priority_id(class="form-select") }}
-                                {% if form.priority_id.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.priority_id.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.assigned_to_id.label(class="form-label") }}
-                                {{ form.assigned_to_id(class="form-select") }}
-                                {% if form.assigned_to_id.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.assigned_to_id.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.due_date.label(class="form-label") }}
-                                {{ form.due_date(class="form-control", type="date") }}
-                                {% if form.due_date.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.due_date.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Group 5: Estimates -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.estimated_hours.label(class="form-label") }}
-                                {{ form.estimated_hours(class="form-control") }}
-                                {% if form.estimated_hours.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.estimated_hours.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.cost_estimate.label(class="form-label") }}
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    {{ form.cost_estimate(class="form-control") }}
                                 </div>
-                                {% if form.cost_estimate.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.cost_estimate.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
+                            </div>
+                            
+                            <!-- Description (Full Width) -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        {{ form.description.label(class="form-label fw-bold") }}
+                                        {{ form.description(class="form-control", rows="4", placeholder="Provide detailed description of work to be performed, including any specific requirements or constraints...") }}
+                                        {% if form.description.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.description.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
                                     </div>
-                                {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Category and Status -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.category_id.label(class="form-label fw-bold") }}
+                                        {{ form.category_id(class="form-select") }}
+                                        {% if form.category_id.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.category_id.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.status_id.label(class="form-label fw-bold") }}
+                                        {{ form.status_id(class="form-select") }}
+                                        {% if form.status_id.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.status_id.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Group 6: Notes -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                {{ form.notes.label(class="form-label") }}
-                                {{ form.notes(class="form-control", rows="3") }}
-                                {% if form.notes.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.notes.errors %}
-                                            <small>{{ error }}</small %}
-                                        {% endfor %}
+                        <!-- Product & Customer Information Section -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h5 class="text-primary mb-0">
+                                    <i class="fas fa-box me-2"></i>Product & Customer Details
+                                </h5>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.product_name.label(class="form-label fw-bold") }}
+                                        {{ form.product_name(class="form-select") }}
+                                        {% if form.product_name.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.product_name.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
                                     </div>
-                                {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.owner_name.label(class="form-label fw-bold") }}
+                                        {{ form.owner_name(class="form-control", placeholder="Customer or client name") }}
+                                        {% if form.owner_name.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.owner_name.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Address (Full Width) -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        {{ form.address.label(class="form-label fw-bold") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                            {{ form.address(class="form-control", placeholder="Complete service address with city, state, ZIP") }}
+                                        </div>
+                                        {% if form.address.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.address.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('workorders.list_workorders') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Cancel
-                        </a>
-                        {{ form.submit(class="btn btn-success") }}
-                    </div>
-                </form>
+                        <!-- Work Assignment & Scheduling Section -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h5 class="text-primary mb-0">
+                                    <i class="fas fa-users me-2"></i>Assignment & Scheduling
+                                </h5>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.priority_id.label(class="form-label fw-bold") }}
+                                        {{ form.priority_id(class="form-select") }}
+                                        {% if form.priority_id.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.priority_id.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.assigned_to_id.label(class="form-label fw-bold") }}
+                                        {{ form.assigned_to_id(class="form-select") }}
+                                        {% if form.assigned_to_id.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.assigned_to_id.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.due_date.label(class="form-label fw-bold") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                            {{ form.due_date(class="form-control", type="date") }}
+                                        </div>
+                                        {% if form.due_date.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.due_date.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cost & Time Estimates Section -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h5 class="text-primary mb-0">
+                                    <i class="fas fa-calculator me-2"></i>Project Estimates
+                                </h5>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.estimated_hours.label(class="form-label fw-bold") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                            {{ form.estimated_hours(class="form-control", placeholder="0.0", step="0.25") }}
+                                            <span class="input-group-text">hours</span>
+                                        </div>
+                                        {% if form.estimated_hours.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.estimated_hours.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.cost_estimate.label(class="form-label fw-bold") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                            {{ form.cost_estimate(class="form-control", placeholder="0.00", step="0.01") }}
+                                        </div>
+                                        {% if form.cost_estimate.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.cost_estimate.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Notes Section -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h5 class="text-primary mb-0">
+                                    <i class="fas fa-sticky-note me-2"></i>Additional Notes
+                                </h5>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        {{ form.notes.label(class="form-label fw-bold") }}
+                                        {{ form.notes(class="form-control", rows="3", placeholder="Any additional notes, special instructions, or important details...") }}
+                                        {% if form.notes.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in form.notes.errors %}
+                                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{{ url_for('workorders.list_workorders') }}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-lg" onclick="window.history.back()">
+                                    <i class="fas fa-arrow-left me-2"></i>Back
+                                </button>
+                                {{ form.submit(class="btn btn-success btn-lg px-4") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Work Order Creation Help</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Required Fields:</h6>
+                <ul>
+                    <li><strong>Title:</strong> Provide a clear, descriptive title</li>
+                    <li><strong>Priority:</strong> Select appropriate priority level</li>
+                </ul>
+                <h6>Tips:</h6>
+                <ul>
+                    <li>Use detailed descriptions for better tracking</li>
+                    <li>Set realistic due dates and estimates</li>
+                    <li>Assign to appropriate team members</li>
+                </ul>
             </div>
         </div>
     </div>

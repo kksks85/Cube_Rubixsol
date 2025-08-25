@@ -1,325 +1,49 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="auth-container d-flex align-items-center justify-content-center min-vh-100">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-5 col-md-7 col-sm-9">
-                <div class="auth-card card border-0 shadow-lg">
-                    <!-- Logo and Branding -->
-                    <div class="auth-header text-center py-4">
-                        <div class="auth-logo mb-3">
-                            <img src="{{ url_for('static', filename='img/cube.svg') }}" alt="Cube Logo" style="height:56px;width:56px;object-fit:contain;" />
-                        </div>
-                        <h1 class="auth-title h3 fw-bold text-primary mb-1">CUBE - PRO</h1>
-                        <p class="auth-subtitle text-muted mb-0">Enterprise Work Order Management</p>
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4><i class="fas fa-cube"></i> CUBE Login</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.username.label(class="form-label") }}
+                        {{ form.username(class="form-control") }}
+                        {% if form.username.errors %}
+                            <div class="text-danger">
+                                {% for error in form.username.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                     
-                    <div class="card-body px-5 py-4">
-                        <div class="text-center mb-4">
-                            <h4 class="fw-semibold">Welcome Back!</h4>
-                            <p class="text-muted">Sign in to your account to continue</p>
-                        </div>
-                        
-                        <form method="POST" class="auth-form">
-                            {{ form.hidden_tag() }}
-                            
-                            <div class="form-floating mb-3">
-                                {{ form.username(class="form-control form-control-lg", placeholder="Username") }}
-                                {{ form.username.label() }}
-                                {% if form.username.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.username.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                    <div class="mb-3">
+                        {{ form.password.label(class="form-label") }}
+                        {{ form.password(class="form-control") }}
+                        {% if form.password.errors %}
+                            <div class="text-danger">
+                                {% for error in form.password.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
                             </div>
-                            
-                            <div class="form-floating mb-3">
-                                {{ form.password(class="form-control form-control-lg", placeholder="Password") }}
-                                {{ form.password.label() }}
-                                <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y pe-3" 
-                                        style="z-index: 10; border: none; background: none;"
-                                        onclick="togglePassword()">
-                                    <i class="fas fa-eye" id="toggleIcon"></i>
-                                </button>
-                                {% if form.password.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.password.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div class="form-check">
-                                    {{ form.remember_me(class="form-check-input") }}
-                                    {{ form.remember_me.label(class="form-check-label text-muted") }}
-                                </div>
-                                <a href="#" class="text-decoration-none small">Forgot Password?</a>
-                            </div>
-                            
-                            <div class="d-grid mb-3">
-                                {{ form.submit(class="btn btn-primary btn-lg fw-semibold") }}
-                            </div>
-                        </form>
-                        
-                        <!-- Demo Credentials -->
-                        <div class="demo-credentials bg-light rounded-3 p-3 mt-4">
-                            <div class="text-center mb-2">
-                                <small class="text-muted fw-semibold">
-                                    <i class="fas fa-info-circle me-1"></i>Demo Credentials
-                                </small>
-                            </div>
-                            <div class="row text-center">
-                                <div class="col-12">
-                                    <div class="demo-item">
-                                        <div class="fw-semibold text-primary">Administrator</div>
-                                        <small class="text-muted">Username: <code>admin</code> | Password: <code>admin123</code></small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {% endif %}
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Features Section -->
-<div class="container mt-5 pt-5">
-    <div class="row text-center">
-        <div class="col-12 mb-5">
-            <h2 class="fw-bold text-primary">Comprehensive Work Order Management</h2>
-            <p class="lead text-muted">Enterprise-grade solution for managing work orders, teams, and analytics</p>
-        </div>
-    </div>
-    
-    <div class="row g-4">
-        <div class="col-lg-4 col-md-6">
-            <div class="feature-card card h-100 border-0 shadow-sm">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mb-3">
-                        <i class="fas fa-clipboard-list fa-3x text-primary"></i>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.remember_me(class="form-check-input") }}
+                        {{ form.remember_me.label(class="form-check-label") }}
                     </div>
-                    <h5 class="fw-semibold">Work Order Management</h5>
-                    <p class="text-muted">Create, assign, and track work orders with priority levels, status updates, and detailed activity logs.</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6">
-            <div class="feature-card card h-100 border-0 shadow-sm">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mb-3">
-                        <i class="fas fa-users fa-3x text-success"></i>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
                     </div>
-                    <h5 class="fw-semibold">Team Management</h5>
-                    <p class="text-muted">Role-based user management with admin, manager, and user privileges for secure access control.</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6">
-            <div class="feature-card card h-100 border-0 shadow-sm">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mb-3">
-                        <i class="fas fa-chart-line fa-3x text-info"></i>
-                    </div>
-                    <h5 class="fw-semibold">Analytics & Reports</h5>
-                    <p class="text-muted">Comprehensive reporting with interactive dashboards, charts, and performance metrics.</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6">
-            <div class="feature-card card h-100 border-0 shadow-sm">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mb-3">
-                        <i class="fas fa-mobile-alt fa-3x text-warning"></i>
-                    </div>
-                    <h5 class="fw-semibold">Responsive Design</h5>
-                    <p class="text-muted">Modern, mobile-friendly interface that works seamlessly across all devices and screen sizes.</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6">
-            <div class="feature-card card h-100 border-0 shadow-sm">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mb-3">
-                        <i class="fas fa-lock fa-3x text-danger"></i>
-                    </div>
-                    <h5 class="fw-semibold">Secure Authentication</h5>
-                    <p class="text-muted">Robust security with encrypted passwords, session management, and role-based permissions.</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6">
-            <div class="feature-card card h-100 border-0 shadow-sm">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mb-3">
-                        <i class="fas fa-cog fa-3x text-secondary"></i>
-                    </div>
-                    <h5 class="fw-semibold">Easy Configuration</h5>
-                    <p class="text-muted">Flexible system settings, customizable categories, priorities, and status workflows.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-.auth-container {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    position: relative;
-}
-
-.auth-card {
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.95);
-    overflow: hidden;
-}
-
-html[data-bs-theme="dark"] .auth-card {
-    background: rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.auth-header {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-}
-
-.auth-logo {
-    width: 80px;
-    height: 80px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-}
-
-.form-floating > .form-control {
-    border-radius: 12px;
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    padding: 1rem;
-    font-size: 1rem;
-}
-
-.form-floating > .form-control:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
-}
-
-.demo-credentials {
-    border: 2px dashed rgba(102, 126, 234, 0.3);
-    background: rgba(102, 126, 234, 0.05) !important;
-}
-
-.demo-credentials code {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    font-weight: 600;
-}
-
-.feature-card {
-    transition: all 0.3s ease;
-}
-
-.feature-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
-}
-
-.feature-icon {
-    width: 80px;
-    height: 80px;
-    background: rgba(102, 126, 234, 0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-}
-</style>
-
-{% endblock %}
-
-{% block scripts %}
-<script>
-function togglePassword() {
-    const passwordField = document.getElementById('password');
-    const toggleIcon = document.getElementById('toggleIcon');
-    
-    if (passwordField.type === 'password') {
-        passwordField.type = 'text';
-        toggleIcon.classList.remove('fa-eye');
-        toggleIcon.classList.add('fa-eye-slash');
-    } else {
-        passwordField.type = 'password';
-        toggleIcon.classList.remove('fa-eye-slash');
-        toggleIcon.classList.add('fa-eye');
-    }
-}
-
-// Auto-fill demo credentials
-document.addEventListener('DOMContentLoaded', function() {
-    const demoItem = document.querySelector('.demo-item');
-    if (demoItem) {
-        demoItem.addEventListener('click', function() {
-            document.getElementById('username').value = 'admin';
-            document.getElementById('password').value = 'admin123';
-            
-            // Add visual feedback
-            this.style.background = 'rgba(102, 126, 234, 0.1)';
-            setTimeout(() => {
-                this.style.background = '';
-            }, 500);
-        });
-        
-        demoItem.style.cursor = 'pointer';
-        demoItem.title = 'Click to auto-fill credentials';
-    }
-});
-</script>
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <i class="fas fa-users fa-3x text-success mb-3"></i>
-                            <h5>User Management</h5>
-                            <p class="card-text">Manage users with role-based access control and user profiles.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <i class="fas fa-chart-bar fa-3x text-warning mb-3"></i>
-                            <h5>Reports & Analytics</h5>
-                            <p class="card-text">Comprehensive reporting with charts and performance metrics.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <i class="fas fa-tachometer-alt fa-3x text-info mb-3"></i>
-                            <h5>Real-time Dashboard</h5>
-                            <p class="card-text">Monitor work order status and performance in real-time.</p>
-                        </div>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>

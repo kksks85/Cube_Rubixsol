@@ -17,6 +17,7 @@ class WorkOrderForm(FlaskForm):
     address = StringField('Address', validators=[Optional()])
     category_id = SelectField('Category', coerce=int, validators=[Optional()])
     priority_id = SelectField('Priority', coerce=int, validators=[DataRequired()])
+    status_id = SelectField('Status', coerce=int, validators=[DataRequired()])  # Added status field
     assigned_to_id = SelectField('Assigned To', coerce=int, validators=[Optional()])
     estimated_hours = FloatField('Estimated Hours', validators=[Optional(), NumberRange(min=0)])
     cost_estimate = DecimalField('Cost Estimate', validators=[Optional(), NumberRange(min=0)], places=2)

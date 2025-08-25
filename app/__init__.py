@@ -68,6 +68,9 @@ def create_app():
     from app.reporting import bp as reporting_bp
     app.register_blueprint(reporting_bp, url_prefix='/reporting')
     
+    from app.email_management import bp as email_management_bp
+    app.register_blueprint(email_management_bp, url_prefix='/email-management')
+    
     # Create database tables
     with app.app_context():
         db.create_all()

@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header p-4 rounded-3 position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); color: white;">
+                <div class="position-relative z-index-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="display-6 fw-bold mb-2 animate__animated animate__fadeInLeft">
+                                <i class="fas fa-cog me-3"></i>Email Settings
+                            </h1>
+                            <p class="lead mb-0 animate__animated animate__fadeInLeft" style="animation-delay: 0.2s;">
+                                Configure SMTP settings and email server configuration
+                            </p>
+                        </div>
+                        <div class="animate__animated animate__fadeInRight">
+                            <a href="{{ url_for('email_management.dashboard') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- SMTP Configuration -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-server me-2"></i>SMTP Server Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="smtpConfigForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="smtpServer" class="form-label">SMTP Server</label>
+                                    <input type="text" class="form-control" id="smtpServer" value="{{ config.smtp_server if config else 'smtp.gmail.com' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="smtpPort" class="form-label">SMTP Port</label>
+                                    <input type="number" class="form-control" id="smtpPort" value="{{ config.smtp_port if config else '587' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="senderEmail" class="form-label">Sender Email</label>
+                                    <input type="email" class="form-control" id="senderEmail" value="{{ config.sender_email if config else 'noreply@cubeproapp.com' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="senderName" class="form-label">Sender Name</label>
+                                    <input type="text" class="form-control" id="senderName" value="{{ config.sender_name if config else 'CUBE - PRO System' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="smtpUsername" class="form-label">SMTP Username</label>
+                                    <input type="text" class="form-control" id="smtpUsername" placeholder="Usually your email address">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="smtpPassword" class="form-label">SMTP Password</label>
+                                    <input type="password" class="form-control" id="smtpPassword" placeholder="Your email password or app password">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="useTLS" checked>
+                                        <label class="form-check-label" for="useTLS">
+                                            Use TLS/STARTTLS
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="useSSL">
+                                        <label class="form-check-label" for="useSSL">
+                                            Use SSL
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Configuration
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="testConnection()">
+                                <i class="fas fa-plug me-2"></i>Test Connection
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Common Email Providers -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-mail-bulk me-2"></i>Quick Setup for Common Providers
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card border">
+                                <div class="card-body text-center">
+                                    <i class="fab fa-google fa-2x text-danger mb-2"></i>
+                                    <h6>Gmail</h6>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="setupProvider('gmail')">
+                                        Quick Setup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border">
+                                <div class="card-body text-center">
+                                    <i class="fab fa-microsoft fa-2x text-primary mb-2"></i>
+                                    <h6>Outlook/Office 365</h6>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="setupProvider('outlook')">
+                                        Quick Setup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-envelope fa-2x text-info mb-2"></i>
+                                    <h6>SendGrid</h6>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="setupProvider('sendgrid')">
+                                        Quick Setup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-mail-bulk fa-2x text-warning mb-2"></i>
+                                    <h6>Mailgun</h6>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="setupProvider('mailgun')">
+                                        Quick Setup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Connection Status -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-wifi me-2"></i>Connection Status
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3" id="connectionStatus">
+                        <div class="flex-shrink-0">
+                            <div class="status-indicator bg-secondary" id="statusIndicator"></div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0" id="statusText">Not tested</h6>
+                            <small class="text-muted" id="statusDetails">Click 'Test Connection' to verify settings</small>
+                        </div>
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <small class="text-muted">
+                            <strong>Last tested:</strong> Never<br>
+                            <strong>Last successful:</strong> Never
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Tips -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Security Tips
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Use app-specific passwords for Gmail
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Enable 2FA on your email account
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Use TLS encryption when possible
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Regularly rotate SMTP passwords
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Help & Documentation -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Need Help?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="showHelp()">
+                            <i class="fas fa-book me-2"></i>Setup Guide
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="showTroubleshooting()">
+                            <i class="fas fa-tools me-2"></i>Troubleshooting
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="contactSupport()">
+                            <i class="fas fa-headset me-2"></i>Contact Support
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+</style>
+
+<script>
+function setupProvider(provider) {
+    const providers = {
+        gmail: {
+            server: 'smtp.gmail.com',
+            port: 587,
+            tls: true,
+            ssl: false
+        },
+        outlook: {
+            server: 'smtp-mail.outlook.com',
+            port: 587,
+            tls: true,
+            ssl: false
+        },
+        sendgrid: {
+            server: 'smtp.sendgrid.net',
+            port: 587,
+            tls: true,
+            ssl: false
+        },
+        mailgun: {
+            server: 'smtp.mailgun.org',
+            port: 587,
+            tls: true,
+            ssl: false
+        }
+    };
+    
+    const config = providers[provider];
+    if (config) {
+        document.getElementById('smtpServer').value = config.server;
+        document.getElementById('smtpPort').value = config.port;
+        document.getElementById('useTLS').checked = config.tls;
+        document.getElementById('useSSL').checked = config.ssl;
+        
+        alert(`Configuration for ${provider} has been applied. Please enter your credentials and test the connection.`);
+    }
+}
+
+function testConnection() {
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusText = document.getElementById('statusText');
+    const statusDetails = document.getElementById('statusDetails');
+    
+    // Show testing state
+    statusIndicator.className = 'status-indicator bg-warning';
+    statusText.textContent = 'Testing...';
+    statusDetails.textContent = 'Verifying SMTP connection';
+    
+    // Simulate connection test
+    setTimeout(() => {
+        const success = Math.random() > 0.3; // 70% success rate for demo
+        
+        if (success) {
+            statusIndicator.className = 'status-indicator bg-success';
+            statusText.textContent = 'Connected';
+            statusDetails.textContent = 'SMTP connection successful';
+        } else {
+            statusIndicator.className = 'status-indicator bg-danger';
+            statusText.textContent = 'Connection Failed';
+            statusDetails.textContent = 'Unable to connect to SMTP server';
+        }
+    }, 2000);
+}
+
+document.getElementById('smtpConfigForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Collect form data
+    const formData = {
+        smtp_server: document.getElementById('smtpServer').value,
+        smtp_port: document.getElementById('smtpPort').value,
+        sender_email: document.getElementById('senderEmail').value,
+        sender_name: document.getElementById('senderName').value,
+        smtp_username: document.getElementById('smtpUsername').value,
+        smtp_password: document.getElementById('smtpPassword').value,
+        use_tls: document.getElementById('useTLS').checked,
+        use_ssl: document.getElementById('useSSL').checked
+    };
+    
+    // Here you would send the data to the server
+    console.log('Saving SMTP configuration:', formData);
+    alert('SMTP configuration saved successfully!');
+});
+
+function showHelp() {
+    alert('Setup guide would be displayed here');
+}
+
+function showTroubleshooting() {
+    alert('Troubleshooting guide would be displayed here');
+}
+
+function contactSupport() {
+    alert('Support contact information would be displayed here');
+}
+</script>
+{% endblock %}

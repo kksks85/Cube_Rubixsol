@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header p-4 rounded-3 position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); color: white;">
+                <div class="position-relative z-index-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="display-6 fw-bold mb-2 animate__animated animate__fadeInLeft">
+                                <i class="fas fa-envelope me-3"></i>Email Management
+                            </h1>
+                            <p class="lead mb-0 animate__animated animate__fadeInLeft" style="animation-delay: 0.2s;">
+                                Comprehensive email system administration and automation
+                            </p>
+                        </div>
+                        <div class="animate__animated animate__fadeInRight">
+                            <button class="btn btn-light btn-lg shadow-sm me-2" id="toggleEmailSidebar">
+                                <i class="fas fa-bars me-2"></i>Menu
+                            </button>
+                            <button class="btn btn-success btn-lg shadow-sm" onclick="sendTestEmail()">
+                                <i class="fas fa-paper-plane me-2"></i>Test Email
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="position-absolute top-0 end-0 w-100 h-100 opacity-10">
+                    <i class="fas fa-envelope" style="font-size: 15rem; color: white; position: absolute; top: -2rem; right: -5rem; transform: rotate(15deg);"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Collapsible Sidebar -->
+        <div class="col-lg-3 mb-4" id="emailManagementSidebar">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>Email Administration
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="accordion" id="emailManagementAccordion">
+                        
+                        <!-- Configuration -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="configHeading">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#configCollapse" aria-expanded="true" aria-controls="configCollapse">
+                                    <i class="fas fa-cogs me-2"></i>Configuration
+                                </button>
+                            </h2>
+                            <div id="configCollapse" class="accordion-collapse collapse show" aria-labelledby="configHeading">
+                                <div class="accordion-body p-0">
+                                    <div class="list-group list-group-flush">
+                                        <a href="{{ url_for('email_management.email_settings') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-server me-3 text-primary"></i>SMTP Settings
+                                        </a>
+                                        <a href="#" onclick="showSection('sender-config')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-user-cog me-3 text-info"></i>Sender Configuration
+                                        </a>
+                                        <a href="#" onclick="showSection('security-config')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-shield-alt me-3 text-warning"></i>Security Settings
+                                        </a>
+                                        <a href="#" onclick="showSection('connection-test')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-plug me-3 text-success"></i>Connection Test
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Templates -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="templatesHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#templatesCollapse" aria-expanded="false" aria-controls="templatesCollapse">
+                                    <i class="fas fa-file-alt me-2"></i>Email Templates
+                                </button>
+                            </h2>
+                            <div id="templatesCollapse" class="accordion-collapse collapse" aria-labelledby="templatesHeading">
+                                <div class="accordion-body p-0">
+                                    <div class="list-group list-group-flush">
+                                        <a href="{{ url_for('email_management.email_templates') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-list me-3 text-primary"></i>All Templates
+                                        </a>
+                                        <a href="#" onclick="showSection('work-order-templates')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-clipboard me-3 text-info"></i>Work Order Templates
+                                        </a>
+                                        <a href="#" onclick="showSection('user-templates')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-user me-3 text-success"></i>User Templates
+                                        </a>
+                                        <a href="#" onclick="showSection('system-templates')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-cog me-3 text-warning"></i>System Templates
+                                        </a>
+                                        <a href="#" onclick="createTemplate()" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-plus me-3 text-success"></i>Create Template
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notifications -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="notificationsHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#notificationsCollapse" aria-expanded="false" aria-controls="notificationsCollapse">
+                                    <i class="fas fa-bell me-2"></i>Notifications
+                                </button>
+                            </h2>
+                            <div id="notificationsCollapse" class="accordion-collapse collapse" aria-labelledby="notificationsHeading">
+                                <div class="accordion-body p-0">
+                                    <div class="list-group list-group-flush">
+                                        <a href="{{ url_for('email_management.email_notifications') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-bell me-3 text-primary"></i>All Notifications
+                                        </a>
+                                        <a href="#" onclick="showSection('auto-notifications')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-robot me-3 text-info"></i>Auto Notifications
+                                        </a>
+                                        <a href="#" onclick="showSection('scheduled-emails')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-clock me-3 text-warning"></i>Scheduled Emails
+                                        </a>
+                                        <a href="#" onclick="showSection('notification-rules')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-rules me-3 text-danger"></i>Notification Rules
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Monitoring -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="monitoringHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#monitoringCollapse" aria-expanded="false" aria-controls="monitoringCollapse">
+                                    <i class="fas fa-chart-line me-2"></i>Monitoring & Logs
+                                </button>
+                            </h2>
+                            <div id="monitoringCollapse" class="accordion-collapse collapse" aria-labelledby="monitoringHeading">
+                                <div class="accordion-body p-0">
+                                    <div class="list-group list-group-flush">
+                                        <a href="{{ url_for('email_management.email_logs') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-list-alt me-3 text-primary"></i>Email Logs
+                                        </a>
+                                        <a href="#" onclick="showSection('delivery-status')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-truck me-3 text-success"></i>Delivery Status
+                                        </a>
+                                        <a href="#" onclick="showSection('failed-emails')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-exclamation-triangle me-3 text-danger"></i>Failed Emails
+                                        </a>
+                                        <a href="#" onclick="showSection('email-analytics')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-chart-bar me-3 text-info"></i>Analytics
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Maintenance -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="maintenanceHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#maintenanceCollapse" aria-expanded="false" aria-controls="maintenanceCollapse">
+                                    <i class="fas fa-tools me-2"></i>Maintenance
+                                </button>
+                            </h2>
+                            <div id="maintenanceCollapse" class="accordion-collapse collapse" aria-labelledby="maintenanceHeading">
+                                <div class="accordion-body p-0">
+                                    <div class="list-group list-group-flush">
+                                        <a href="#" onclick="showSection('queue-management')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-layer-group me-3 text-primary"></i>Email Queue
+                                        </a>
+                                        <a href="#" onclick="showSection('cleanup-tools')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-broom me-3 text-warning"></i>Cleanup Tools
+                                        </a>
+                                        <a href="#" onclick="showSection('backup-restore')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-database me-3 text-info"></i>Backup & Restore
+                                        </a>
+                                        <a href="#" onclick="showSection('system-health')" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <i class="fas fa-heartbeat me-3 text-success"></i>System Health
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status Card -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-server me-2"></i>System Status
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="status-indicator bg-success"></div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">SMTP Connection</h6>
+                            <small class="text-muted">Connected and ready</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="status-indicator bg-success"></div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">Email Queue</h6>
+                            <small class="text-muted">0 pending emails</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="status-indicator bg-warning"></div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">Auto Notifications</h6>
+                            <small class="text-muted">Some disabled</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="col-lg-9">
+            <!-- Statistics Cards -->
+            <div class="row mb-4 g-3">
+                <div class="col-lg-3 col-sm-6">
+                    <div class="stat-card card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-envelope stat-icon text-primary"></i>
+                            <div class="stat-number text-primary">1,247</div>
+                            <div class="stat-label">Emails Sent Today</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6">
+                    <div class="stat-card card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-check-circle stat-icon text-success"></i>
+                            <div class="stat-number text-success">98.5%</div>
+                            <div class="stat-label">Delivery Rate</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6">
+                    <div class="stat-card card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-alt stat-icon text-info"></i>
+                            <div class="stat-number text-info">{{ stats.email_templates if stats else 12 }}</div>
+                            <div class="stat-label">Active Templates</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6">
+                    <div class="stat-card card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-exclamation-triangle stat-icon text-warning"></i>
+                            <div class="stat-number text-warning">3</div>
+                            <div class="stat-label">Failed Emails</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Content -->
+            <div class="row">
+                <!-- Quick Actions -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-bolt me-2"></i>Quick Actions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <button class="btn btn-outline-primary w-100 d-flex flex-column align-items-center py-3" onclick="sendTestEmail()">
+                                        <i class="fas fa-paper-plane fa-2x mb-2"></i>
+                                        <span>Send Test Email</span>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <a href="{{ url_for('email_management.email_templates') }}" class="btn btn-outline-secondary w-100 d-flex flex-column align-items-center py-3">
+                                        <i class="fas fa-file-alt fa-2x mb-2"></i>
+                                        <span>Manage Templates</span>
+                                    </a>
+                                </div>
+                                <div class="col-6">
+                                    <a href="{{ url_for('email_management.email_settings') }}" class="btn btn-outline-info w-100 d-flex flex-column align-items-center py-3">
+                                        <i class="fas fa-cog fa-2x mb-2"></i>
+                                        <span>SMTP Settings</span>
+                                    </a>
+                                </div>
+                                <div class="col-6">
+                                    <a href="{{ url_for('email_management.email_logs') }}" class="btn btn-outline-warning w-100 d-flex flex-column align-items-center py-3">
+                                        <i class="fas fa-list fa-2x mb-2"></i>
+                                        <span>View Logs</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-clock me-2"></i>Recent Activity
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-success"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-1">Work Order Assignment Email</h6>
+                                        <small class="text-muted">Sent to john.doe@example.com • 2 min ago</small>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-info"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-1">Password Reset Email</h6>
+                                        <small class="text-muted">Sent to jane.smith@example.com • 15 min ago</small>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-warning"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-1">Template Updated</h6>
+                                        <small class="text-muted">Welcome email template modified • 1 hour ago</small>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-danger"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-1">Failed Email Delivery</h6>
+                                        <small class="text-muted">Invalid email address • 2 hours ago</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Performance Chart -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line me-2"></i>Email Performance (Last 7 Days)
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="emailPerformanceChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Email Modal -->
+<div class="modal fade" id="testEmailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Send Test Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="testEmailForm">
+                    <div class="mb-3">
+                        <label for="testEmailAddress" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="testEmailAddress" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="testEmailSubject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="testEmailSubject" value="CUBE - PRO Test Email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="testEmailMessage" class="form-label">Message</label>
+                        <textarea class="form-control" id="testEmailMessage" rows="4">This is a test email from the CUBE - PRO email management system.</textarea>
+                    </div>
+                </form>
+                <div id="testEmailResult"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="sendTestEmailAction()">Send Test Email</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.timeline {
+    position: relative;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.timeline-content h6 {
+    font-size: 14px;
+}
+
+#emailManagementSidebar {
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 991.98px) {
+    #emailManagementSidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        z-index: 1050;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    #emailManagementSidebar.show {
+        transform: translateX(0);
+    }
+}
+</style>
+
+<script>
+// Toggle sidebar
+document.getElementById('toggleEmailSidebar').addEventListener('click', function() {
+    const sidebar = document.getElementById('emailManagementSidebar');
+    sidebar.classList.toggle('show');
+});
+
+// Show different sections
+function showSection(section) {
+    console.log('Showing section:', section);
+    // Implement section switching logic here
+}
+
+// Send test email
+function sendTestEmail() {
+    const modal = new bootstrap.Modal(document.getElementById('testEmailModal'));
+    modal.show();
+}
+
+function sendTestEmailAction() {
+    const email = document.getElementById('testEmailAddress').value;
+    const subject = document.getElementById('testEmailSubject').value;
+    const message = document.getElementById('testEmailMessage').value;
+    const resultDiv = document.getElementById('testEmailResult');
+    
+    if (!email) {
+        resultDiv.innerHTML = '<div class="alert alert-danger">Please enter an email address</div>';
+        return;
+    }
+    
+    resultDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>Sending test email...</div>';
+    
+    fetch('{{ url_for("email_management.send_test_email") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `test_email=${encodeURIComponent(email)}&subject=${encodeURIComponent(subject)}&message=${encodeURIComponent(message)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = '<div class="alert alert-success"><i class="fas fa-check me-2"></i>' + data.message + '</div>';
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('testEmailModal')).hide();
+            }, 2000);
+        } else {
+            resultDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>' + data.message + '</div>';
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error sending test email</div>';
+    });
+}
+
+function createTemplate() {
+    alert('Template creation functionality would be implemented here');
+}
+
+// Email Performance Chart
+const ctx = document.getElementById('emailPerformanceChart').getContext('2d');
+const emailChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+            label: 'Emails Sent',
+            data: [120, 190, 300, 250, 220, 180, 160],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.1
+        }, {
+            label: 'Emails Delivered',
+            data: [118, 187, 295, 245, 215, 175, 155],
+            borderColor: 'rgb(54, 162, 235)',
+            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

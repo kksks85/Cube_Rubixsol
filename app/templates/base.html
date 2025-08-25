@@ -70,10 +70,24 @@
                             <i class="fas fa-plus-circle me-1"></i> Create Order
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-2" href="{{ url_for('users.list_users') }}">
-                            <i class="fas fa-users me-1"></i> Team
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cogs me-1"></i> Administration
                         </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('users.list_users') }}">
+                                <i class="fas fa-users me-2 text-primary"></i> User Management
+                            </a></li>
+                            {% if current_user.role and current_user.role.name == 'admin' %}
+                            <li><a class="dropdown-item py-1" href="{{ url_for('email_management.dashboard') }}">
+                                <i class="fas fa-envelope me-2 text-success"></i> Email Management
+                            </a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('users.create_user') }}">
+                                <i class="fas fa-user-plus me-2 text-info"></i> Add User
+                            </a></li>
+                            {% endif %}
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-2" href="{{ url_for('reporting.dashboard') }}">
@@ -180,15 +194,12 @@
     {% endif %}
                 <div class="col-md-6">
                     <p class="mb-0 text-muted">
-                        <i class="fas fa-cube me-2"></i>
-                        <strong>CUBE - PRO</strong> - Enterprise Work Order Management
+                        © 2025 CUBE - PRO. All rights reserved.
                     </p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="mb-0 text-muted">
-                        <i class="fas fa-code me-1"></i> Built with Flask 
-                        <span class="mx-2">|</span>
-                        <i class="fas fa-calendar me-1"></i> &copy; 2025
+                        Powered by Rubix Solutions
                     </p>
                 </div>
             </div>

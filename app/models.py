@@ -94,7 +94,7 @@ class Priority(db.Model):
         return f'<Priority {self.name}>'
 
 class Status(db.Model):
-    """Status options for work orders"""
+    """Status options for work orders - DEPRECATED, use WorkOrderStatus instead"""
     __tablename__ = 'statuses'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -103,8 +103,8 @@ class Status(db.Model):
     is_closed = db.Column(db.Boolean, default=False)
     color = db.Column(db.String(7), default='#6c757d')
     
-    # Relationships
-    workorders = db.relationship('WorkOrder', backref='status', lazy='dynamic')
+    # Relationships - COMMENTED OUT to avoid conflicts with WorkOrderStatus
+    # workorders = db.relationship('WorkOrder', backref='status', lazy='dynamic')
     
     def __repr__(self):
         return f'<Status {self.name}>'
@@ -150,7 +150,7 @@ class WorkOrder(db.Model):
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     assigned_to_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     priority_id = db.Column(db.Integer, db.ForeignKey('priorities.id'), nullable=False)
-    status_id = db.Column(db.Integer, db.ForeignKey('statuses.id'), nullable=False)
+    status_id = db.Column(db.Integer, db.ForeignKey('workorder_statuses.id'), nullable=True)  # Updated to use workorder_statuses
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     
     # Relationships
@@ -160,17 +160,22 @@ class WorkOrder(db.Model):
     @property
     def is_overdue(self):
         """Check if work order is overdue"""
-        if self.due_date and not self.status.is_closed:
+        if self.due_date and self.status_detail and not self.status_detail.is_final:
             return datetime.now(timezone.utc) > self.due_date.replace(tzinfo=timezone.utc)
         return False
     
     @property
     def days_until_due(self):
         """Calculate days until due date"""
-        if self.due_date and not self.status.is_closed:
+        if self.due_date and self.status_detail and not self.status_detail.is_final:
             delta = self.due_date.replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)
             return delta.days
         return None
+    
+    @property
+    def work_order_number(self):
+        """Return formatted work order number"""
+        return f"WO-{self.id:05d}"
     
     def add_activity(self, user, activity_type, description):
         """Add activity log entry"""
@@ -184,7 +189,7 @@ class WorkOrder(db.Model):
         return activity
     
     def __repr__(self):
-        return f'<WorkOrder {self.id}: {self.title}>'
+        return f'<WorkOrder {self.work_order_number}: {self.title}>'
 
 class WorkOrderActivity(db.Model):
     """Activity log for work orders"""
@@ -475,3 +480,88 @@ class ProductImage(db.Model):
     
     def __repr__(self):
         return f'<ProductImage {self.filename}>'
+
+
+class WorkOrderStatus(db.Model):
+    """Enhanced work order status with workflow support"""
+    __tablename__ = 'workorder_statuses'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+    description = db.Column(db.String(200))
+    order_index = db.Column(db.Integer, default=0)  # For stage ordering
+    is_initial = db.Column(db.Boolean, default=False)  # Initial status
+    is_final = db.Column(db.Boolean, default=False)   # Final status
+    requires_approval = db.Column(db.Boolean, default=False)  # Needs admin approval
+    color = db.Column(db.String(7), default='#6c757d')  # Status color
+    icon = db.Column(db.String(50), default='fas fa-circle')  # Status icon
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    workorders = db.relationship('WorkOrder', backref='status_detail', lazy='dynamic')
+    transitions_from = db.relationship('WorkOrderStatusTransition', 
+                                     foreign_keys='WorkOrderStatusTransition.from_status_id',
+                                     backref='from_status', lazy='dynamic')
+    transitions_to = db.relationship('WorkOrderStatusTransition',
+                                   foreign_keys='WorkOrderStatusTransition.to_status_id', 
+                                   backref='to_status', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<WorkOrderStatus {self.name}>'
+
+
+class WorkOrderStatusTransition(db.Model):
+    """Define allowed status transitions"""
+    __tablename__ = 'workorder_status_transitions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    from_status_id = db.Column(db.Integer, db.ForeignKey('workorder_statuses.id'), nullable=False)
+    to_status_id = db.Column(db.Integer, db.ForeignKey('workorder_statuses.id'), nullable=False)
+    requires_role = db.Column(db.String(50))  # Role required for this transition
+    is_active = db.Column(db.Boolean, default=True)
+
+    def __repr__(self):
+        return f'<WorkOrderStatusTransition {self.from_status.name} -> {self.to_status.name}>'
+
+
+class WorkOrderApproval(db.Model):
+    """Track approval workflow for work orders"""
+    __tablename__ = 'workorder_approvals'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    workorder_id = db.Column(db.Integer, db.ForeignKey('workorders.id'), nullable=False)
+    requested_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    approver_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    comments = db.Column(db.Text)
+    requested_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    approved_at = db.Column(db.DateTime)
+    
+    # Relationships
+    workorder = db.relationship('WorkOrder', backref='approvals')
+    requested_by = db.relationship('User', foreign_keys=[requested_by_id], backref='approval_requests')
+    approver = db.relationship('User', foreign_keys=[approver_id], backref='approval_decisions')
+
+    def __repr__(self):
+        return f'<WorkOrderApproval WO#{self.workorder_id} - {self.status}>'
+
+
+class EmailConfig(db.Model):
+    """Email configuration settings"""
+    __tablename__ = 'email_config'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    smtp_server = db.Column(db.String(255), default='smtp.gmail.com')
+    smtp_port = db.Column(db.Integer, default=587)
+    use_tls = db.Column(db.Boolean, default=True)
+    sender_email = db.Column(db.String(255))
+    sender_name = db.Column(db.String(255), default='CUBE - PRO System')
+    smtp_username = db.Column(db.String(255))
+    smtp_password = db.Column(db.String(255))  # Should be encrypted in production
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), 
+                          onupdate=lambda: datetime.now(timezone.utc))
+    
+    def __repr__(self):
+        return f'<EmailConfig {self.sender_email}>'

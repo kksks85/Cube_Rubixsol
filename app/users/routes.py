@@ -24,7 +24,52 @@ def list_users():
         page=page, per_page=per_page, error_out=False
     )
     
-    return render_template('users/list.html', title='User Management', users=users)
+    # Calculate statistics for the comprehensive dashboard
+    total_users = User.query.count()
+    active_users_count = User.query.filter_by(is_active=True).count()
+    admin_count = User.query.join(Role).filter(Role.name == 'admin').count()
+    manager_count = User.query.join(Role).filter(Role.name == 'manager').count()
+    tech_count = User.query.join(Role).filter(Role.name == 'technician').count()
+    
+    return render_template('users/list.html', 
+                         title='User Management', 
+                         users=users,
+                         total_users=total_users,
+                         active_users_count=active_users_count,
+                         admin_count=admin_count,
+                         manager_count=manager_count,
+                         tech_count=tech_count)
+
+@bp.route('/create', methods=['GET', 'POST'])
+@login_required
+def create_user():
+    """Create new user (admin only)"""
+    if not current_user.has_role('admin'):
+        flash('You do not have permission to create users.', 'error')
+        return redirect(url_for('users.list_users'))
+    
+    from app.users.forms import CreateUserForm
+    form = CreateUserForm()
+    form.role.choices = [(r.id, r.name.title()) for r in Role.query.all()]
+    
+    if form.validate_on_submit():
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
+            phone=form.phone.data,
+            role_id=form.role.data
+        )
+        user.set_password(form.password.data)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash(f'User {user.username} has been created successfully.', 'success')
+        return redirect(url_for('users.view_user', id=user.id))
+    
+    return render_template('users/create.html', title='Create User', form=form)
 
 @bp.route('/<int:id>')
 @login_required
@@ -154,3 +199,40 @@ def reset_user_password(id):
     
     flash(f'Password reset for {user.username}. Temporary password: {temp_password}', 'success')
     return redirect(url_for('users.view_user', id=user.id))
+
+@bp.route('/api/user/<int:id>/toggle-status', methods=['POST'])
+@login_required
+def api_toggle_user_status(id):
+    """API endpoint to toggle user status"""
+    if not current_user.has_role('admin'):
+        return {'success': False, 'message': 'Permission denied'}, 403
+    
+    user = User.query.get_or_404(id)
+    
+    # Prevent admin from deactivating themselves
+    if user.id == current_user.id:
+        return {'success': False, 'message': 'Cannot deactivate your own account'}, 400
+    
+    user.is_active = not user.is_active
+    db.session.commit()
+    
+    status = 'activated' if user.is_active else 'deactivated'
+    return {'success': True, 'message': f'User {user.username} has been {status}'}
+
+@bp.route('/api/user/<int:id>/reset-password', methods=['POST'])
+@login_required
+def api_reset_user_password(id):
+    """API endpoint to reset user password"""
+    if not current_user.has_role('admin'):
+        return {'success': False, 'message': 'Permission denied'}, 403
+    
+    user = User.query.get_or_404(id)
+    
+    # Generate temporary password
+    import secrets
+    temp_password = secrets.token_urlsafe(12)
+    user.set_password(temp_password)
+    
+    db.session.commit()
+    
+    return {'success': True, 'message': f'Password reset. Temporary password: {temp_password}'}

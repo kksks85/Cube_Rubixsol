@@ -9,7 +9,7 @@ from flask_login import login_required, current_user
 from sqlalchemy import func, desc
 from app import db
 from app.main import bp
-from app.models import WorkOrder, User, Priority, Status, Category, Product
+from app.models import WorkOrder, User, Priority, WorkOrderStatus, Category, Product
 
 @bp.route('/')
 @bp.route('/index')
@@ -35,13 +35,13 @@ def dashboard():
     if current_user.has_role('admin') or current_user.has_role('manager'):
         # Admin/Manager can see all work orders
         stats['total_workorders'] = WorkOrder.query.count()
-        stats['open_workorders'] = WorkOrder.query.join(Status).filter(~Status.is_closed).count()
-        stats['overdue_workorders'] = WorkOrder.query.join(Status).filter(
-            ~Status.is_closed,
+        stats['open_workorders'] = WorkOrder.query.join(WorkOrderStatus).filter(~WorkOrderStatus.is_final).count()
+        stats['overdue_workorders'] = WorkOrder.query.join(WorkOrderStatus).filter(
+            ~WorkOrderStatus.is_final,
             WorkOrder.due_date < today
         ).count()
-        stats['completed_this_week'] = WorkOrder.query.join(Status).filter(
-            Status.is_closed,
+        stats['completed_this_week'] = WorkOrder.query.join(WorkOrderStatus).filter(
+            WorkOrderStatus.is_final,
             WorkOrder.completed_date >= week_ago
         ).count()
         
@@ -76,25 +76,25 @@ def dashboard():
         
         # Status distribution
         status_stats = db.session.query(
-            Status.name,
-            Status.color,
+            WorkOrderStatus.name,
+            WorkOrderStatus.color,
             func.count(WorkOrder.id).label('count')
-        ).join(WorkOrder).group_by(Status.id, Status.name, Status.color).all()
+        ).join(WorkOrder).group_by(WorkOrderStatus.id, WorkOrderStatus.name, WorkOrderStatus.color).all()
         
     else:
         # Technicians can only see their assigned work orders
         stats['total_workorders'] = WorkOrder.query.filter_by(assigned_to_id=current_user.id).count()
-        stats['open_workorders'] = WorkOrder.query.join(Status).filter(
-            ~Status.is_closed,
+        stats['open_workorders'] = WorkOrder.query.join(WorkOrderStatus).filter(
+            ~WorkOrderStatus.is_final,
             WorkOrder.assigned_to_id == current_user.id
         ).count()
-        stats['overdue_workorders'] = WorkOrder.query.join(Status).filter(
-            ~Status.is_closed,
+        stats['overdue_workorders'] = WorkOrder.query.join(WorkOrderStatus).filter(
+            ~WorkOrderStatus.is_final,
             WorkOrder.assigned_to_id == current_user.id,
             WorkOrder.due_date < today
         ).count()
-        stats['completed_this_week'] = WorkOrder.query.join(Status).filter(
-            Status.is_closed,
+        stats['completed_this_week'] = WorkOrder.query.join(WorkOrderStatus).filter(
+            WorkOrderStatus.is_final,
             WorkOrder.assigned_to_id == current_user.id,
             WorkOrder.completed_date >= week_ago
         ).count()
@@ -134,12 +134,12 @@ def dashboard():
         
         # Status distribution for assigned work orders
         status_stats = db.session.query(
-            Status.name,
-            Status.color,
+            WorkOrderStatus.name,
+            WorkOrderStatus.color,
             func.count(WorkOrder.id).label('count')
         ).join(WorkOrder).filter(
             WorkOrder.assigned_to_id == current_user.id
-        ).group_by(Status.id, Status.name, Status.color).all()
+        ).group_by(WorkOrderStatus.id, WorkOrderStatus.name, WorkOrderStatus.color).all()
     
     # Active users count (admin/manager only)
     if current_user.has_role('admin') or current_user.has_role('manager'):
@@ -164,9 +164,9 @@ def profile():
     total_assigned = current_user.assigned_workorders.count()
     
     # Get open work orders (not closed status)
-    open_assigned = db.session.query(WorkOrder).join(Status).filter(
+    open_assigned = db.session.query(WorkOrder).join(WorkOrderStatus).filter(
         WorkOrder.assigned_to_id == current_user.id,
-        ~Status.is_closed
+        ~WorkOrderStatus.is_final
     ).count()
     
     workorder_stats = {
