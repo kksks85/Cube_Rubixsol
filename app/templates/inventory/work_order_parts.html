@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-cogs text-primary me-2"></i>
+                        Parts for {{ work_order.work_order_number }}
+                    </h2>
+                    <p class="text-muted">{{ work_order.title }}</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('inventory.request_part', work_order_id=work_order.id) }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Request Part
+                    </a>
+                    <a href="{{ url_for('workorders.view_workorder', id=work_order.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Work Order
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Order Summary -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                                        <i class="fas fa-hashtag text-primary"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="text-muted small">Work Order</div>
+                                    <div class="fw-semibold">{{ work_order.work_order_number }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-info bg-opacity-10 p-2">
+                                        <i class="fas fa-user text-info"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="text-muted small">Assigned To</div>
+                                    <div class="fw-semibold">
+                                        {% if work_order.assignee %}
+                                            {{ work_order.assignee.first_name }} {{ work_order.assignee.last_name }}
+                                        {% else %}
+                                            <span class="text-muted">Unassigned</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-warning bg-opacity-10 p-2">
+                                        <i class="fas fa-flag text-warning"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="text-muted small">Priority</div>
+                                    <div class="fw-semibold">
+                                        {% if work_order.priority %}
+                                            <span class="badge bg-{{ work_order.priority.color or 'secondary' }}">
+                                                {{ work_order.priority.name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">No priority</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-success bg-opacity-10 p-2">
+                                        <i class="fas fa-tasks text-success"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="text-muted small">Status</div>
+                                    <div class="fw-semibold">
+                                        {% if work_order.status_detail %}
+                                            <span class="badge bg-{{ work_order.status_detail.color or 'secondary' }}">
+                                                {{ work_order.status_detail.name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">No status</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parts List -->
+    <div class="row">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cogs text-secondary me-2"></i>
+                            Requested Parts ({{ parts|length }})
+                        </h5>
+                        {% if parts %}
+                        <div class="text-muted small">
+                            Total Cost: ${% set total_cost = 0 %}{% for part in parts %}{% set total_cost = total_cost + (part.total_cost or 0) %}{% endfor %}{{ "%.2f"|format(total_cost) }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if parts %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Part Number</th>
+                                        <th>Name</th>
+                                        <th>Requested</th>
+                                        <th>Used</th>
+                                        <th>Status</th>
+                                        <th>Unit Cost</th>
+                                        <th>Total Cost</th>
+                                        <th>Requested Date</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for part in parts %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('inventory.view_item', id=part.inventory_item.id) }}" class="text-decoration-none">
+                                                <strong>{{ part.inventory_item.part_number }}</strong>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            {{ part.inventory_item.name }}
+                                            {% if part.inventory_item.manufacturer %}
+                                            <br><small class="text-muted">{{ part.inventory_item.manufacturer }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">{{ part.quantity_requested }}</span>
+                                        </td>
+                                        <td>
+                                            {% if part.quantity_used > 0 %}
+                                                <span class="badge bg-success">{{ part.quantity_used }}</span>
+                                            {% else %}
+                                                <span class="text-muted">0</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge {{ part.status_badge_class }}">
+                                                {{ part.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if part.unit_cost %}
+                                                ${{ "%.2f"|format(part.unit_cost) }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if part.total_cost %}
+                                                <strong>${{ "%.2f"|format(part.total_cost) }}</strong>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small>{{ part.requested_at.strftime('%m/%d/%Y %H:%M') }}</small>
+                                            {% if part.requested_by %}
+                                            <br><small class="text-muted">by {{ part.requested_by.first_name }} {{ part.requested_by.last_name }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            {% if part.status == 'REQUESTED' %}
+                                                <a href="{{ url_for('inventory.allocate_part', part_id=part.id) }}" 
+                                                   class="btn btn-sm btn-success" title="Allocate Part">
+                                                    <i class="fas fa-check"></i> Allocate
+                                                </a>
+                                            {% elif part.status == 'ALLOCATED' %}
+                                                <button class="btn btn-sm btn-outline-secondary" disabled title="Part Allocated">
+                                                    <i class="fas fa-check-circle"></i> Allocated
+                                                </button>
+                                            {% elif part.status == 'USED' %}
+                                                <button class="btn btn-sm btn-outline-success" disabled title="Part Used">
+                                                    <i class="fas fa-check-double"></i> Used
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% if part.notes %}
+                                    <tr>
+                                        <td colspan="9" class="border-0 pt-0">
+                                            <small class="text-muted">
+                                                <i class="fas fa-sticky-note me-1"></i>
+                                                {{ part.notes }}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-cogs text-muted fa-3x mb-3"></i>
+                            <h5 class="text-muted">No parts requested yet</h5>
+                            <p class="text-muted">Request parts needed for this work order.</p>
+                            <a href="{{ url_for('inventory.request_part', work_order_id=work_order.id) }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Request First Part
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parts Status Summary -->
+    {% if parts %}
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-pie text-info me-2"></i>
+                        Parts Status Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% set requested_count = parts|selectattr("status", "equalto", "REQUESTED")|list|length %}
+                        {% set allocated_count = parts|selectattr("status", "equalto", "ALLOCATED")|list|length %}
+                        {% set used_count = parts|selectattr("status", "equalto", "USED")|list|length %}
+                        
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-warning">{{ requested_count }}</div>
+                                <div class="text-muted small">Requested</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-info">{{ allocated_count }}</div>
+                                <div class="text-muted small">Allocated</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-success">{{ used_count }}</div>
+                                <div class="text-muted small">Used</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-primary">{{ parts|length }}</div>
+                                <div class="text-muted small">Total Parts</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-plus-circle text-primary me-2"></i>
+                        Request Part
+                    </h2>
+                    <p class="text-muted">Request a part for work order: {{ work_order.work_order_number }} - {{ work_order.title }}</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('inventory.work_order_parts', work_order_id=work_order.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Parts
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-list text-secondary me-2"></i>
+                        Part Request Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Part Selection -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                {{ form.inventory_item_id.label(class="form-label fw-semibold") }}
+                                {{ form.inventory_item_id(class="form-select form-select-lg", id="partSelect") }}
+                                {% for error in form.inventory_item_id.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Part Details (will be populated via JavaScript) -->
+                        <div id="partDetails" class="d-none mb-4">
+                            <div class="card bg-light border-0">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <strong>Part Number:</strong> <span id="partNumber"></span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong>Manufacturer:</strong> <span id="partManufacturer"></span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong>Category:</strong> <span id="partCategory"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <strong>Current Stock:</strong> <span id="partStock"></span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong>Unit Cost:</strong> <span id="partCost"></span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong>Status:</strong> <span id="partStatus"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <strong>Description:</strong>
+                                        <div id="partDescription" class="text-muted"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quantity and Cost -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.quantity_requested.label(class="form-label fw-semibold") }}
+                                <div class="input-group">
+                                    {{ form.quantity_requested(class="form-control", min="1", id="quantityInput") }}
+                                    <span class="input-group-text">units</span>
+                                </div>
+                                {% for error in form.quantity_requested.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.unit_cost.label(class="form-label fw-semibold") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.unit_cost(class="form-control", step="0.01", id="unitCostInput") }}
+                                </div>
+                                {% for error in form.unit_cost.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                                <div class="form-text">Leave blank to use default cost from inventory</div>
+                            </div>
+                        </div>
+
+                        <!-- Total Cost Display -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="alert alert-info d-none" id="totalCostAlert">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    <strong>Estimated Total Cost:</strong> $<span id="totalCost">0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                {{ form.notes.label(class="form-label fw-semibold") }}
+                                {{ form.notes(class="form-control", rows="3", placeholder="Add any special instructions or notes for this part request...") }}
+                                {% for error in form.notes.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane me-1"></i> Submit Request
+                                    </button>
+                                    <a href="{{ url_for('inventory.work_order_parts', work_order_id=work_order.id) }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i> Cancel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Work Order Summary Sidebar -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-clipboard text-secondary me-2"></i>
+                        Work Order Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="text-muted small">Work Order Number</div>
+                        <div class="fw-semibold">{{ work_order.work_order_number }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small">Title</div>
+                        <div>{{ work_order.title }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small">Assigned To</div>
+                        <div>
+                            {% if work_order.assignee %}
+                                {{ work_order.assignee.first_name }} {{ work_order.assignee.last_name }}
+                            {% else %}
+                                <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small">Status</div>
+                        <div>
+                            {% if work_order.status_detail %}
+                                <span class="badge bg-{{ work_order.status_detail.color or 'secondary' }}">
+                                    {{ work_order.status_detail.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">No status</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small">Priority</div>
+                        <div>
+                            {% if work_order.priority %}
+                                <span class="badge bg-{{ work_order.priority.color or 'secondary' }}">
+                                    {{ work_order.priority.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">No priority</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if work_order.parts %}
+                    <div class="mb-3">
+                        <div class="text-muted small">Current Parts</div>
+                        <div class="badge bg-light text-dark">{{ work_order.parts|length }} parts requested</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt text-warning me-2"></i>
+                        Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('inventory.dashboard') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-warehouse me-1"></i> View Inventory
+                        </a>
+                        <a href="{{ url_for('workorders.view_workorder', id=work_order.id) }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-eye me-1"></i> View Work Order
+                        </a>
+                        <a href="{{ url_for('inventory.work_order_parts', work_order_id=work_order.id) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-cogs me-1"></i> All Parts
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for dynamic part details and cost calculation -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const partSelect = document.getElementById('partSelect');
+    const partDetails = document.getElementById('partDetails');
+    const quantityInput = document.getElementById('quantityInput');
+    const unitCostInput = document.getElementById('unitCostInput');
+    const totalCostAlert = document.getElementById('totalCostAlert');
+    const totalCostSpan = document.getElementById('totalCost');
+
+    // Part data (this would typically come from an API endpoint)
+    const partData = {
+        {% for item in available_items %}
+        "{{ item.id }}": {
+            part_number: "{{ item.part_number }}",
+            manufacturer: "{{ item.manufacturer or 'N/A' }}",
+            category: "{{ item.category.name if item.category else 'N/A' }}",
+            current_stock: {{ item.current_stock }},
+            unit_cost: {{ item.unit_cost or 0 }},
+            status: "{{ item.stock_status_display }}",
+            description: "{{ item.description or 'No description available' }}"
+        },
+        {% endfor %}
+    };
+
+    function updatePartDetails() {
+        const selectedId = partSelect.value;
+        if (selectedId && partData[selectedId]) {
+            const part = partData[selectedId];
+            
+            document.getElementById('partNumber').textContent = part.part_number;
+            document.getElementById('partManufacturer').textContent = part.manufacturer;
+            document.getElementById('partCategory').textContent = part.category;
+            document.getElementById('partStock').textContent = part.current_stock;
+            document.getElementById('partCost').textContent = part.unit_cost > 0 ? '$' + part.unit_cost.toFixed(2) : 'N/A';
+            document.getElementById('partStatus').innerHTML = '<span class="badge bg-secondary">' + part.status + '</span>';
+            document.getElementById('partDescription').textContent = part.description;
+            
+            // Auto-fill unit cost if not already set
+            if (!unitCostInput.value && part.unit_cost > 0) {
+                unitCostInput.value = part.unit_cost.toFixed(2);
+            }
+            
+            partDetails.classList.remove('d-none');
+            updateTotalCost();
+        } else {
+            partDetails.classList.add('d-none');
+            totalCostAlert.classList.add('d-none');
+        }
+    }
+
+    function updateTotalCost() {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const unitCost = parseFloat(unitCostInput.value) || 0;
+        
+        if (quantity > 0 && unitCost > 0) {
+            const total = quantity * unitCost;
+            totalCostSpan.textContent = total.toFixed(2);
+            totalCostAlert.classList.remove('d-none');
+        } else {
+            totalCostAlert.classList.add('d-none');
+        }
+    }
+
+    // Event listeners
+    partSelect.addEventListener('change', updatePartDetails);
+    quantityInput.addEventListener('input', updateTotalCost);
+    unitCostInput.addEventListener('input', updateTotalCost);
+
+    // Initialize if part is already selected
+    if (partSelect.value) {
+        updatePartDetails();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-cubes text-primary me-2"></i>
+                        Inventory Items
+                        {% if selected_category %}
+                        <span class="text-muted">- {{ selected_category.name }}</span>
+                        {% endif %}
+                    </h2>
+                    <p class="text-muted">
+                        {% if selected_category %}
+                        Showing items in "{{ selected_category.name }}" category
+                        {% else %}
+                        Manage UAV parts and equipment
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if selected_category %}
+                    <a href="{{ url_for('inventory.items') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> Clear Filter
+                    </a>
+                    <a href="{{ url_for('inventory.categories') }}" class="btn btn-outline-info">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Categories
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('inventory.create_item') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Add Item
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Filter Alert -->
+    {% if selected_category %}
+    <div class="row mb-3">
+        <div class="col">
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+                <i class="fas fa-filter me-2"></i>
+                <div class="flex-grow-1">
+                    <strong>Filter Active:</strong> Showing items from "{{ selected_category.name }}" category
+                </div>
+                <a href="{{ url_for('inventory.items') }}" class="btn btn-sm btn-outline-info">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        {{ form.hidden_tag() }}
+                        <div class="col-md-4">
+                            {{ form.search_term.label(class="form-label small fw-medium") }}
+                            {{ form.search_term(class="form-control", placeholder="Search by name, part number, or manufacturer") }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.category_id.label(class="form-label small fw-medium") }}
+                            {{ form.category_id(class="form-select") }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.stock_status.label(class="form-label small fw-medium") }}
+                            {{ form.stock_status(class="form-select") }}
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            {{ form.submit(class="btn btn-primary w-100") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items List -->
+    <div class="row">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            Items ({{ items.total }} total)
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('inventory.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if items.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Part Number</th>
+                                        <th>Name</th>
+                                        <th>Category</th>
+                                        <th>Manufacturer</th>
+                                        <th>Stock</th>
+                                        <th>Status</th>
+                                        <th>Unit Cost</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items.items %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ item.part_number }}</strong>
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('inventory.view_item', id=item.id) }}" class="text-decoration-none">
+                                                {{ item.name }}
+                                            </a>
+                                            {% if item.model %}
+                                            <br><small class="text-muted">{{ item.model }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.category %}
+                                                <span class="badge bg-light text-dark">{{ item.category.name }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ item.manufacturer or '-' }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="me-2">{{ item.quantity_in_stock }}</span>
+                                                {% if item.quantity_in_stock == 0 %}
+                                                    <i class="fas fa-exclamation-circle text-danger" title="Out of stock"></i>
+                                                {% elif item.is_low_stock %}
+                                                    <i class="fas fa-exclamation-triangle text-warning" title="Low stock"></i>
+                                                {% else %}
+                                                    <i class="fas fa-check-circle text-success" title="In stock"></i>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">Min: {{ item.minimum_stock_level }}</small>
+                                        </td>
+                                        <td>
+                                            {% if item.quantity_in_stock == 0 %}
+                                                <span class="badge bg-danger">Out of Stock</span>
+                                            {% elif item.is_low_stock %}
+                                                <span class="badge bg-warning">Low Stock</span>
+                                            {% else %}
+                                                <span class="badge bg-success">In Stock</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.unit_cost %}
+                                                ${{ "%.2f"|format(item.unit_cost) }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('inventory.view_item', id=item.id) }}" 
+                                                   class="btn btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ url_for('inventory.edit_item', id=item.id) }}" 
+                                                   class="btn btn-outline-secondary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{{ url_for('inventory.add_transaction', id=item.id) }}" 
+                                                   class="btn btn-outline-info" title="Add Transaction">
+                                                    <i class="fas fa-exchange-alt"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-cubes text-muted fa-3x mb-3"></i>
+                            <h5 class="text-muted">No inventory items found</h5>
+                            <p class="text-muted">Start by adding your first inventory item.</p>
+                            <a href="{{ url_for('inventory.create_item') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Add First Item
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if items.pages > 1 %}
+                <div class="card-footer bg-white border-0">
+                    <nav aria-label="Items pagination">
+                        <ul class="pagination pagination-sm justify-content-center mb-0">
+                            {% if items.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('inventory.items', page=items.prev_num) }}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page_num in items.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != items.page %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('inventory.items', page=page_num) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page_num }}</span>
+                                        </li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if items.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('inventory.items', page=items.next_num) }}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-plus-circle text-primary me-2"></i>
+                        {% if category %}Edit Category{% else %}Create Category{% endif %}
+                    </h2>
+                    <p class="text-muted">{% if category %}Update the category details{% else %}Add a new inventory category for organizing parts{% endif %}</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('inventory.categories') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Categories
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tag text-secondary me-2"></i>
+                        Category Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Category Name -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                {{ form.name.label(class="form-label fw-semibold") }}
+                                {{ form.name(class="form-control form-control-lg", placeholder="Enter category name (e.g., Motors & Propulsion)") }}
+                                {% for error in form.name.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Category Description -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                {{ form.description.label(class="form-label fw-semibold") }}
+                                {{ form.description(class="form-control", rows="4", placeholder="Describe what types of parts belong in this category...") }}
+                                {% for error in form.description.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                                <div class="form-text">Provide a clear description to help users understand what items belong in this category.</div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    {{ form.submit(class="btn btn-primary") }}
+                                    <a href="{{ url_for('inventory.categories') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i> Cancel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar with helpful information -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>
+                        Category Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-primary">Best Practices</h6>
+                        <ul class="small text-muted">
+                            <li>Use clear, descriptive names</li>
+                            <li>Group similar parts together</li>
+                            <li>Keep categories broad enough to be useful</li>
+                            <li>Consider how technicians think about parts</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-info">Suggested UAV Categories</h6>
+                        <div class="d-flex flex-wrap gap-1">
+                            <span class="badge bg-light text-dark">Airframes</span>
+                            <span class="badge bg-light text-dark">Motors</span>
+                            <span class="badge bg-light text-dark">Electronics</span>
+                            <span class="badge bg-light text-dark">Sensors</span>
+                            <span class="badge bg-light text-dark">Cameras</span>
+                            <span class="badge bg-light text-dark">Batteries</span>
+                            <span class="badge bg-light text-dark">Tools</span>
+                        </div>
+                    </div>
+
+                    {% if category %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Current Category:</strong><br>
+                        This category currently has {{ category.items.count() }} items.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Categories (for context) -->
+            {% if not category %}
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-history text-secondary me-2"></i>
+                        Existing Categories
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if existing_categories %}
+                        {% for cat in existing_categories[:5] %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <div class="fw-semibold">{{ cat.name }}</div>
+                                <small class="text-muted">{{ cat.items.count() }} items</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mb-0">No categories created yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
