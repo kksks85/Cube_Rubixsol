@@ -27,7 +27,7 @@
                 <div class="card-body text-center py-3">
                     <div class="d-flex align-items-center justify-content-center mb-2">
                         <i class="fas fa-clipboard-list fa-lg text-primary me-2"></i>
-                        <h5 class="mb-0 fw-semibold">{{ stats.total_workorders if stats else 0 }}</h5>
+                        <h5 class="mb-0 fw-semibold" data-stat="total_workorders">{{ stats.total_workorders if stats else 0 }}</h5>
                     </div>
                     <p class="text-muted mb-0 small">Total Orders</p>
                 </div>
@@ -39,7 +39,7 @@
                 <div class="card-body text-center py-3">
                     <div class="d-flex align-items-center justify-content-center mb-2">
                         <i class="fas fa-clock fa-lg text-warning me-2"></i>
-                        <h5 class="mb-0 fw-semibold text-warning">{{ stats.open_workorders if stats else 0 }}</h5>
+                        <h5 class="mb-0 fw-semibold text-warning" data-stat="open_workorders">{{ stats.open_workorders if stats else 0 }}</h5>
                     </div>
                     <p class="text-muted mb-0 small">Open Orders</p>
                 </div>
@@ -51,7 +51,7 @@
                 <div class="card-body text-center py-3">
                     <div class="d-flex align-items-center justify-content-center mb-2">
                         <i class="fas fa-exclamation-triangle fa-lg text-danger me-2"></i>
-                        <h5 class="mb-0 fw-semibold text-danger">{{ stats.overdue_workorders if stats else 0 }}</h5>
+                        <h5 class="mb-0 fw-semibold text-danger" data-stat="overdue_workorders">{{ stats.overdue_workorders if stats else 0 }}</h5>
                     </div>
                     <p class="text-muted mb-0 small">Overdue</p>
                 </div>
@@ -63,7 +63,7 @@
                 <div class="card-body text-center py-3">
                     <div class="d-flex align-items-center justify-content-center mb-2">
                         <i class="fas fa-check-circle fa-lg text-success me-2"></i>
-                        <h5 class="mb-0 fw-semibold text-success">{{ stats.completed_workorders if stats else 0 }}</h5>
+                        <h5 class="mb-0 fw-semibold text-success" data-stat="completed_workorders">{{ stats.completed_workorders if stats else 0 }}</h5>
                     </div>
                     <p class="text-muted mb-0 small">Completed</p>
                 </div>

@@ -24,6 +24,10 @@ def index():
 def dashboard():
     """Main dashboard with overview statistics"""
     
+    # Force refresh of database session to ensure latest data
+    from app import db
+    db.session.expire_all()
+    
     # Get current date for filtering
     today = datetime.now(timezone.utc)
     week_ago = today - timedelta(days=7)
@@ -147,14 +151,60 @@ def dashboard():
     else:
         stats['active_users'] = 0
     
-    return render_template('main/dashboard.html',
+    # Create response with cache-control headers to ensure fresh data
+    from flask import make_response
+    response = make_response(render_template('main/dashboard.html',
                          title='Dashboard',
                          stats=stats,
                          recent_workorders=recent_workorders,
                          priority_stats=priority_stats,
                          status_stats=status_stats,
                          uavs_service_due_soon=uavs_service_due_soon,
-                         uavs_service_overdue=uavs_service_overdue)
+                         uavs_service_overdue=uavs_service_overdue))
+    
+    # Prevent caching to ensure statistics are always fresh
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    
+    return response
+
+
+@bp.route('/api/dashboard-stats')
+@login_required
+def dashboard_stats_api():
+    """API endpoint to get fresh dashboard statistics"""
+    from flask import jsonify
+    from app import db
+    
+    # Force refresh of database session
+    db.session.expire_all()
+    
+    # Get current date for filtering
+    today = datetime.now(timezone.utc)
+    
+    # Basic statistics
+    stats = {}
+    
+    if current_user.has_role('admin') or current_user.has_role('manager'):
+        stats['total_workorders'] = WorkOrder.query.count()
+        stats['open_workorders'] = WorkOrder.query.join(WorkOrderStatus).filter(~WorkOrderStatus.is_final).count()
+        stats['overdue_workorders'] = WorkOrder.query.join(WorkOrderStatus).filter(
+            ~WorkOrderStatus.is_final,
+            WorkOrder.due_date < today
+        ).count()
+        stats['completed_workorders'] = WorkOrder.query.join(WorkOrderStatus).filter(WorkOrderStatus.is_final).count()
+    else:
+        # For regular users, show their assigned work orders
+        stats['total_workorders'] = current_user.assigned_workorders.count()
+        stats['open_workorders'] = current_user.assigned_workorders.join(WorkOrderStatus).filter(~WorkOrderStatus.is_final).count()
+        stats['overdue_workorders'] = current_user.assigned_workorders.join(WorkOrderStatus).filter(
+            ~WorkOrderStatus.is_final,
+            WorkOrder.due_date < today
+        ).count()
+        stats['completed_workorders'] = current_user.assigned_workorders.join(WorkOrderStatus).filter(WorkOrderStatus.is_final).count()
+    
+    return jsonify(stats)
 
 @bp.route('/profile')
 @login_required

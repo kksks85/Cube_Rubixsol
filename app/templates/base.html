@@ -70,6 +70,62 @@
                     </li>
                     {% if current_user.role and (current_user.role.name == 'admin' or current_user.role.name == 'manager') %}
                     <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="inventoryDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-boxes me-1"></i> Inventory
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.items') }}">
+                                <i class="fas fa-cubes me-2 text-info"></i> All Items
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.create_item') }}">
+                                <i class="fas fa-plus me-2 text-success"></i> Add Item
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.categories') }}">
+                                <i class="fas fa-tags me-2 text-secondary"></i> Categories
+                            </a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.items', stock_status='low_stock') }}">
+                                <i class="fas fa-exclamation-triangle me-2 text-warning"></i> Low Stock
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.items', stock_status='out_of_stock') }}">
+                                <i class="fas fa-times-circle me-2 text-danger"></i> Out of Stock
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="serviceDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-tools me-1"></i> Service
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('service.dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Service Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('service.incidents') }}">
+                                <i class="fas fa-ticket-alt me-2 text-info"></i> All Incidents
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('service.create_incident') }}">
+                                <i class="fas fa-plus me-2 text-success"></i> New Incident
+                            </a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('service.categories') }}">
+                                <i class="fas fa-tags me-2 text-secondary"></i> Service Categories
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('service.templates') }}">
+                                <i class="fas fa-file-alt me-2 text-warning"></i> Service Templates
+                            </a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('service.incidents') }}?status=URGENT">
+                                <i class="fas fa-exclamation-triangle me-2 text-danger"></i> Urgent Services
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('service.incidents') }}?status=WAITING_PARTS">
+                                <i class="fas fa-clock me-2 text-warning"></i> Waiting Parts
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle px-2" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-cogs me-1"></i> Administration
                         </a>
@@ -216,6 +272,66 @@
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/modern.js') }}"></script>
+    
+    <!-- Dashboard Statistics Refresh Script -->
+    <script>
+        // Function to refresh dashboard statistics
+        function refreshDashboardStats() {
+            fetch('/api/dashboard-stats')
+                .then(response => response.json())
+                .then(data => {
+                    // Update statistics on dashboard if elements exist
+                    const totalElement = document.querySelector('[data-stat="total_workorders"]');
+                    const openElement = document.querySelector('[data-stat="open_workorders"]');
+                    const overdueElement = document.querySelector('[data-stat="overdue_workorders"]');
+                    const completedElement = document.querySelector('[data-stat="completed_workorders"]');
+                    
+                    if (totalElement) totalElement.textContent = data.total_workorders || 0;
+                    if (openElement) openElement.textContent = data.open_workorders || 0;
+                    if (overdueElement) overdueElement.textContent = data.overdue_workorders || 0;
+                    if (completedElement) completedElement.textContent = data.completed_workorders || 0;
+                })
+                .catch(error => {
+                    console.log('Error refreshing dashboard stats:', error);
+                });
+        }
+        
+        // Check if we came from a work order creation or update
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if there's a work order success flash message
+            const flashMessages = document.querySelectorAll('.alert-success');
+            let shouldRefreshDashboard = false;
+            
+            flashMessages.forEach(function(message) {
+                if (message.textContent.includes('work order') || 
+                    message.textContent.includes('Work order') ||
+                    message.textContent.includes('Work Order')) {
+                    shouldRefreshDashboard = true;
+                }
+            });
+            
+            // If on dashboard and should refresh, refresh statistics
+            if (shouldRefreshDashboard && window.location.pathname.includes('dashboard')) {
+                setTimeout(function() {
+                    refreshDashboardStats();
+                }, 500);
+            }
+            
+            // Auto-refresh dashboard stats every 30 seconds if on dashboard
+            if (window.location.pathname.includes('dashboard')) {
+                setInterval(refreshDashboardStats, 30000);
+            }
+            
+            // Add event listener for navigation to dashboard
+            const dashboardLinks = document.querySelectorAll('a[href*="dashboard"]');
+            dashboardLinks.forEach(function(link) {
+                link.addEventListener('click', function() {
+                    // Refresh stats when navigating to dashboard
+                    setTimeout(refreshDashboardStats, 200);
+                });
+            });
+        });
+    </script>
     
     <!-- Theme Toggle Script handled by modern.js -->
     

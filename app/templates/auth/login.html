@@ -1,55 +1,111 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if title %}{{ title }} - CUBE - PRO{% else %}CUBE - PRO - Sign In{% endif %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Professional Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="auth-body">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-{% block content %}
-<div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
-    <div class="row justify-content-center w-100">
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow-lg border-0">
-                <div class="card-header text-center bg-white border-0 py-4">
-                    <h4 class="mb-0 text-dark fw-semibold">
-                        <i class="fas fa-cube me-2 text-primary"></i> CUBE Login
-                    </h4>
-                </div>
-                <div class="card-body p-4">
-                    <form method="POST">
-                        {{ form.hidden_tag() }}
-                        
-                        <div class="mb-3">
-                            {{ form.username.label(class="form-label text-muted small fw-medium") }}
-                            {{ form.username(class="form-control form-control-lg") }}
-                            {% if form.username.errors %}
-                                <div class="text-danger mt-1">
-                                    {% for error in form.username.errors %}
-                                        <small>{{ error }}</small>
-                                    {% endfor %}
+    <!-- Login Container -->
+    <div class="auth-content">
+        <div class="container-fluid">
+            <div class="row justify-content-center align-items-center min-vh-100">
+                <div class="col-md-6 col-lg-4 col-xl-3">
+                    <div class="card shadow-lg border-0 auth-card">
+                        <div class="card-header text-center bg-white border-0 py-4">
+                            <div class="mb-3">
+                                <img src="{{ url_for('static', filename='img/cube.svg') }}" alt="CUBE Logo" style="height:56px;width:56px;object-fit:contain;" class="mb-2">
+                            </div>
+                            <h4 class="mb-0 text-dark fw-semibold">CUBE - PRO</h4>
+                            <p class="text-muted small mb-0 mt-1">Enterprise Work Order Management</p>
+                        </div>
+                        <div class="card-body p-4">
+                            <form method="POST">
+                                {{ form.hidden_tag() }}
+                                
+                                <div class="mb-3">
+                                    {{ form.username.label(class="form-label text-muted small fw-medium") }}
+                                    {{ form.username(class="form-control form-control-lg", placeholder="Enter your username") }}
+                                    {% if form.username.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.username.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form.password.label(class="form-label text-muted small fw-medium") }}
-                            {{ form.password(class="form-control form-control-lg") }}
-                            {% if form.password.errors %}
-                                <div class="text-danger mt-1">
-                                    {% for error in form.password.errors %}
-                                        <small>{{ error }}</small>
-                                    {% endfor %}
+                                
+                                <div class="mb-3">
+                                    {{ form.password.label(class="form-label text-muted small fw-medium") }}
+                                    {{ form.password(class="form-control form-control-lg", placeholder="Enter your password") }}
+                                    {% if form.password.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.password.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
+                                
+                                <div class="mb-4 form-check">
+                                    {{ form.remember_me(class="form-check-input") }}
+                                    {{ form.remember_me.label(class="form-check-label text-muted small") }}
+                                </div>
+                                
+                                <div class="d-grid">
+                                    {{ form.submit(class="btn btn-primary btn-lg fw-semibold") }}
+                                </div>
+                            </form>
                         </div>
-                        
-                        <div class="mb-4 form-check">
-                            {{ form.remember_me(class="form-check-input") }}
-                            {{ form.remember_me.label(class="form-check-label text-muted small") }}
+                        <div class="card-footer bg-light text-center py-3">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt me-1"></i> Secure Access Portal
+                            </small>
                         </div>
-                        
-                        <div class="d-grid">
-                            {{ form.submit(class="btn btn-primary btn-lg fw-semibold") }}
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Auto-hide flash messages -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>

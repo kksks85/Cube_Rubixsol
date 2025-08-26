@@ -141,6 +141,9 @@ def create_workorder():
             )
         
         db.session.commit()
+        
+        # Ensure the session is refreshed to confirm the work order is persisted
+        db.session.refresh(workorder)
 
         # Generate Gate Pass PDF and save to Desktop
         try:

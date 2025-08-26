@@ -9,6 +9,10 @@
                     <i class="fas fa-clipboard"></i> Work Order {{ workorder.work_order_number }}
                 </h4>
                 <div class="btn-group">
+                    <a href="{{ url_for('inventory.work_order_parts', work_order_id=workorder.id) }}" 
+                       class="btn btn-secondary btn-sm">
+                        <i class="fas fa-cogs"></i> Parts
+                    </a>
                     {% if current_user.can_edit_workorder(workorder) %}
                     <a href="{{ url_for('workorders.edit_workorder', id=workorder.id) }}" 
                        class="btn btn-warning btn-sm">
