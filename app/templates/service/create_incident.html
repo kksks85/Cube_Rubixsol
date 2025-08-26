@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-plus text-primary me-2"></i>
+                        Create Service Incident
+                    </h2>
+                    <p class="text-muted">Register new UAV service request</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('service.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Incident Form -->
+    <div class="row">
+        <!-- Process Flow Preview -->
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list-ol text-primary me-2"></i>
+                        Service Workflow Process
+                    </h6>
+                    <small class="text-muted">Your incident will follow this step-by-step process</small>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Workflow Steps -->
+                    <div class="workflow-steps">
+                        <div class="row">
+                            {% set workflow_steps = [
+                                {'step': 1, 'label': 'New', 'description': 'Item received and logged'},
+                                {'step': 2, 'label': 'Assess', 'description': 'Initial inspection'},
+                                {'step': 3, 'label': 'Authorize', 'description': 'Customer approval'},
+                                {'step': 4, 'label': 'Scheduled', 'description': 'Work scheduled'},
+                                {'step': 5, 'label': 'Implement', 'description': 'Repair execution'},
+                                {'step': 6, 'label': 'Review', 'description': 'Quality testing'},
+                                {'step': 7, 'label': 'Closed', 'description': 'Ready for delivery'}
+                            ] %}
+                            {% for step_info in workflow_steps %}
+                            <div class="col-md-3 col-lg-1-5 mb-3">
+                                <div class="step-item text-center">
+                                    <div class="step-circle {{ 'active' if step_info.step == 1 else 'pending' }}">
+                                        {% if step_info.step == 1 %}
+                                            <i class="fas fa-clock"></i>
+                                        {% else %}
+                                            {{ step_info.step }}
+                                        {% endif %}
+                                    </div>
+                                    <h6 class="step-label mt-2 {{ 'text-primary' if step_info.step == 1 else 'text-muted' }}">
+                                        {{ step_info.label }}
+                                    </h6>
+                                    <small class="text-muted">{{ step_info.description }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        Service Details
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.title.label(class="form-label fw-medium") }}
+                                {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                                {% if form.title.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.title.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.incident_type.label(class="form-label fw-medium") }}
+                                {{ form.incident_type(class="form-select" + (" is-invalid" if form.incident_type.errors else "")) }}
+                                {% if form.incident_type.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.incident_type.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.priority.label(class="form-label fw-medium") }}
+                                {{ form.priority(class="form-select" + (" is-invalid" if form.priority.errors else "")) }}
+                                {% if form.priority.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.priority.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.category_id.label(class="form-label fw-medium") }}
+                                {{ form.category_id(class="form-select" + (" is-invalid" if form.category_id.errors else "")) }}
+                                {% if form.category_id.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.category_id.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Product Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.product_id.label(class="form-label fw-medium") }}
+                                {{ form.product_id(class="form-select" + (" is-invalid" if form.product_id.errors else "")) }}
+                                {% if form.product_id.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.product_id.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.technician_id.label(class="form-label fw-medium") }}
+                                {{ form.technician_id(class="form-select" + (" is-invalid" if form.technician_id.errors else "")) }}
+                                {% if form.technician_id.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.technician_id.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Description and Symptoms -->
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label fw-medium") }}
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="4") }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.symptoms.label(class="form-label fw-medium") }}
+                            {{ form.symptoms(class="form-control" + (" is-invalid" if form.symptoms.errors else ""), rows="3") }}
+                            {% if form.symptoms.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.symptoms.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">What did the customer report as issues or problems?</div>
+                        </div>
+
+                        <!-- Customer Information -->
+                        <h6 class="mt-4 mb-3">
+                            <i class="fas fa-user text-primary me-2"></i>
+                            Customer Information
+                        </h6>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.customer_name.label(class="form-label fw-medium") }}
+                                {{ form.customer_name(class="form-control" + (" is-invalid" if form.customer_name.errors else "")) }}
+                                {% if form.customer_name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.customer_name.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.customer_email.label(class="form-label fw-medium") }}
+                                {{ form.customer_email(class="form-control" + (" is-invalid" if form.customer_email.errors else "")) }}
+                                {% if form.customer_email.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.customer_email.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.customer_phone.label(class="form-label fw-medium") }}
+                                {{ form.customer_phone(class="form-control" + (" is-invalid" if form.customer_phone.errors else "")) }}
+                                {% if form.customer_phone.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.customer_phone.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.estimated_completion_date.label(class="form-label fw-medium") }}
+                                {{ form.estimated_completion_date(class="form-control" + (" is-invalid" if form.estimated_completion_date.errors else ""), type="date") }}
+                                {% if form.estimated_completion_date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.estimated_completion_date.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Select estimated completion date (e.g., 2025-08-26)</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.customer_address.label(class="form-label fw-medium") }}
+                            {{ form.customer_address(class="form-control" + (" is-invalid" if form.customer_address.errors else ""), rows="2") }}
+                            {% if form.customer_address.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.customer_address.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Technical Information -->
+                        <h6 class="mt-4 mb-3">
+                            <i class="fas fa-cog text-success me-2"></i>
+                            Technical Information
+                        </h6>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.software_version_before.label(class="form-label fw-medium") }}
+                                {{ form.software_version_before(class="form-control" + (" is-invalid" if form.software_version_before.errors else "")) }}
+                                {% if form.software_version_before.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.software_version_before.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.firmware_version_before.label(class="form-label fw-medium") }}
+                                {{ form.firmware_version_before(class="form-control" + (" is-invalid" if form.firmware_version_before.errors else "")) }}
+                                {% if form.firmware_version_before.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.firmware_version_before.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.estimated_cost.label(class="form-label fw-medium") }}
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ form.estimated_cost(class="form-control" + (" is-invalid" if form.estimated_cost.errors else "")) }}
+                                {% if form.estimated_cost.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.estimated_cost.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <h6 class="mt-4 mb-3">
+                            <i class="fas fa-sticky-note text-warning me-2"></i>
+                            Notes
+                        </h6>
+                        
+                        <div class="mb-3">
+                            {{ form.internal_notes.label(class="form-label fw-medium") }}
+                            {{ form.internal_notes(class="form-control" + (" is-invalid" if form.internal_notes.errors else ""), rows="3") }}
+                            {% if form.internal_notes.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.internal_notes.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Internal notes - not visible to customer</div>
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.customer_notes.label(class="form-label fw-medium") }}
+                            {{ form.customer_notes(class="form-control" + (" is-invalid" if form.customer_notes.errors else ""), rows="3") }}
+                            {% if form.customer_notes.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.customer_notes.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Notes visible to customer</div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-flex justify-content-end">
+                            <a href="{{ url_for('service.dashboard') }}" class="btn btn-outline-secondary me-2">Cancel</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Panel -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-question-circle text-info me-2"></i>
+                        Help & Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>Incident Types:</h6>
+                    <ul class="small">
+                        <li><strong>WARRANTY:</strong> Issues covered under warranty</li>
+                        <li><strong>REPAIR:</strong> Damage repair services</li>
+                        <li><strong>MAINTENANCE:</strong> Routine maintenance</li>
+                        <li><strong>INSPECTION:</strong> Safety and compliance checks</li>
+                        <li><strong>UPGRADE:</strong> Software/hardware upgrades</li>
+                    </ul>
+
+                    <h6 class="mt-3">Priority Levels:</h6>
+                    <ul class="small">
+                        <li><strong>URGENT:</strong> Critical safety issues</li>
+                        <li><strong>HIGH:</strong> UAV grounded, can't operate</li>
+                        <li><strong>MEDIUM:</strong> Performance degradation</li>
+                        <li><strong>LOW:</strong> Minor issues, cosmetic</li>
+                    </ul>
+
+                    <h6 class="mt-3">Tips:</h6>
+                    <ul class="small">
+                        <li>Be specific in the description</li>
+                        <li>Include error messages if any</li>
+                        <li>Note environmental conditions</li>
+                        <li>Mention any recent changes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Workflow Steps */
+.workflow-steps {
+    margin: 0 -5px;
+}
+
+.step-item {
+    padding: 0 5px;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid;
+}
+
+.step-circle.completed {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.step-circle.active {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.step-circle.pending {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+}
+
+.step-label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+@media (min-width: 992px) {
+    .col-lg-1-5 {
+        flex: 0 0 auto;
+        width: 12.5%;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date to today for estimated completion
+    const estimatedCompletionInput = document.getElementById('estimated_completion_date');
+    if (estimatedCompletionInput) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        const minDateTime = now.toISOString().slice(0, 16);
+        estimatedCompletionInput.setAttribute('min', minDateTime);
+        
+        // Add helper text on focus
+        estimatedCompletionInput.addEventListener('focus', function() {
+            const helpText = this.parentNode.querySelector('.form-text');
+            if (helpText) {
+                helpText.style.color = '#007bff';
+                helpText.style.fontWeight = 'bold';
+            }
+        });
+        
+        estimatedCompletionInput.addEventListener('blur', function() {
+            const helpText = this.parentNode.querySelector('.form-text');
+            if (helpText) {
+                helpText.style.color = '#6c757d';
+                helpText.style.fontWeight = 'normal';
+            }
+        });
+        
+        // Validate date format
+        estimatedCompletionInput.addEventListener('change', function() {
+            if (this.value) {
+                const selectedDate = new Date(this.value);
+                const now = new Date();
+                
+                if (selectedDate < now) {
+                    alert('Estimated completion date cannot be in the past.');
+                    this.value = '';
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

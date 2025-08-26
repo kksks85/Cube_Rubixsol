@@ -1,0 +1,511 @@
+{% extends "base.html" %}
+
+{% block title %}{{ incident.incident_number_formatted }} - Service Incident{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-tools me-2"></i>{{ incident.incident_number_formatted }}</h2>
+                    <p class="text-muted mb-0">{{ incident.title }}</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('service.update_status', id=incident.id) }}" class="btn btn-primary me-2">
+                        <i class="fas fa-edit me-1"></i>Update Status
+                    </a>
+                    <a href="{{ url_for('service.incidents') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Process Flow Bar -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Service Workflow Progress</h5>
+                        <span class="badge bg-primary">{{ "%.0f"|format(incident.progress_percentage) }}% Complete</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Progress Bar -->
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar" 
+                             role="progressbar" 
+                             style="width: {{ incident.progress_percentage }}%"
+                             aria-valuenow="{{ incident.progress_percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    
+                    <!-- Workflow Steps -->
+                    <div class="workflow-steps">
+                        <div class="row">
+                            {% for step_info in incident.status_workflow %}
+                            <div class="col-md-3 col-lg-1-5 mb-3">
+                                <div class="step-item text-center">
+                                    <div class="step-circle {{ 'active' if step_info.step == incident.status_step else 'completed' if step_info.step < incident.status_step else 'pending' }}">
+                                        {% if step_info.step < incident.status_step %}
+                                            <i class="fas fa-check"></i>
+                                        {% elif step_info.step == incident.status_step %}
+                                            <i class="fas fa-clock"></i>
+                                        {% else %}
+                                            {{ step_info.step }}
+                                        {% endif %}
+                                    </div>
+                                    <h6 class="step-label mt-2 {{ 'text-primary' if step_info.step == incident.status_step else 'text-success' if step_info.step < incident.status_step else 'text-muted' }}">
+                                        {{ step_info.label }}
+                                    </h6>
+                                    <small class="text-muted">{{ step_info.description }}</small>
+                                    
+                                    <!-- Show timestamp if available -->
+                                    {% set timestamp_field = 'step' + step_info.step|string + '_' + step_info.status.lower() + '_at' %}
+                                    {% if incident[timestamp_field] %}
+                                    <div class="step-timestamp">
+                                        <small class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            {{ incident[timestamp_field].strftime('%m/%d %H:%M') }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="mt-3 text-center">
+                        {% if incident.can_advance_status %}
+                        <button id="quickAdvanceBtn" class="btn btn-success btn-sm">
+                            <i class="fas fa-arrow-right me-1"></i>Quick Advance to Next Step
+                        </button>
+                        {% endif %}
+                        <a href="{{ url_for('service.update_status', id=incident.id) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit me-1"></i>Detailed Status Update
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-md-8">
+            <!-- Incident Details -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Incident Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Status:</strong></div>
+                        <div class="col-sm-9">
+                            <span class="badge bg-{{ 'success' if incident.status == 'COMPLETED' else 'primary' if incident.status == 'IN_PROGRESS' else 'warning' if incident.status == 'DIAGNOSED' else 'secondary' }} me-2">
+                                {{ incident.status }}
+                            </span>
+                            <span class="text-muted">{{ incident.current_status_info.description }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Priority:</strong></div>
+                        <div class="col-sm-9">
+                            <span class="badge bg-{{ 'danger' if incident.priority == 'URGENT' else 'warning' if incident.priority == 'HIGH' else 'info' if incident.priority == 'MEDIUM' else 'secondary' }}">
+                                {{ incident.priority }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Type:</strong></div>
+                        <div class="col-sm-9">{{ incident.incident_type }}</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Description:</strong></div>
+                        <div class="col-sm-9">{{ incident.description }}</div>
+                    </div>
+                    
+                    {% if incident.symptoms %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Symptoms:</strong></div>
+                        <div class="col-sm-9">{{ incident.symptoms }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if incident.diagnosis %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Diagnosis:</strong></div>
+                        <div class="col-sm-9">{{ incident.diagnosis }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if incident.resolution_summary %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Resolution:</strong></div>
+                        <div class="col-sm-9">{{ incident.resolution_summary }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Customer Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-sm-3"><strong>Name:</strong></div>
+                        <div class="col-sm-9">{{ incident.customer_name }}</div>
+                    </div>
+                    {% if incident.customer_email %}
+                    <div class="row mb-2">
+                        <div class="col-sm-3"><strong>Email:</strong></div>
+                        <div class="col-sm-9">
+                            <a href="mailto:{{ incident.customer_email }}">{{ incident.customer_email }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if incident.customer_phone %}
+                    <div class="row mb-2">
+                        <div class="col-sm-3"><strong>Phone:</strong></div>
+                        <div class="col-sm-9">{{ incident.customer_phone }}</div>
+                    </div>
+                    {% endif %}
+                    {% if incident.customer_address %}
+                    <div class="row mb-2">
+                        <div class="col-sm-3"><strong>Address:</strong></div>
+                        <div class="col-sm-9">{{ incident.customer_address }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Service Activities -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Service Activities</h5>
+                </div>
+                <div class="card-body">
+                    {% if activities %}
+                    <div class="timeline">
+                        {% for activity in activities %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker">
+                                <i class="fas fa-{{ 'check' if activity.activity_type == 'completed' else 'cog' if activity.activity_type == 'status_changed' else 'plus' if activity.activity_type == 'created' else 'sticky-note' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">{{ activity.activity_type.replace('_', ' ').title() }}</h6>
+                                <p class="mb-1">{{ activity.description }}</p>
+                                <small class="text-muted">
+                                    {{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }} 
+                                    by {{ activity.user.first_name }} {{ activity.user.last_name }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-history fa-3x mb-3"></i>
+                        <p>No activities recorded yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Parts Used -->
+            {% if parts %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Parts Used</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Part</th>
+                                    <th>Quantity</th>
+                                    <th>Cost</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for part in parts %}
+                                <tr>
+                                    <td>{{ part.inventory_item.name }}</td>
+                                    <td>{{ part.quantity_used }}</td>
+                                    <td>${{ "%.2f"|format(part.total_cost) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if part.status == 'INSTALLED' else 'warning' if part.status == 'RECEIVED' else 'info' }}">
+                                            {{ part.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ part.notes or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Key Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-key me-2"></i>Key Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Incident #:</strong></div>
+                        <div class="col-sm-7">{{ incident.incident_number_formatted }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Product:</strong></div>
+                        <div class="col-sm-7">{{ incident.product.product_name }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Model:</strong></div>
+                        <div class="col-sm-7">{{ incident.product.product_code }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Technician:</strong></div>
+                        <div class="col-sm-7">
+                            {% if incident.technician %}
+                                {{ incident.technician.first_name }} {{ incident.technician.last_name }}
+                            {% else %}
+                                <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Created:</strong></div>
+                        <div class="col-sm-7">{{ incident.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                    </div>
+                    {% if incident.estimated_completion_date %}
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Est. Complete:</strong></div>
+                        <div class="col-sm-7">{{ incident.estimated_completion_date.strftime('%Y-%m-%d') }}</div>
+                    </div>
+                    {% endif %}
+                    {% if incident.actual_completion_date %}
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Completed:</strong></div>
+                        <div class="col-sm-7">{{ incident.actual_completion_date.strftime('%Y-%m-%d %H:%M') }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Cost Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-dollar-sign me-2"></i>Cost Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if incident.estimated_cost %}
+                    <div class="row mb-2">
+                        <div class="col-sm-6"><strong>Estimated:</strong></div>
+                        <div class="col-sm-6">${{ "%.2f"|format(incident.estimated_cost) }}</div>
+                    </div>
+                    {% endif %}
+                    {% if incident.actual_cost %}
+                    <div class="row mb-2">
+                        <div class="col-sm-6"><strong>Actual:</strong></div>
+                        <div class="col-sm-6">${{ "%.2f"|format(incident.actual_cost) }}</div>
+                    </div>
+                    {% endif %}
+                    {% if incident.parts_cost %}
+                    <div class="row mb-2">
+                        <div class="col-sm-6"><strong>Parts:</strong></div>
+                        <div class="col-sm-6">${{ "%.2f"|format(incident.parts_cost) }}</div>
+                    </div>
+                    {% endif %}
+                    {% if incident.labor_cost %}
+                    <div class="row mb-2">
+                        <div class="col-sm-6"><strong>Labor:</strong></div>
+                        <div class="col-sm-6">${{ "%.2f"|format(incident.labor_cost) }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-lightning-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('service.update_status', id=incident.id) }}" class="btn btn-primary">
+                            <i class="fas fa-edit me-1"></i>Update Status
+                        </a>
+                        <a href="{{ url_for('service.add_part', id=incident.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-plus me-1"></i>Add Part
+                        </a>
+                        <a href="{{ url_for('service.edit_incident', id=incident.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i>Edit Incident
+                        </a>
+                        {% if incident.related_workorder %}
+                        <a href="{{ url_for('workorders.view_workorder', id=incident.related_workorder.id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-external-link-alt me-1"></i>View Work Order
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.workflow-steps {
+    margin: 0 -5px;
+}
+
+.step-item {
+    padding: 0 5px;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid;
+}
+
+.step-circle.completed {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.step-circle.active {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+.step-circle.pending {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+}
+
+.step-label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.step-timestamp {
+    margin-top: 5px;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.timeline-content {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 3px solid #007bff;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
+
+@media (min-width: 992px) {
+    .col-lg-1-5 {
+        flex: 0 0 auto;
+        width: 12.5%;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Quick advance status button
+    const quickAdvanceBtn = document.getElementById('quickAdvanceBtn');
+    if (quickAdvanceBtn) {
+        quickAdvanceBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to advance to the next status step?')) {
+                fetch('{{ url_for("service.advance_status", id=incident.id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating the status.');
+                });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -156,6 +156,8 @@ class WorkOrder(db.Model):
     # Relationships
     activities = db.relationship('WorkOrderActivity', backref='workorder', 
                                lazy='dynamic', cascade='all, delete-orphan')
+    parts = db.relationship('WorkOrderPart', backref='workorder', 
+                          lazy='dynamic', cascade='all, delete-orphan')
     
     @property
     def is_overdue(self):
@@ -610,3 +612,611 @@ class EmailTemplate(db.Model):
     
     def __repr__(self):
         return f'<EmailTemplate {self.name}>'
+
+# Inventory Management Models
+
+class InventoryCategory(db.Model):
+    """Categories for inventory items (e.g., UAV Parts, Sensors, Batteries)"""
+    __tablename__ = 'inventory_categories'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    items = db.relationship('InventoryItem', backref='category', lazy='dynamic')
+    
+    def __repr__(self):
+        return f'<InventoryCategory {self.name}>'
+
+class InventoryItem(db.Model):
+    """Individual inventory items/parts"""
+    __tablename__ = 'inventory_items'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    part_number = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    manufacturer = db.Column(db.String(100))
+    model = db.Column(db.String(100))
+    
+    # Stock Information
+    quantity_in_stock = db.Column(db.Integer, default=0, nullable=False)
+    minimum_stock_level = db.Column(db.Integer, default=0)
+    maximum_stock_level = db.Column(db.Integer, default=100)
+    unit_cost = db.Column(db.Numeric(10, 2), default=0.00)
+    
+    # Item Details
+    weight = db.Column(db.Numeric(8, 3))  # in kg
+    dimensions = db.Column(db.String(100))  # e.g., "10x5x2 cm"
+    compatible_uav_models = db.Column(db.Text)  # JSON or comma-separated
+    
+    # Status and Tracking
+    is_active = db.Column(db.Boolean, default=True)
+    last_restocked = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), 
+                          onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Foreign Keys
+    category_id = db.Column(db.Integer, db.ForeignKey('inventory_categories.id'))
+    
+    # Relationships
+    transactions = db.relationship('InventoryTransaction', backref='item', lazy='dynamic')
+    work_order_parts = db.relationship('WorkOrderPart', backref='inventory_item', lazy='dynamic')
+    
+    @property
+    def is_low_stock(self):
+        """Check if item is below minimum stock level"""
+        return self.quantity_in_stock <= self.minimum_stock_level
+    
+    @property
+    def stock_status(self):
+        """Get stock status as string"""
+        if self.quantity_in_stock == 0:
+            return "Out of Stock"
+        elif self.is_low_stock:
+            return "Low Stock"
+        elif self.quantity_in_stock >= self.maximum_stock_level:
+            return "Overstock"
+        else:
+            return "In Stock"
+    
+    def __repr__(self):
+        return f'<InventoryItem {self.part_number}: {self.name}>'
+
+class InventoryTransaction(db.Model):
+    """Track all inventory movements (in/out/adjustments)"""
+    __tablename__ = 'inventory_transactions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    transaction_type = db.Column(db.String(20), nullable=False)  # 'IN', 'OUT', 'ADJUSTMENT'
+    quantity = db.Column(db.Integer, nullable=False)
+    unit_cost = db.Column(db.Numeric(10, 2))
+    total_cost = db.Column(db.Numeric(10, 2))
+    
+    # Reference Information
+    reference_type = db.Column(db.String(50))  # 'PURCHASE', 'WORKORDER', 'ADJUSTMENT', 'RETURN'
+    reference_id = db.Column(db.String(50))  # ID of related record
+    notes = db.Column(db.Text)
+    
+    # Tracking
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    # Foreign Keys
+    item_id = db.Column(db.Integer, db.ForeignKey('inventory_items.id'), nullable=False)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    
+    # Relationships
+    created_by = db.relationship('User', backref='inventory_transactions')
+    
+    def __repr__(self):
+        return f'<InventoryTransaction {self.transaction_type}: {self.quantity} units>'
+
+class WorkOrderPart(db.Model):
+    """Parts requested/used in work orders"""
+    __tablename__ = 'work_order_parts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    quantity_requested = db.Column(db.Integer, nullable=False)
+    quantity_used = db.Column(db.Integer, default=0)
+    status = db.Column(db.String(20), default='REQUESTED')  # 'REQUESTED', 'ALLOCATED', 'USED', 'RETURNED'
+    
+    # Cost tracking
+    unit_cost = db.Column(db.Numeric(10, 2))
+    total_cost = db.Column(db.Numeric(10, 2))
+    
+    # Notes and tracking
+    notes = db.Column(db.Text)
+    requested_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    allocated_at = db.Column(db.DateTime)
+    used_at = db.Column(db.DateTime)
+    
+    # Foreign Keys
+    work_order_id = db.Column(db.Integer, db.ForeignKey('workorders.id'), nullable=False)
+    inventory_item_id = db.Column(db.Integer, db.ForeignKey('inventory_items.id'), nullable=False)
+    requested_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    allocated_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    
+    # Relationships
+    requested_by = db.relationship('User', foreign_keys=[requested_by_id], backref='requested_parts')
+    allocated_by = db.relationship('User', foreign_keys=[allocated_by_id], backref='allocated_parts')
+    
+    @property
+    def status_badge_class(self):
+        """Get Bootstrap badge class for status"""
+        status_classes = {
+            'REQUESTED': 'bg-warning',
+            'ALLOCATED': 'bg-info',
+            'USED': 'bg-success',
+            'RETURNED': 'bg-secondary'
+        }
+        return status_classes.get(self.status, 'bg-secondary')
+    
+    def __repr__(self):
+        return f'<WorkOrderPart WO-{self.work_order_id}: {self.quantity_requested} units>'
+
+
+# Service Management Models
+class ServiceCategory(db.Model):
+    """Categories for UAV service types and defects"""
+    __tablename__ = 'service_categories'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    category_type = db.Column(db.String(50), nullable=False)  # 'HARDWARE', 'SOFTWARE', 'FIRMWARE', 'MAINTENANCE', 'INSPECTION'
+    severity_level = db.Column(db.String(20), default='MEDIUM')  # 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'
+    estimated_service_time = db.Column(db.Integer)  # in hours
+    requires_parts = db.Column(db.Boolean, default=False)
+    requires_software_update = db.Column(db.Boolean, default=False)
+    requires_firmware_update = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    service_incidents = db.relationship('ServiceIncident', backref='service_category', lazy='dynamic')
+    
+    def __repr__(self):
+        return f'<ServiceCategory {self.name}>'
+
+
+class ServiceIncident(db.Model):
+    """Service incidents/tickets for UAV products"""
+    __tablename__ = 'service_incidents'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    incident_number = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    
+    # Incident Details
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    symptoms = db.Column(db.Text)  # What the customer reported
+    diagnosis = db.Column(db.Text)  # Technical diagnosis
+    
+    # Service Information
+    incident_type = db.Column(db.String(50), nullable=False)  # 'WARRANTY', 'REPAIR', 'MAINTENANCE', 'INSPECTION', 'UPGRADE'
+    priority = db.Column(db.String(20), default='MEDIUM')  # 'LOW', 'MEDIUM', 'HIGH', 'URGENT'
+    status = db.Column(db.String(30), default='RECEIVED')  # Main status
+    
+    # Detailed Status Tracking (Step-by-step process)
+    status_step = db.Column(db.Integer, default=1)  # Current step number (1-8)
+    status_details = db.Column(db.String(50), default='INTAKE_RECEIVED')  # Detailed status
+    
+    # Status timestamps for tracking
+    step1_received_at = db.Column(db.DateTime)  # Item received
+    step2_initial_inspection_at = db.Column(db.DateTime)  # Initial inspection
+    step3_diagnosis_at = db.Column(db.DateTime)  # Diagnosis completed
+    step4_approval_at = db.Column(db.DateTime)  # Customer approval
+    step5_parts_ordered_at = db.Column(db.DateTime)  # Parts ordered (if needed)
+    step6_repair_started_at = db.Column(db.DateTime)  # Repair work started
+    step7_testing_at = db.Column(db.DateTime)  # Testing and QC
+    step8_completed_at = db.Column(db.DateTime)  # Ready for pickup/delivery
+    
+    # Customer Information
+    customer_name = db.Column(db.String(200), nullable=False)
+    customer_email = db.Column(db.String(120))
+    customer_phone = db.Column(db.String(20))
+    customer_address = db.Column(db.Text)
+    
+    # Service Tracking
+    received_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    diagnosis_date = db.Column(db.DateTime)
+    estimated_completion_date = db.Column(db.DateTime)
+    actual_completion_date = db.Column(db.DateTime)
+    returned_to_customer_date = db.Column(db.DateTime)
+    
+    # Cost Information
+    estimated_cost = db.Column(db.Numeric(10, 2))
+    actual_cost = db.Column(db.Numeric(10, 2), default=0.00)
+    parts_cost = db.Column(db.Numeric(10, 2), default=0.00)
+    labor_cost = db.Column(db.Numeric(10, 2), default=0.00)
+    
+    # Technical Information
+    software_version_before = db.Column(db.String(50))
+    software_version_after = db.Column(db.String(50))
+    firmware_version_before = db.Column(db.String(50))
+    firmware_version_after = db.Column(db.String(50))
+    
+    # Service Notes
+    internal_notes = db.Column(db.Text)  # Internal technician notes
+    customer_notes = db.Column(db.Text)  # Notes visible to customer
+    resolution_summary = db.Column(db.Text)  # Final resolution summary
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), 
+                          onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Foreign Keys
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('service_categories.id'))
+    technician_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Assigned technician
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    related_workorder_id = db.Column(db.Integer, db.ForeignKey('workorders.id'))  # Auto-generated work order
+    
+    # Relationships
+    product = db.relationship('Product', backref='service_incidents')
+    technician = db.relationship('User', foreign_keys=[technician_id], backref='assigned_service_incidents')
+    creator = db.relationship('User', foreign_keys=[created_by_id], backref='created_service_incidents')
+    related_workorder = db.relationship('WorkOrder', backref='service_incident')
+    service_parts = db.relationship('ServicePart', backref='service_incident', lazy='dynamic', cascade='all, delete-orphan')
+    service_activities = db.relationship('ServiceActivity', backref='service_incident', lazy='dynamic', cascade='all, delete-orphan')
+    software_updates = db.relationship('ServiceSoftwareUpdate', backref='service_incident', lazy='dynamic', cascade='all, delete-orphan')
+    
+    @property
+    def incident_number_formatted(self):
+        """Return formatted incident number"""
+        return f"SVC-{self.id:06d}"
+    
+    @property
+    def is_overdue(self):
+        """Check if service is overdue"""
+        if self.estimated_completion_date and self.status not in ['COMPLETED', 'CLOSED']:
+            return datetime.now(timezone.utc) > self.estimated_completion_date.replace(tzinfo=timezone.utc)
+        return False
+    
+    @property
+    def service_duration_days(self):
+        """Calculate service duration in days"""
+        end_date = self.actual_completion_date or datetime.now(timezone.utc)
+        start_date = self.received_date.replace(tzinfo=timezone.utc)
+        return (end_date - start_date).days
+    
+    @property
+    def status_workflow(self):
+        """Return the complete status workflow"""
+        return [
+            {'step': 1, 'status': 'INTAKE_RECEIVED', 'label': 'Received', 'description': 'Item received and logged'},
+            {'step': 2, 'status': 'INITIAL_INSPECTION', 'label': 'Inspection', 'description': 'Initial inspection and assessment'},
+            {'step': 3, 'status': 'DIAGNOSIS_COMPLETE', 'label': 'Diagnosis', 'description': 'Problem diagnosis completed'},
+            {'step': 4, 'status': 'AWAITING_APPROVAL', 'label': 'Approval', 'description': 'Awaiting customer approval'},
+            {'step': 5, 'status': 'PARTS_PROCUREMENT', 'label': 'Parts', 'description': 'Parts ordered/procured'},
+            {'step': 6, 'status': 'REPAIR_IN_PROGRESS', 'label': 'Repair', 'description': 'Repair work in progress'},
+            {'step': 7, 'status': 'TESTING_QC', 'label': 'Testing', 'description': 'Testing and quality control'},
+            {'step': 8, 'status': 'READY_FOR_PICKUP', 'label': 'Complete', 'description': 'Ready for pickup/delivery'}
+        ]
+    
+    @property
+    def current_status_info(self):
+        """Get current status information"""
+        workflow = self.status_workflow
+        for step_info in workflow:
+            if step_info['step'] == self.status_step:
+                return step_info
+        return workflow[0]  # Default to first step
+    
+    @property
+    def progress_percentage(self):
+        """Calculate progress percentage"""
+        return (self.status_step / 8) * 100
+    
+    @property
+    def can_advance_status(self):
+        """Check if status can be advanced to next step"""
+        return self.status_step < 8
+    
+    @property
+    def can_go_back_status(self):
+        """Check if status can go back to previous step"""
+        return self.status_step > 1
+    
+    def advance_status(self, user, notes=None):
+        """Advance to next status step"""
+        if not self.can_advance_status:
+            return False
+        
+        current_time = datetime.now(timezone.utc)
+        old_step = self.status_step
+        old_status = self.status_details
+        
+        # Advance step
+        self.status_step += 1
+        
+        # Update status details and timestamps
+        workflow = self.status_workflow
+        new_status_info = None
+        for step_info in workflow:
+            if step_info['step'] == self.status_step:
+                new_status_info = step_info
+                break
+        
+        if new_status_info:
+            self.status_details = new_status_info['status']
+            
+            # Set timestamp for current step
+            timestamp_field = f'step{self.status_step}_{new_status_info["status"].lower()}_at'
+            if hasattr(self, timestamp_field):
+                setattr(self, timestamp_field, current_time)
+            
+            # Update main status based on step
+            if self.status_step <= 2:
+                self.status = 'RECEIVED'
+            elif self.status_step <= 4:
+                self.status = 'DIAGNOSED'
+            elif self.status_step <= 6:
+                self.status = 'IN_PROGRESS'
+            elif self.status_step == 7:
+                self.status = 'TESTING'
+            else:
+                self.status = 'COMPLETED'
+                self.actual_completion_date = current_time
+        
+        # Log activity
+        activity_notes = notes or f'Status advanced from step {old_step} to step {self.status_step}'
+        self.add_activity(user, 'status_change', activity_notes)
+        
+        return True
+    
+    def set_status_step(self, step, user, notes=None):
+        """Set specific status step"""
+        if step < 1 or step > 8:
+            return False
+        
+        old_step = self.status_step
+        self.status_step = step
+        
+        # Update status details
+        workflow = self.status_workflow
+        for step_info in workflow:
+            if step_info['step'] == step:
+                self.status_details = step_info['status']
+                break
+        
+        # Update main status
+        if self.status_step <= 2:
+            self.status = 'RECEIVED'
+        elif self.status_step <= 4:
+            self.status = 'DIAGNOSED'
+        elif self.status_step <= 6:
+            self.status = 'IN_PROGRESS'
+        elif self.status_step == 7:
+            self.status = 'TESTING'
+        else:
+            self.status = 'COMPLETED'
+            if not self.actual_completion_date:
+                self.actual_completion_date = datetime.now(timezone.utc)
+        
+        # Log activity
+        activity_notes = notes or f'Status changed from step {old_step} to step {self.status_step}'
+        self.add_activity(user, 'status_change', activity_notes)
+        
+        return True
+    
+    def initialize_workflow(self):
+        """Initialize the workflow when incident is created"""
+        self.status_step = 1
+        self.status_details = 'INTAKE_RECEIVED'
+        self.step1_received_at = datetime.now(timezone.utc)
+        self.status = 'RECEIVED'
+    
+    def generate_work_order(self):
+        """Generate a work order for this service incident"""
+        if not self.related_workorder_id:
+            # Create work order
+            work_order = WorkOrder(
+                title=f"Service: {self.title}",
+                description=f"Service incident #{self.incident_number_formatted}\n\n{self.description}",
+                product_name=f"{self.product.product_name} ({self.product.product_code})",
+                owner_name=self.customer_name,
+                estimated_hours=self.service_category.estimated_service_time if self.service_category else 8,
+                cost_estimate=self.estimated_cost,
+                created_by_id=self.created_by_id,
+                assigned_to_id=self.technician_id,
+                priority_id=self._get_priority_id(),
+                category_id=self._get_category_id(),
+                status_id=1  # Set to "Draft" status by default
+            )
+            db.session.add(work_order)
+            db.session.flush()
+            
+            self.related_workorder_id = work_order.id
+            
+            # Add activity
+            work_order.add_activity(
+                user=self.creator,
+                activity_type='created',
+                description=f'Work order created from service incident {self.incident_number_formatted}'
+            )
+            
+            return work_order
+        return self.related_workorder
+    
+    def _get_priority_id(self):
+        """Get priority ID based on service priority"""
+        priority_mapping = {
+            'LOW': 1,
+            'MEDIUM': 2, 
+            'HIGH': 3,
+            'URGENT': 4
+        }
+        return priority_mapping.get(self.priority, 2)
+    
+    def _get_category_id(self):
+        """Get work order category ID for service"""
+        # You may want to create a "Service" category in categories table
+        return 1  # Default category
+    
+    def add_activity(self, user, activity_type, description):
+        """Add service activity log entry"""
+        activity = ServiceActivity(
+            service_incident_id=self.id,
+            user_id=user.id,
+            activity_type=activity_type,
+            description=description
+        )
+        db.session.add(activity)
+        return activity
+    
+    def __repr__(self):
+        return f'<ServiceIncident {self.incident_number_formatted}: {self.title}>'
+
+
+class ServicePart(db.Model):
+    """Parts used in service incidents"""
+    __tablename__ = 'service_parts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    quantity_used = db.Column(db.Integer, nullable=False, default=1)
+    unit_cost = db.Column(db.Numeric(10, 2))
+    total_cost = db.Column(db.Numeric(10, 2))
+    status = db.Column(db.String(30), default='REQUIRED')  # 'REQUIRED', 'ORDERED', 'RECEIVED', 'INSTALLED'
+    notes = db.Column(db.Text)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    installed_at = db.Column(db.DateTime)
+    
+    # Foreign Keys
+    service_incident_id = db.Column(db.Integer, db.ForeignKey('service_incidents.id'), nullable=False)
+    inventory_item_id = db.Column(db.Integer, db.ForeignKey('inventory_items.id'), nullable=False)
+    installed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    
+    # Relationships
+    inventory_item = db.relationship('InventoryItem', backref='service_parts')
+    installed_by = db.relationship('User', backref='installed_service_parts')
+    
+    def install_part(self, user):
+        """Mark part as installed and update inventory"""
+        self.status = 'INSTALLED'
+        self.installed_at = datetime.now(timezone.utc)
+        self.installed_by_id = user.id
+        
+        # Create inventory transaction
+        transaction = InventoryTransaction(
+            item_id=self.inventory_item_id,
+            transaction_type='OUT',
+            quantity=self.quantity_used,
+            unit_cost=self.unit_cost,
+            total_cost=self.total_cost,
+            reference_type='SERVICE',
+            reference_id=self.service_incident_id,
+            notes=f'Used in service incident {self.service_incident.incident_number_formatted}',
+            created_by_id=user.id
+        )
+        db.session.add(transaction)
+        
+        # Update inventory quantity
+        self.inventory_item.quantity_in_stock -= self.quantity_used
+        
+    def __repr__(self):
+        return f'<ServicePart {self.id}: {self.inventory_item.name if self.inventory_item else "N/A"}>'
+
+
+class ServiceActivity(db.Model):
+    """Activity log for service incidents"""
+    __tablename__ = 'service_activities'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    activity_type = db.Column(db.String(50), nullable=False)  # 'received', 'diagnosed', 'parts_ordered', 'repair_started', 'completed', etc.
+    description = db.Column(db.Text, nullable=False)
+    is_customer_visible = db.Column(db.Boolean, default=True)  # Whether customer can see this activity
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    # Foreign Keys
+    service_incident_id = db.Column(db.Integer, db.ForeignKey('service_incidents.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Relationships
+    user = db.relationship('User', backref='service_activities')
+    
+    def __repr__(self):
+        return f'<ServiceActivity {self.id}: {self.activity_type}>'
+
+
+class ServiceSoftwareUpdate(db.Model):
+    """Track software/firmware updates during service"""
+    __tablename__ = 'service_software_updates'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    update_type = db.Column(db.String(20), nullable=False)  # 'SOFTWARE', 'FIRMWARE', 'DRIVER', 'CONFIG'
+    component_name = db.Column(db.String(100), nullable=False)  # 'Flight Controller', 'Camera Module', etc.
+    version_before = db.Column(db.String(50))
+    version_after = db.Column(db.String(50), nullable=False)
+    update_method = db.Column(db.String(50))  # 'OTA', 'USB', 'SD_CARD', 'MANUAL'
+    status = db.Column(db.String(30), default='PENDING')  # 'PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED'
+    
+    # Update Details
+    update_file_path = db.Column(db.String(255))  # Path to update file
+    checksum = db.Column(db.String(64))  # File checksum for verification
+    update_notes = db.Column(db.Text)
+    failure_reason = db.Column(db.Text)  # If update failed
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    started_at = db.Column(db.DateTime)
+    completed_at = db.Column(db.DateTime)
+    
+    # Foreign Keys
+    service_incident_id = db.Column(db.Integer, db.ForeignKey('service_incidents.id'), nullable=False)
+    performed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Relationships
+    performed_by = db.relationship('User', backref='performed_software_updates')
+    
+    def start_update(self):
+        """Mark update as started"""
+        self.status = 'IN_PROGRESS'
+        self.started_at = datetime.now(timezone.utc)
+    
+    def complete_update(self, success=True, failure_reason=None):
+        """Mark update as completed or failed"""
+        self.status = 'COMPLETED' if success else 'FAILED'
+        self.completed_at = datetime.now(timezone.utc)
+        if not success and failure_reason:
+            self.failure_reason = failure_reason
+    
+    def __repr__(self):
+        return f'<ServiceSoftwareUpdate {self.id}: {self.component_name} {self.version_after}>'
+
+
+class ServiceTemplate(db.Model):
+    """Templates for common service procedures"""
+    __tablename__ = 'service_templates'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    procedure_steps = db.Column(db.Text)  # JSON or structured text
+    estimated_time = db.Column(db.Integer)  # in hours
+    required_tools = db.Column(db.Text)  # JSON or comma-separated
+    safety_notes = db.Column(db.Text)
+    
+    # Template Categories
+    template_type = db.Column(db.String(50), nullable=False)  # 'REPAIR', 'MAINTENANCE', 'INSPECTION', 'UPGRADE'
+    applicable_models = db.Column(db.Text)  # JSON or comma-separated product codes
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), 
+                          onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Foreign Keys
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('service_categories.id'))
+    
+    # Relationships
+    creator = db.relationship('User', backref='created_service_templates')
+    
+    def __repr__(self):
+        return f'<ServiceTemplate {self.name}>'

@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Update Status - {{ incident.incident_number_formatted }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-cogs me-2"></i>Update Service Status</h2>
+                    <p class="text-muted mb-0">{{ incident.incident_number_formatted }} - {{ incident.title }}</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('service.view_incident', id=incident.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Incident
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Process Flow Bar -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Service Workflow Progress</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Progress Bar -->
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar" 
+                             role="progressbar" 
+                             style="width: {{ incident.progress_percentage }}%"
+                             aria-valuenow="{{ incident.progress_percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    
+                    <!-- Workflow Steps -->
+                    <div class="workflow-steps">
+                        <div class="row">
+                            {% for step_info in incident.status_workflow %}
+                            <div class="col-md-3 col-lg-1-5 mb-3">
+                                <div class="step-item text-center">
+                                    <div class="step-circle {{ 'active' if step_info.step == incident.status_step else 'completed' if step_info.step < incident.status_step else 'pending' }}">
+                                        {% if step_info.step < incident.status_step %}
+                                            <i class="fas fa-check"></i>
+                                        {% elif step_info.step == incident.status_step %}
+                                            <i class="fas fa-clock"></i>
+                                        {% else %}
+                                            {{ step_info.step }}
+                                        {% endif %}
+                                    </div>
+                                    <h6 class="step-label mt-2 {{ 'text-primary' if step_info.step == incident.status_step else 'text-success' if step_info.step < incident.status_step else 'text-muted' }}">
+                                        {{ step_info.label }}
+                                    </h6>
+                                    <small class="text-muted">{{ step_info.description }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Update Form -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Update Status</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Current Status Information -->
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Current Status</h6>
+                            <p class="mb-1"><strong>Step {{ incident.status_step }}:</strong> {{ incident.current_status_info.label }}</p>
+                            <p class="mb-0">{{ incident.current_status_info.description }}</p>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="btn-group w-100" role="group">
+                                    {% if incident.can_advance_status %}
+                                    <button type="submit" name="advance_status" class="btn btn-primary">
+                                        <i class="fas fa-arrow-right me-1"></i>Advance to Next Step
+                                    </button>
+                                    {% endif %}
+                                    <button type="submit" name="add_notes_only" class="btn btn-outline-secondary">
+                                        <i class="fas fa-sticky-note me-1"></i>Add Notes Only
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Step Selection -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.status_step.id }}" class="form-label">{{ form.status_step.label }}</label>
+                                {{ form.status_step(class="form-select") }}
+                                <div class="form-text">Select a specific step to jump to (use with "Set Specific Status" button)</div>
+                            </div>
+                        </div>
+
+                        <!-- Status Notes -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.status_notes.id }}" class="form-label">{{ form.status_notes.label }}</label>
+                                {{ form.status_notes(class="form-control", rows="3", placeholder="Add notes about this status change...") }}
+                            </div>
+                        </div>
+
+                        <!-- Conditional Fields Based on Status -->
+                        {% if incident.status_step >= 3 %}
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.diagnosis.id }}" class="form-label">{{ form.diagnosis.label }}</label>
+                                {{ form.diagnosis(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if incident.status_step >= 4 %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.estimated_cost.id }}" class="form-label">{{ form.estimated_cost.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.estimated_cost(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.customer_approval_notes.id }}" class="form-label">{{ form.customer_approval_notes.label }}</label>
+                                {{ form.customer_approval_notes(class="form-control") }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if incident.status_step >= 5 %}
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.parts_needed.id }}" class="form-label">{{ form.parts_needed.label }}</label>
+                                {{ form.parts_needed(class="form-control", rows="2") }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if incident.status_step >= 6 %}
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.repair_notes.id }}" class="form-label">{{ form.repair_notes.label }}</label>
+                                {{ form.repair_notes(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if incident.status_step >= 7 %}
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.testing_results.id }}" class="form-label">{{ form.testing_results.label }}</label>
+                                {{ form.testing_results(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if incident.status_step >= 8 %}
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.completion_notes.id }}" class="form-label">{{ form.completion_notes.label }}</label>
+                                {{ form.completion_notes(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Submit Buttons -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="btn-group w-100" role="group">
+                                    <button type="submit" name="set_specific_status" class="btn btn-success">
+                                        <i class="fas fa-save me-1"></i>Set Specific Status
+                                    </button>
+                                    <a href="{{ url_for('service.view_incident', id=incident.id) }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i>Cancel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Incident Summary -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Incident Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Incident #:</strong></div>
+                        <div class="col-sm-7">{{ incident.incident_number_formatted }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Customer:</strong></div>
+                        <div class="col-sm-7">{{ incident.customer_name }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Product:</strong></div>
+                        <div class="col-sm-7">{{ incident.product.product_name }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Priority:</strong></div>
+                        <div class="col-sm-7">
+                            <span class="badge bg-{{ 'danger' if incident.priority == 'URGENT' else 'warning' if incident.priority == 'HIGH' else 'info' if incident.priority == 'MEDIUM' else 'secondary' }}">
+                                {{ incident.priority }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Type:</strong></div>
+                        <div class="col-sm-7">{{ incident.incident_type }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Technician:</strong></div>
+                        <div class="col-sm-7">
+                            {% if incident.technician %}
+                                {{ incident.technician.first_name }} {{ incident.technician.last_name }}
+                            {% else %}
+                                <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Created:</strong></div>
+                        <div class="col-sm-7">{{ incident.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                    </div>
+                    {% if incident.estimated_completion_date %}
+                    <div class="row mb-2">
+                        <div class="col-sm-5"><strong>Est. Complete:</strong></div>
+                        <div class="col-sm-7">{{ incident.estimated_completion_date.strftime('%Y-%m-%d') }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.workflow-steps {
+    margin: 0 -5px;
+}
+
+.step-item {
+    padding: 0 5px;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid;
+}
+
+.step-circle.completed {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.step-circle.active {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+.step-circle.pending {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+}
+
+.step-label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
+
+@media (min-width: 992px) {
+    .col-lg-1-5 {
+        flex: 0 0 auto;
+        width: 12.5%;
+    }
+}
+</style>
+{% endblock %}
