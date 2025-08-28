@@ -56,34 +56,6 @@
     </div>
     {% endif %}
 
-    <!-- Search and Filters -->
-    <div class="row mb-4">
-        <div class="col">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <form method="POST" class="row g-3">
-                        {{ form.hidden_tag() }}
-                        <div class="col-md-4">
-                            {{ form.search_term.label(class="form-label small fw-medium") }}
-                            {{ form.search_term(class="form-control", placeholder="Search by name, part number, or manufacturer") }}
-                        </div>
-                        <div class="col-md-3">
-                            {{ form.category_id.label(class="form-label small fw-medium") }}
-                            {{ form.category_id(class="form-select") }}
-                        </div>
-                        <div class="col-md-3">
-                            {{ form.stock_status.label(class="form-label small fw-medium") }}
-                            {{ form.stock_status(class="form-select") }}
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            {{ form.submit(class="btn btn-primary w-100") }}
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Items List -->
     <div class="row">
         <div class="col">
@@ -94,6 +66,163 @@
                             Items ({{ items.total }} total)
                         </h5>
                         <div class="d-flex gap-2">
+                            <!-- Filter Toggle -->
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="toggle-filters">
+                                <i class="fas fa-filter me-1"></i> Filters
+                            </button>
+                            <!-- Export Dropdown -->
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-download me-1"></i> Export
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                                    <li class="dropdown-header">Export Current View</li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="exportData('excel')">
+                                            <i class="fas fa-file-excel text-success me-2"></i>Excel (.xlsx)
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="exportData('csv')">
+                                            <i class="fas fa-file-csv text-info me-2"></i>CSV (.csv)
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="exportData('xml')">
+                                            <i class="fas fa-file-code text-warning me-2"></i>XML (.xml)
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- Column Visibility Controls -->
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="columnToggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-columns me-1"></i> Columns
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="columnToggle" style="min-width: 220px;">
+                                    <li class="dropdown-header">Show/Hide Columns</li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="part-number" id="toggle-part-number" checked>
+                                            <label class="form-check-label" for="toggle-part-number">Part Number</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="name" id="toggle-name" checked>
+                                            <label class="form-check-label" for="toggle-name">Name</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="description" id="toggle-description">
+                                            <label class="form-check-label" for="toggle-description">Description</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="category" id="toggle-category" checked>
+                                            <label class="form-check-label" for="toggle-category">Category</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="manufacturer" id="toggle-manufacturer" checked>
+                                            <label class="form-check-label" for="toggle-manufacturer">Manufacturer</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="model" id="toggle-model">
+                                            <label class="form-check-label" for="toggle-model">Model</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="stock" id="toggle-stock" checked>
+                                            <label class="form-check-label" for="toggle-stock">Stock</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="min-stock" id="toggle-min-stock">
+                                            <label class="form-check-label" for="toggle-min-stock">Min Stock</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="max-stock" id="toggle-max-stock">
+                                            <label class="form-check-label" for="toggle-max-stock">Max Stock</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="condition" id="toggle-condition" checked>
+                                            <label class="form-check-label" for="toggle-condition">Condition</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="status" id="toggle-status" checked>
+                                            <label class="form-check-label" for="toggle-status">Status</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="unit-cost" id="toggle-unit-cost" checked>
+                                            <label class="form-check-label" for="toggle-unit-cost">Unit Cost</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="weight" id="toggle-weight">
+                                            <label class="form-check-label" for="toggle-weight">Weight</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="dimensions" id="toggle-dimensions">
+                                            <label class="form-check-label" for="toggle-dimensions">Dimensions</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="compatible-models" id="toggle-compatible-models">
+                                            <label class="form-check-label" for="toggle-compatible-models">Compatible UAVs</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="last-restocked" id="toggle-last-restocked">
+                                            <label class="form-check-label" for="toggle-last-restocked">Last Restocked</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check dropdown-item-text">
+                                            <input class="form-check-input column-toggle" type="checkbox" value="created-at" id="toggle-created-at">
+                                            <label class="form-check-label" for="toggle-created-at">Created Date</label>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item" type="button" id="show-all-columns">
+                                            <i class="fas fa-eye me-1"></i> Show All
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" type="button" id="hide-all-columns">
+                                            <i class="fas fa-eye-slash me-1"></i> Hide All
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" type="button" id="reset-columns">
+                                            <i class="fas fa-undo me-1"></i> Reset to Default
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
                             <a href="{{ url_for('inventory.dashboard') }}" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-1"></i> Dashboard
                             </a>
@@ -106,40 +235,190 @@
                             <table class="table table-hover mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Part Number</th>
-                                        <th>Name</th>
-                                        <th>Category</th>
-                                        <th>Manufacturer</th>
-                                        <th>Stock</th>
-                                        <th>Condition</th>
-                                        <th>Status</th>
-                                        <th>Unit Cost</th>
+                                        <th data-column="part-number">Part Number</th>
+                                        <th data-column="name">Name</th>
+                                        <th data-column="description" style="display: none;">Description</th>
+                                        <th data-column="category">Category</th>
+                                        <th data-column="manufacturer">Manufacturer</th>
+                                        <th data-column="model" style="display: none;">Model</th>
+                                        <th data-column="stock">Stock</th>
+                                        <th data-column="min-stock" style="display: none;">Min Stock</th>
+                                        <th data-column="max-stock" style="display: none;">Max Stock</th>
+                                        <th data-column="condition">Condition</th>
+                                        <th data-column="status">Status</th>
+                                        <th data-column="unit-cost">Unit Cost</th>
+                                        <th data-column="weight" style="display: none;">Weight</th>
+                                        <th data-column="dimensions" style="display: none;">Dimensions</th>
+                                        <th data-column="compatible-models" style="display: none;">Compatible UAVs</th>
+                                        <th data-column="last-restocked" style="display: none;">Last Restocked</th>
+                                        <th data-column="created-at" style="display: none;">Created Date</th>
                                         <th class="text-end">Actions</th>
+                                    </tr>
+                                    <!-- Filter Row -->
+                                    <tr class="filter-row bg-light">
+                                        <th data-column="part-number">
+                                            <input type="text" class="form-control form-control-sm column-filter" 
+                                                   data-column="part-number" placeholder="Filter part number..." 
+                                                   data-filter-type="text">
+                                        </th>
+                                        <th data-column="name">
+                                            <input type="text" class="form-control form-control-sm column-filter" 
+                                                   data-column="name" placeholder="Filter name..." 
+                                                   data-filter-type="text">
+                                        </th>
+                                        <th data-column="description" style="display: none;">
+                                            <input type="text" class="form-control form-control-sm column-filter" 
+                                                   data-column="description" placeholder="Filter description..." 
+                                                   data-filter-type="text">
+                                        </th>
+                                        <th data-column="category">
+                                            <select class="form-select form-select-sm column-filter" 
+                                                    data-column="category" data-filter-type="select">
+                                                <option value="">All Categories</option>
+                                                {% for category in categories %}
+                                                <option value="{{ category.name }}">{{ category.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </th>
+                                        <th data-column="manufacturer">
+                                            <input type="text" class="form-control form-control-sm column-filter" 
+                                                   data-column="manufacturer" placeholder="Filter manufacturer..." 
+                                                   data-filter-type="text">
+                                        </th>
+                                        <th data-column="model" style="display: none;">
+                                            <input type="text" class="form-control form-control-sm column-filter" 
+                                                   data-column="model" placeholder="Filter model..." 
+                                                   data-filter-type="text">
+                                        </th>
+                                        <th data-column="stock">
+                                            <div class="d-flex gap-1">
+                                                <input type="number" class="form-control form-control-sm column-filter" 
+                                                       data-column="stock" data-filter-type="number" data-filter-operator="gte"
+                                                       placeholder="Min" style="width: 60px;">
+                                                <input type="number" class="form-control form-control-sm column-filter" 
+                                                       data-column="stock" data-filter-type="number" data-filter-operator="lte"
+                                                       placeholder="Max" style="width: 60px;">
+                                            </div>
+                                        </th>
+                                        <th data-column="min-stock" style="display: none;">
+                                            <div class="d-flex gap-1">
+                                                <input type="number" class="form-control form-control-sm column-filter" 
+                                                       data-column="min-stock" data-filter-type="number" data-filter-operator="gte"
+                                                       placeholder="Min" style="width: 60px;">
+                                                <input type="number" class="form-control form-control-sm column-filter" 
+                                                       data-column="min-stock" data-filter-type="number" data-filter-operator="lte"
+                                                       placeholder="Max" style="width: 60px;">
+                                            </div>
+                                        </th>
+                                        <th data-column="max-stock" style="display: none;">
+                                            <div class="d-flex gap-1">
+                                                <input type="number" class="form-control form-control-sm column-filter" 
+                                                       data-column="max-stock" data-filter-type="number" data-filter-operator="gte"
+                                                       placeholder="Min" style="width: 60px;">
+                                                <input type="number" class="form-control form-control-sm column-filter" 
+                                                       data-column="max-stock" data-filter-type="number" data-filter-operator="lte"
+                                                       placeholder="Max" style="width: 60px;">
+                                            </div>
+                                        </th>
+                                        <th data-column="condition">
+                                            <select class="form-select form-select-sm column-filter" 
+                                                    data-column="condition" data-filter-type="select">
+                                                <option value="">All Conditions</option>
+                                                <option value="New">New</option>
+                                                <option value="Used">Used</option>
+                                                <option value="Refurbished">Refurbished</option>
+                                                <option value="Damaged">Damaged</option>
+                                            </select>
+                                        </th>
+                                        <th data-column="status">
+                                            <select class="form-select form-select-sm column-filter" 
+                                                    data-column="status" data-filter-type="select">
+                                                <option value="">All Status</option>
+                                                <option value="Available">Available</option>
+                                                <option value="Reserved">Reserved</option>
+                                                <option value="Out of Stock">Out of Stock</option>
+                                                <option value="Discontinued">Discontinued</option>
+                                            </select>
+                                        </th>
+                                        <th data-column="unit-cost">
+                                            <div class="d-flex gap-1">
+                                                <input type="number" class="form-control form-control-sm column-filter" 
+                                                       data-column="unit-cost" data-filter-type="number" data-filter-operator="gte"
+                                                       placeholder="Min $" style="width: 70px;" step="0.01">
+                                                <input type="number" class="form-control form-control-sm column-filter" 
+                                                       data-column="unit-cost" data-filter-type="number" data-filter-operator="lte"
+                                                       placeholder="Max $" style="width: 70px;" step="0.01">
+                                            </div>
+                                        </th>
+                                        <th data-column="weight" style="display: none;">
+                                            <input type="text" class="form-control form-control-sm column-filter" 
+                                                   data-column="weight" placeholder="Filter weight..." 
+                                                   data-filter-type="text">
+                                        </th>
+                                        <th data-column="dimensions" style="display: none;">
+                                            <input type="text" class="form-control form-control-sm column-filter" 
+                                                   data-column="dimensions" placeholder="Filter dimensions..." 
+                                                   data-filter-type="text">
+                                        </th>
+                                        <th data-column="compatible-models" style="display: none;">
+                                            <input type="text" class="form-control form-control-sm column-filter" 
+                                                   data-column="compatible-models" placeholder="Filter models..." 
+                                                   data-filter-type="text">
+                                        </th>
+                                        <th data-column="last-restocked" style="display: none;">
+                                            <div class="d-flex gap-1">
+                                                <input type="date" class="form-control form-control-sm column-filter" 
+                                                       data-column="last-restocked" data-filter-type="date" data-filter-operator="gte"
+                                                       style="width: 110px;">
+                                                <input type="date" class="form-control form-control-sm column-filter" 
+                                                       data-column="last-restocked" data-filter-type="date" data-filter-operator="lte"
+                                                       style="width: 110px;">
+                                            </div>
+                                        </th>
+                                        <th data-column="created-at" style="display: none;">
+                                            <div class="d-flex gap-1">
+                                                <input type="date" class="form-control form-control-sm column-filter" 
+                                                       data-column="created-at" data-filter-type="date" data-filter-operator="gte"
+                                                       style="width: 110px;">
+                                                <input type="date" class="form-control form-control-sm column-filter" 
+                                                       data-column="created-at" data-filter-type="date" data-filter-operator="lte"
+                                                       style="width: 110px;">
+                                            </div>
+                                        </th>
+                                        <th class="text-end">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                    id="clear-filters" title="Clear all filters">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for item in items.items %}
                                     <tr>
-                                        <td>
+                                        <td data-column="part-number">
                                             <strong>{{ item.part_number }}</strong>
                                         </td>
-                                        <td>
+                                        <td data-column="name">
                                             <a href="{{ url_for('inventory.view_item', id=item.id) }}" class="text-decoration-none">
                                                 {{ item.name }}
                                             </a>
-                                            {% if item.model %}
-                                            <br><small class="text-muted">{{ item.model }}</small>
-                                            {% endif %}
                                         </td>
-                                        <td>
+                                        <td data-column="description" style="display: none;">
+                                            <span class="text-truncate" style="max-width: 200px; display: inline-block;" title="{{ item.description or '' }}">
+                                                {{ item.description[:50] + '...' if item.description and item.description|length > 50 else (item.description or '-') }}
+                                            </span>
+                                        </td>
+                                        <td data-column="category">
                                             {% if item.category %}
                                                 <span class="badge bg-light text-dark">{{ item.category.name }}</span>
                                             {% else %}
                                                 <span class="text-muted">-</span>
                                             {% endif %}
                                         </td>
-                                        <td>{{ item.manufacturer or '-' }}</td>
-                                        <td>
+                                        <td data-column="manufacturer">{{ item.manufacturer or '-' }}</td>
+                                        <td data-column="model" style="display: none;">{{ item.model or '-' }}</td>
+                                        <td data-column="stock">
                                             <div class="d-flex align-items-center">
                                                 <span class="me-2">{{ item.quantity_in_stock }}</span>
                                                 {% if item.quantity_in_stock == 0 %}
@@ -150,14 +429,19 @@
                                                     <i class="fas fa-check-circle text-success" title="In stock"></i>
                                                 {% endif %}
                                             </div>
-                                            <small class="text-muted">Min: {{ item.minimum_stock_level }}</small>
                                         </td>
-                                        <td>
+                                        <td data-column="min-stock" style="display: none;">
+                                            {{ item.minimum_stock_level }}
+                                        </td>
+                                        <td data-column="max-stock" style="display: none;">
+                                            {{ item.maximum_stock_level }}
+                                        </td>
+                                        <td data-column="condition">
                                             <span class="badge bg-{{ 'success' if item.condition == 'new' else 'warning' }}">
                                                 {{ item.condition.title() }}
                                             </span>
                                         </td>
-                                        <td>
+                                        <td data-column="status">
                                             {% if item.quantity_in_stock == 0 %}
                                                 <span class="badge bg-danger">Out of Stock</span>
                                             {% elif item.is_low_stock %}
@@ -166,12 +450,41 @@
                                                 <span class="badge bg-success">In Stock</span>
                                             {% endif %}
                                         </td>
-                                        <td>
+                                        <td data-column="unit-cost">
                                             {% if item.unit_cost %}
                                                 ${{ "%.2f"|format(item.unit_cost) }}
                                             {% else %}
                                                 <span class="text-muted">-</span>
                                             {% endif %}
+                                        </td>
+                                        <td data-column="weight" style="display: none;">
+                                            {% if item.weight %}
+                                                {{ item.weight }} kg
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td data-column="dimensions" style="display: none;">
+                                            {{ item.dimensions or '-' }}
+                                        </td>
+                                        <td data-column="compatible-models" style="display: none;">
+                                            {% if item.compatible_uav_models %}
+                                                <span class="text-truncate" style="max-width: 150px; display: inline-block;" title="{{ item.compatible_uav_models }}">
+                                                    {{ item.compatible_uav_models[:30] + '...' if item.compatible_uav_models|length > 30 else item.compatible_uav_models }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td data-column="last-restocked" style="display: none;">
+                                            {% if item.last_restocked %}
+                                                <small>{{ item.last_restocked.strftime('%Y-%m-%d') }}</small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td data-column="created-at" style="display: none;">
+                                            <small>{{ item.created_at.strftime('%Y-%m-%d') }}</small>
                                         </td>
                                         <td class="text-end">
                                             <div class="btn-group btn-group-sm">
@@ -252,4 +565,408 @@
         </div>
     </div>
 </div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Column visibility controls
+    const columnToggles = document.querySelectorAll('.column-toggle');
+    const showAllBtn = document.getElementById('show-all-columns');
+    const hideAllBtn = document.getElementById('hide-all-columns');
+    const resetBtn = document.getElementById('reset-columns');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    const toggleFiltersBtn = document.getElementById('toggle-filters');
+    
+    // Filter controls
+    const columnFilters = document.querySelectorAll('.column-filter');
+    const filterRow = document.querySelector('.filter-row');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    // Default visible columns
+    const defaultColumns = [
+        'part-number', 'name', 'category', 'manufacturer', 
+        'stock', 'condition', 'status', 'unit-cost'
+    ];
+    
+    // Active filters object
+    let activeFilters = {};
+    
+    // Function to toggle column visibility
+    function toggleColumn(columnName, show) {
+        const headers = document.querySelectorAll(`th[data-column="${columnName}"]`);
+        const cells = document.querySelectorAll(`td[data-column="${columnName}"]`);
+        
+        headers.forEach(header => {
+            header.style.display = show ? '' : 'none';
+        });
+        
+        cells.forEach(cell => {
+            cell.style.display = show ? '' : 'none';
+        });
+    }
+    
+    // Function to get cell text content for filtering
+    function getCellText(row, columnName) {
+        const cell = row.querySelector(`td[data-column="${columnName}"]`);
+        if (!cell) return '';
+        
+        // Handle different cell types
+        const badge = cell.querySelector('.badge');
+        if (badge) return badge.textContent.trim();
+        
+        const link = cell.querySelector('a');
+        if (link) return link.textContent.trim();
+        
+        const strong = cell.querySelector('strong');
+        if (strong) return strong.textContent.trim();
+        
+        return cell.textContent.trim();
+    }
+    
+    // Function to parse date for comparison
+    function parseDate(dateStr) {
+        if (!dateStr || dateStr === '-') return null;
+        return new Date(dateStr);
+    }
+    
+    // Function to parse number for comparison
+    function parseNumber(numStr) {
+        if (!numStr || numStr === '-') return null;
+        const num = parseFloat(numStr.replace(/[^0-9.-]/g, ''));
+        return isNaN(num) ? null : num;
+    }
+    
+    // Function to check if row matches all active filters
+    function rowMatchesFilters(row) {
+        for (const [columnName, filters] of Object.entries(activeFilters)) {
+            const cellText = getCellText(row, columnName).toLowerCase();
+            
+            for (const filter of filters) {
+                const { type, operator, value } = filter;
+                
+                if (!value) continue;
+                
+                switch (type) {
+                    case 'text':
+                        if (!cellText.includes(value.toLowerCase())) {
+                            return false;
+                        }
+                        break;
+                        
+                    case 'select':
+                        if (cellText !== value.toLowerCase()) {
+                            return false;
+                        }
+                        break;
+                        
+                    case 'number':
+                        const cellNum = parseNumber(cellText);
+                        const filterNum = parseFloat(value);
+                        
+                        if (cellNum === null || isNaN(filterNum)) continue;
+                        
+                        if (operator === 'gte' && cellNum < filterNum) return false;
+                        if (operator === 'lte' && cellNum > filterNum) return false;
+                        break;
+                        
+                    case 'date':
+                        const cellDate = parseDate(cellText);
+                        const filterDate = new Date(value);
+                        
+                        if (!cellDate || !filterDate) continue;
+                        
+                        if (operator === 'gte' && cellDate < filterDate) return false;
+                        if (operator === 'lte' && cellDate > filterDate) return false;
+                        break;
+                }
+            }
+        }
+        return true;
+    }
+    
+    // Function to apply all filters
+    function applyFilters() {
+        let visibleCount = 0;
+        
+        tableRows.forEach(row => {
+            const matches = rowMatchesFilters(row);
+            row.style.display = matches ? '' : 'none';
+            if (matches) visibleCount++;
+        });
+        
+        // Update results count
+        updateResultsCount(visibleCount, tableRows.length);
+    }
+    
+    // Function to update results count
+    function updateResultsCount(visible, total) {
+        let countElement = document.getElementById('results-count');
+        if (!countElement) {
+            countElement = document.createElement('div');
+            countElement.id = 'results-count';
+            countElement.className = 'text-muted small mb-2';
+            const table = document.querySelector('.table-responsive');
+            table.parentNode.insertBefore(countElement, table);
+        }
+        
+        const hasFilters = Object.keys(activeFilters).length > 0;
+        countElement.innerHTML = hasFilters 
+            ? `<i class="fas fa-filter me-1"></i>Showing ${visible} of ${total} items`
+            : `Showing ${total} items`;
+    }
+    
+    // Function to update active filters
+    function updateActiveFilters() {
+        activeFilters = {};
+        
+        columnFilters.forEach(filter => {
+            const columnName = filter.dataset.column;
+            const filterType = filter.dataset.filterType;
+            const operator = filter.dataset.filterOperator || 'eq';
+            const value = filter.value.trim();
+            
+            if (value) {
+                if (!activeFilters[columnName]) {
+                    activeFilters[columnName] = [];
+                }
+                
+                activeFilters[columnName].push({
+                    type: filterType,
+                    operator: operator,
+                    value: value
+                });
+            }
+        });
+        
+        applyFilters();
+    }
+    
+    // Load saved column preferences from localStorage
+    function loadColumnPreferences() {
+        const savedPreferences = localStorage.getItem('inventoryTableColumns');
+        if (savedPreferences) {
+            const preferences = JSON.parse(savedPreferences);
+            columnToggles.forEach(toggle => {
+                const columnName = toggle.value;
+                const isVisible = preferences[columnName] !== undefined ? preferences[columnName] : defaultColumns.includes(columnName);
+                toggle.checked = isVisible;
+                toggleColumn(columnName, isVisible);
+            });
+        } else {
+            resetToDefault();
+        }
+    }
+    
+    // Save column preferences to localStorage
+    function saveColumnPreferences() {
+        const preferences = {};
+        columnToggles.forEach(toggle => {
+            preferences[toggle.value] = toggle.checked;
+        });
+        localStorage.setItem('inventoryTableColumns', JSON.stringify(preferences));
+    }
+    
+    // Reset to default columns
+    function resetToDefault() {
+        columnToggles.forEach(toggle => {
+            const columnName = toggle.value;
+            const isDefault = defaultColumns.includes(columnName);
+            toggle.checked = isDefault;
+            toggleColumn(columnName, isDefault);
+        });
+        saveColumnPreferences();
+    }
+    
+    // Clear all filters
+    function clearAllFilters() {
+        columnFilters.forEach(filter => {
+            filter.value = '';
+        });
+        activeFilters = {};
+        applyFilters();
+    }
+    
+    // Add event listeners to column toggles
+    columnToggles.forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const columnName = this.value;
+            const isVisible = this.checked;
+            toggleColumn(columnName, isVisible);
+            saveColumnPreferences();
+            updateColumnCount();
+        });
+    });
+    
+    // Add event listeners to filter inputs
+    columnFilters.forEach(filter => {
+        const eventType = filter.type === 'text' ? 'input' : 'change';
+        filter.addEventListener(eventType, function() {
+            // Debounce text inputs for better performance
+            if (this.type === 'text') {
+                clearTimeout(this.debounceTimer);
+                this.debounceTimer = setTimeout(() => {
+                    updateActiveFilters();
+                }, 300);
+            } else {
+                updateActiveFilters();
+            }
+        });
+    });
+    
+    // Show all columns
+    showAllBtn.addEventListener('click', function() {
+        columnToggles.forEach(toggle => {
+            toggle.checked = true;
+            toggleColumn(toggle.value, true);
+        });
+        saveColumnPreferences();
+        updateColumnCount();
+    });
+    
+    // Hide all columns (except actions)
+    hideAllBtn.addEventListener('click', function() {
+        columnToggles.forEach(toggle => {
+            toggle.checked = false;
+            toggleColumn(toggle.value, false);
+        });
+        saveColumnPreferences();
+        updateColumnCount();
+    });
+    
+    // Reset to default
+    resetBtn.addEventListener('click', function() {
+        resetToDefault();
+        updateColumnCount();
+    });
+    
+    // Clear all filters
+    clearFiltersBtn.addEventListener('click', function() {
+        clearAllFilters();
+    });
+    
+    // Toggle filter row visibility
+    toggleFiltersBtn.addEventListener('click', function() {
+        const isVisible = filterRow.style.display !== 'none';
+        filterRow.style.display = isVisible ? 'none' : '';
+        
+        // Update button appearance
+        this.classList.toggle('btn-outline-primary', !isVisible);
+        this.classList.toggle('btn-primary', isVisible);
+        
+        // Update button text
+        const icon = this.querySelector('i');
+        if (isVisible) {
+            icon.className = 'fas fa-filter-circle-xmark me-1';
+        } else {
+            icon.className = 'fas fa-filter me-1';
+        }
+    });
+    
+    // Update column count in button text
+    function updateColumnCount() {
+        const visibleCount = Array.from(columnToggles).filter(toggle => toggle.checked).length;
+        const totalCount = columnToggles.length;
+        const columnButton = document.getElementById('columnToggle');
+        columnButton.innerHTML = `<i class="fas fa-columns me-1"></i> Columns (${visibleCount}/${totalCount})`;
+    }
+    
+    // Prevent dropdown from closing when clicking on checkboxes
+    document.querySelectorAll('.dropdown-item-text').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+    
+    // Load saved preferences on page load
+    loadColumnPreferences();
+    updateColumnCount();
+    updateResultsCount(tableRows.length, tableRows.length);
+    
+    // Add smooth transition effect for better UX
+    const style = document.createElement('style');
+    style.textContent = `
+        th[data-column], td[data-column] {
+            transition: all 0.3s ease;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .filter-row th {
+            padding: 0.5rem !important;
+            border-top: 1px solid #dee2e6;
+            background-color: #f8f9fa !important;
+            vertical-align: middle;
+        }
+        .column-filter {
+            min-width: 80px;
+            font-size: 0.875rem;
+        }
+        .column-filter:focus {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        #results-count {
+            margin-left: 1rem;
+            font-weight: 500;
+        }
+        tbody tr {
+            transition: opacity 0.2s ease;
+        }
+        tbody tr[style*="display: none"] {
+            opacity: 0;
+        }
+        .btn-group .btn {
+            border-radius: 0.375rem !important;
+        }
+        .btn-group .btn:not(:last-child) {
+            margin-right: 0.25rem;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Export function
+    window.exportData = function(format) {
+        // Get currently visible/filtered rows
+        const visibleRows = Array.from(document.querySelectorAll('tbody tr:not(.filter-row)'))
+            .filter(row => row.style.display !== 'none');
+        
+        if (visibleRows.length === 0) {
+            alert('No items to export. Please check your filters.');
+            return;
+        }
+        
+        // Extract item IDs from visible rows
+        const itemIds = visibleRows.map(row => {
+            // Look for the view link in the name column or actions column
+            const viewLink = row.querySelector('a[href*="/inventory/items/"]');
+            if (viewLink) {
+                const href = viewLink.getAttribute('href');
+                // Match pattern like /inventory/items/123 or /inventory/items/123/view
+                const match = href.match(/\/inventory\/items\/(\d+)/);
+                return match ? parseInt(match[1]) : null;
+            }
+            return null;
+        }).filter(id => id !== null);
+        
+        if (itemIds.length === 0) {
+            alert('Unable to identify items for export. Please try again.');
+            console.log('Debug: Visible rows found:', visibleRows.length);
+            console.log('Debug: Sample row HTML:', visibleRows[0] ? visibleRows[0].innerHTML : 'No rows');
+            return;
+        }
+        
+        console.log('Exporting items with IDs:', itemIds);
+        
+        // Create export URL with item IDs
+        const exportUrl = new URL(`{{ url_for('inventory.export_items', format='FORMAT') }}`.replace('FORMAT', format), window.location.origin);
+        
+        // Add item IDs as query parameter
+        exportUrl.searchParams.set('item_ids', itemIds.join(','));
+        
+        // Trigger download
+        window.open(exportUrl.toString(), '_blank');
+    };
+});
+</script>
+{% endblock %}
 {% endblock %}

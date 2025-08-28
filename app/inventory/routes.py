@@ -3,7 +3,9 @@ Inventory Management Routes
 """
 
 from datetime import datetime, timezone
-from flask import render_template, request, redirect, url_for, flash, jsonify
+import pandas as pd
+from io import BytesIO
+from flask import render_template, request, redirect, url_for, flash, jsonify, make_response
 from flask_login import login_required, current_user
 from sqlalchemy import or_, desc
 from app import db
@@ -126,7 +128,7 @@ def items():
     # Pagination
     page = request.args.get('page', 1, type=int)
     items = query.order_by(InventoryItem.name).paginate(
-        page=page, per_page=20, error_out=False
+        page=page, per_page=100, error_out=False
     )
     
     # Get selected category name for display
@@ -134,7 +136,146 @@ def items():
     if category_param:
         selected_category = InventoryCategory.query.get(category_param)
     
-    return render_template('inventory/items.html', items=items, form=form, selected_category=selected_category)
+    # Get all categories for filter dropdown
+    categories = InventoryCategory.query.order_by(InventoryCategory.name).all()
+    
+    return render_template('inventory/items.html', items=items, form=form, selected_category=selected_category, categories=categories)
+
+@bp.route('/items/export/<format>')
+@login_required
+def export_items(format):
+    """Export filtered inventory items to Excel, CSV, or XML"""
+    
+    # Check if specific item IDs are provided (from client-side filtering)
+    item_ids_param = request.args.get('item_ids', '')
+    
+    if item_ids_param:
+        # Export specific items based on client-side filtering
+        try:
+            item_ids = [int(id_str.strip()) for id_str in item_ids_param.split(',') if id_str.strip()]
+            query = InventoryItem.query.filter(InventoryItem.id.in_(item_ids), InventoryItem.is_active == True)
+        except ValueError:
+            flash('Invalid item IDs for export.', 'error')
+            return redirect(url_for('inventory.items'))
+    else:
+        # Fallback to URL parameter filtering (for direct links)
+        query = InventoryItem.query.filter_by(is_active=True)
+        
+        # Apply filters from URL parameters
+        category_param = request.args.get('category', type=int)
+        search_param = request.args.get('search', '')
+        stock_status_param = request.args.get('stock_status', '')
+        
+        if category_param:
+            query = query.filter_by(category_id=category_param)
+        
+        if search_param:
+            search = f"%{search_param}%"
+            query = query.filter(or_(
+                InventoryItem.name.ilike(search),
+                InventoryItem.part_number.ilike(search),
+                InventoryItem.manufacturer.ilike(search)
+            ))
+        
+        if stock_status_param:
+            if stock_status_param == 'out_of_stock':
+                query = query.filter(InventoryItem.quantity_in_stock == 0)
+            elif stock_status_param == 'low_stock':
+                query = query.filter(
+                    InventoryItem.quantity_in_stock <= InventoryItem.minimum_stock_level,
+                    InventoryItem.quantity_in_stock > 0
+                )
+            elif stock_status_param == 'in_stock':
+                query = query.filter(InventoryItem.quantity_in_stock > InventoryItem.minimum_stock_level)
+    
+    # Get all items (no pagination for export)
+    items = query.order_by(InventoryItem.name).all()
+    
+    if not items:
+        flash('No items found for export.', 'warning')
+        return redirect(url_for('inventory.items'))
+    items = query.order_by(InventoryItem.name).all()
+    
+    # Prepare data for export
+    data = []
+    for item in items:
+        # Calculate stock status
+        if item.quantity_in_stock == 0:
+            stock_status = 'Out of Stock'
+        elif item.quantity_in_stock <= item.minimum_stock_level:
+            stock_status = 'Low Stock'
+        else:
+            stock_status = 'In Stock'
+        
+        data.append({
+            'Part Number': item.part_number,
+            'Name': item.name,
+            'Description': item.description or '',
+            'Category': item.category.name if item.category else '',
+            'Manufacturer': item.manufacturer or '',
+            'Model': item.model or '',
+            'Current Stock': item.quantity_in_stock,
+            'Minimum Stock': item.minimum_stock_level,
+            'Maximum Stock': item.maximum_stock_level or '',
+            'Unit Cost': f"${item.unit_cost:.2f}" if item.unit_cost else '',
+            'Condition': item.condition or '',
+            'Status': stock_status,
+            'Weight (kg)': item.weight or '',
+            'Dimensions': item.dimensions or '',
+            'Compatible UAV Models': item.compatible_uav_models or '',
+            'Last Restocked': item.last_restocked.strftime('%Y-%m-%d %H:%M:%S') if item.last_restocked else '',
+            'Created Date': item.created_at.strftime('%Y-%m-%d %H:%M:%S') if item.created_at else '',
+            'Last Updated': item.updated_at.strftime('%Y-%m-%d %H:%M:%S') if item.updated_at else ''
+        })
+    
+    df = pd.DataFrame(data)
+    
+    # Generate filename with timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    if format.lower() == 'excel' or format.lower() == 'xls':
+        # Excel export
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Inventory Items', index=False)
+        output.seek(0)
+        
+        response = make_response(output.read())
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = f'attachment; filename=inventory_items_{timestamp}.xlsx'
+        return response
+        
+    elif format.lower() == 'csv':
+        # CSV export
+        output = BytesIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=inventory_items_{timestamp}.csv'
+        return response
+        
+    elif format.lower() == 'xml':
+        # XML export
+        xml_data = '<?xml version="1.0" encoding="UTF-8"?>\n<inventory_items>\n'
+        for _, row in df.iterrows():
+            xml_data += '  <item>\n'
+            for col, value in row.items():
+                # Clean column name for XML tag
+                tag_name = col.lower().replace(' ', '_').replace('(', '').replace(')', '')
+                xml_data += f'    <{tag_name}>{str(value)}</{tag_name}>\n'
+            xml_data += '  </item>\n'
+        xml_data += '</inventory_items>'
+        
+        response = make_response(xml_data)
+        response.headers['Content-Type'] = 'application/xml'
+        response.headers['Content-Disposition'] = f'attachment; filename=inventory_items_{timestamp}.xml'
+        return response
+    
+    else:
+        flash('Invalid export format specified.', 'error')
+        return redirect(url_for('inventory.items'))
 
 @bp.route('/items/create', methods=['GET', 'POST'])
 @login_required
