@@ -161,6 +161,12 @@
                         <i class="fas fa-building me-1"></i>{{ product.owner_company.name }}
                     </p>
                     
+                    {% if product.serial_number %}
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-barcode me-1"></i>S/N: <span class="fw-medium">{{ product.serial_number }}</span>
+                    </p>
+                    {% endif %}
+                    
                     {% if product.description %}
                     <p class="card-text small text-muted mb-3">
                         {{ product.description[:80] }}{% if product.description|length > 80 %}...{% endif %}
@@ -257,6 +263,7 @@
             <thead class="table-light">
                 <tr>
                     <th>Product Code</th>
+                    <th>Serial Number</th>
                     <th>Product Name</th>
                     <th>Company</th>
                     <th>Category</th>
@@ -271,6 +278,13 @@
                 <tr>
                     <td>
                         <strong>{{ product.product_code }}</strong>
+                    </td>
+                    <td>
+                        {% if product.serial_number %}
+                            <span class="badge bg-info small">{{ product.serial_number }}</span>
+                        {% else %}
+                            <span class="text-muted small">Not assigned</span>
+                        {% endif %}
                     </td>
                     <td>{{ product.product_name }}</td>
                     <td>

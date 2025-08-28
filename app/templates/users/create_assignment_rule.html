@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-cogs me-2"></i>Create Assignment Rule</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('users.create_assignment_rule') }}">
+                        <!-- Rule Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="rule_name" class="form-label">Rule Name *</label>
+                                <input type="text" class="form-control" id="rule_name" name="rule_name" required 
+                                       placeholder="Enter rule name">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="rule_priority" class="form-label">Rule Priority *</label>
+                                <select class="form-select" id="rule_priority" name="rule_priority" required>
+                                    <option value="">Select priority...</option>
+                                    <option value="1">1 - Highest Priority</option>
+                                    <option value="2">2 - High Priority</option>
+                                    <option value="3">3 - Medium Priority</option>
+                                    <option value="4">4 - Low Priority</option>
+                                    <option value="5">5 - Lowest Priority</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Describe what this rule does and when it applies"></textarea>
+                        </div>
+
+                        <!-- Rule Conditions -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Rule Conditions</h5>
+                                <small class="text-muted">Define when this rule should be triggered for incidents</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="incident_category" class="form-label">Incident Category</label>
+                                        <select class="form-select" id="incident_category" name="incident_category">
+                                            <option value="">Any Category</option>
+                                            <option value="BATTERY">Battery Issues</option>
+                                            <option value="CAMERA">Camera Problems</option>
+                                            <option value="CRASH_REPAIR">Crash Repair</option>
+                                            <option value="ROUTINE_MAINTENANCE">Routine Maintenance</option>
+                                            <option value="OTHER">Other Issues</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="priority_condition" class="form-label">Incident Priority</label>
+                                        <select class="form-select" id="priority_condition" name="priority_condition">
+                                            <option value="">Any Priority</option>
+                                            <option value="LOW">Low Priority</option>
+                                            <option value="MEDIUM">Medium Priority</option>
+                                            <option value="HIGH">High Priority</option>
+                                            <option value="URGENT">Urgent Priority</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="department_condition" class="form-label">Service Department</label>
+                                        <select class="form-select" id="department_condition" name="department_condition">
+                                            <option value="">Any Department</option>
+                                            <option value="diagnosis">Diagnosis Team</option>
+                                            <option value="repair">Repair & Maintenance</option>
+                                            <option value="quality">Quality Control</option>
+                                            <option value="support">Customer Support</option>
+                                            <option value="logistics">Logistics</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="location_condition" class="form-label">Service Location</label>
+                                        <input type="text" class="form-control" id="location_condition" name="location_condition" 
+                                               placeholder="Service center or customer location (optional)">
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="tag_condition" class="form-label">UAV Model/Tags</label>
+                                        <input type="text" class="form-control" id="tag_condition" name="tag_condition" 
+                                               placeholder="UAV model, serial tags (comma-separated)">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="time_condition" class="form-label">Time Condition</label>
+                                        <select class="form-select" id="time_condition" name="time_condition">
+                                            <option value="">Any Time</option>
+                                            <option value="business_hours">Business Hours Only</option>
+                                            <option value="after_hours">After Hours Only</option>
+                                            <option value="weekdays">Weekdays Only</option>
+                                            <option value="weekends">Weekends Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Assignment Actions -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-bullseye me-2"></i>Assignment Actions</h5>
+                                <small class="text-muted">Define what happens when this rule matches</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="assignment_type" class="form-label">Assignment Type *</label>
+                                    <select class="form-select" id="assignment_type" name="assignment_type" required onchange="toggleAssignmentOptions()">
+                                        <option value="">Select assignment type...</option>
+                                        <option value="specific_user">Assign to Specific User</option>
+                                        <option value="assignment_group">Assign to Assignment Group</option>
+                                        <option value="round_robin">Round Robin Assignment</option>
+                                        <option value="load_balancing">Load Balancing (Least Busy)</option>
+                                        <option value="skill_based">Skill-Based Assignment</option>
+                                    </select>
+                                </div>
+
+                                <!-- Specific User Assignment -->
+                                <div id="specificUserOptions" class="d-none mb-3">
+                                    <label for="target_user" class="form-label">Target User</label>
+                                    <select class="form-select" id="target_user" name="target_user">
+                                        <option value="">Select user...</option>
+                                        {% if available_users %}
+                                            {% for user in available_users %}
+                                            <option value="{{ user.id }}">{{ user.full_name }} ({{ user.username }})</option>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </select>
+                                </div>
+
+                                <!-- Assignment Group Options -->
+                                <div id="groupOptions" class="d-none mb-3">
+                                    <label for="target_group" class="form-label">Target Assignment Group</label>
+                                    <select class="form-select" id="target_group" name="target_group">
+                                        <option value="">Select group...</option>
+                                        {% if assignment_groups %}
+                                            {% for group in assignment_groups %}
+                                            <option value="{{ group.id }}">{{ group.name }} ({{ group.code }})</option>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </select>
+                                </div>
+
+                                <!-- Advanced Options -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="fallback_assignment" class="form-label">Fallback Assignment</label>
+                                        <select class="form-select" id="fallback_assignment" name="fallback_assignment">
+                                            <option value="">No fallback</option>
+                                            <option value="manager">Assign to Manager</option>
+                                            <option value="admin">Assign to Admin</option>
+                                            <option value="unassigned">Leave Unassigned</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="notification_template" class="form-label">Notification Template</label>
+                                        <select class="form-select" id="notification_template" name="notification_template">
+                                            <option value="">Default Notification</option>
+                                            <option value="urgent">Urgent Assignment</option>
+                                            <option value="routine">Routine Assignment</option>
+                                            <option value="escalation">Escalation Notice</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rule Settings -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Rule Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" checked>
+                                            <label class="form-check-label" for="is_active">
+                                                Active Rule
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="auto_escalate" name="auto_escalate" value="1">
+                                            <label class="form-check-label" for="auto_escalate">
+                                                Auto-escalate if not accepted
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="send_notification" name="send_notification" value="1" checked>
+                                            <label class="form-check-label" for="send_notification">
+                                                Send Assignment Notification
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="log_activity" name="log_activity" value="1" checked>
+                                            <label class="form-check-label" for="log_activity">
+                                                Log Rule Activity
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="escalation_time" class="form-label">Escalation Time (minutes)</label>
+                                        <input type="number" class="form-control" id="escalation_time" name="escalation_time" 
+                                               min="5" max="1440" placeholder="60">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="max_assignments" class="form-label">Max Daily Assignments per User</label>
+                                        <input type="number" class="form-control" id="max_assignments" name="max_assignments" 
+                                               min="1" max="100" placeholder="10">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rule Testing -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-vial me-2"></i>Rule Testing</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Test your rule:</strong> Use the preview button to see how this rule would work with sample data.
+                                </div>
+                                <button type="button" class="btn btn-outline-info" onclick="previewRule()">
+                                    <i class="fas fa-eye me-2"></i>Preview Rule Logic
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('users.assignment_rules') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="saveAsDraft()">
+                                    <i class="fas fa-save me-2"></i>Save as Draft
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check me-2"></i>Create Rule
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleAssignmentOptions() {
+    const assignmentType = document.getElementById('assignment_type').value;
+    const specificUserOptions = document.getElementById('specificUserOptions');
+    const groupOptions = document.getElementById('groupOptions');
+    
+    // Hide all options first
+    specificUserOptions.classList.add('d-none');
+    groupOptions.classList.add('d-none');
+    
+    // Show relevant options
+    if (assignmentType === 'specific_user') {
+        specificUserOptions.classList.remove('d-none');
+    } else if (assignmentType === 'assignment_group') {
+        groupOptions.classList.remove('d-none');
+    }
+}
+
+function previewRule() {
+    const ruleName = document.getElementById('rule_name').value;
+    const assignmentType = document.getElementById('assignment_type').value;
+    
+    if (!ruleName) {
+        alert('Please enter a rule name first.');
+        return;
+    }
+    
+    if (!assignmentType) {
+        alert('Please select an assignment type first.');
+        return;
+    }
+    
+    // Create preview content
+    let preview = `Rule Preview: "${ruleName}"\n\n`;
+    
+    // Add conditions
+    const incidentCategory = document.getElementById('incident_category').value;
+    const priority = document.getElementById('priority_condition').value;
+    const department = document.getElementById('department_condition').value;
+    
+    preview += "Conditions:\n";
+    if (incidentCategory) preview += `- Incident Category: ${incidentCategory}\n`;
+    if (priority) preview += `- Priority: ${priority}\n`;
+    if (department) preview += `- Service Department: ${department}\n`;
+    if (!incidentCategory && !priority && !department) preview += "- No specific conditions (applies to all incidents)\n";
+    
+    // Add actions
+    preview += "\nActions:\n";
+    if (assignmentType === 'specific_user') {
+        const targetUser = document.getElementById('target_user');
+        preview += `- Assign to: ${targetUser.options[targetUser.selectedIndex]?.text || 'Not selected'}\n`;
+    } else if (assignmentType === 'assignment_group') {
+        const targetGroup = document.getElementById('target_group');
+        preview += `- Assign to Group: ${targetGroup.options[targetGroup.selectedIndex]?.text || 'Not selected'}\n`;
+    } else {
+        preview += `- Assignment Type: ${assignmentType}\n`;
+    }
+    
+    const sendNotification = document.getElementById('send_notification').checked;
+    preview += `- Send Notification: ${sendNotification ? 'Yes' : 'No'}\n`;
+    
+    alert(preview);
+}
+
+function saveAsDraft() {
+    // In a real implementation, this would save the form data as a draft
+    alert('Rule would be saved as draft. This allows you to complete it later.');
+}
+
+// Initialize form
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate rule name suggestions
+    const incidentCategorySelect = document.getElementById('incident_category');
+    const departmentSelect = document.getElementById('department_condition');
+    const ruleNameInput = document.getElementById('rule_name');
+    
+    function suggestRuleName() {
+        const incidentCategory = incidentCategorySelect.value;
+        const department = departmentSelect.value;
+        
+        if (incidentCategory || department) {
+            let suggestion = '';
+            if (department) suggestion += department.charAt(0).toUpperCase() + department.slice(1) + ' ';
+            if (incidentCategory) suggestion += incidentCategory.charAt(0).toUpperCase() + incidentCategory.slice(1) + ' ';
+            suggestion += 'Auto-Assignment';
+            
+            if (!ruleNameInput.value) {
+                ruleNameInput.value = suggestion;
+            }
+        }
+    }
+    
+    incidentCategorySelect.addEventListener('change', suggestRuleName);
+    departmentSelect.addEventListener('change', suggestRuleName);
+});
+</script>
+{% endblock %}

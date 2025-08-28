@@ -64,20 +64,89 @@
                             {% endif %}
                         </ul>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="inventoryDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-boxes me-1"></i> Inventory
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.items') }}">
+                                <i class="fas fa-cube me-2 text-info"></i> All Items
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.categories') }}">
+                                <i class="fas fa-tags me-2 text-warning"></i> Categories
+                            </a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.items', filter='new') }}">
+                                <i class="fas fa-star me-2 text-success"></i> <span class="fw-semibold">New Items</span>
+                                <span class="badge bg-success ms-1">Latest</span>
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.items', filter='low_stock') }}">
+                                <i class="fas fa-exclamation-triangle me-2 text-danger"></i> Low Stock Alert
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.items', filter='out_of_stock') }}">
+                                <i class="fas fa-times-circle me-2 text-dark"></i> Out of Stock
+                            </a></li>
+                            {% if current_user.role and (current_user.role.name == 'admin' or current_user.role.name == 'manager') %}
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.create_item') }}">
+                                <i class="fas fa-plus me-2 text-success"></i> Add New Item
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('inventory.create_category') }}">
+                                <i class="fas fa-folder-plus me-2 text-success"></i> Add Category
+                            </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="knowledgeDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-book-open me-1"></i> Knowledge
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.index') }}">
+                                <i class="fas fa-home me-2 text-primary"></i> Knowledge Base
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.search') }}">
+                                <i class="fas fa-search me-2 text-info"></i> Search Articles
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.list_categories') }}">
+                                <i class="fas fa-folder me-2 text-warning"></i> Categories
+                            </a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.create_article') }}">
+                                <i class="fas fa-plus me-2 text-success"></i> Create Article
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.my_articles') }}">
+                                <i class="fas fa-user-edit me-2 text-primary"></i> My Articles
+                            </a></li>
+                            {% if current_user.has_role('knowledge_reviewer') or current_user.has_role('knowledge_admin') or current_user.has_role('admin') %}
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.pending_review') }}">
+                                <i class="fas fa-clock me-2 text-warning"></i> Pending Review
+                            </a></li>
+                            {% endif %}
+                            {% if current_user.has_role('knowledge_admin') or current_user.has_role('admin') %}
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.analytics') }}">
+                                <i class="fas fa-chart-bar me-2 text-info"></i> Analytics
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.create_category') }}">
+                                <i class="fas fa-folder-plus me-2 text-success"></i> Manage Categories
+                            </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
                     {% if current_user.role and (current_user.role.name == 'admin' or current_user.role.name == 'manager') %}
-                    <li class="nav-item">
+                    <!-- Create Order menu item hidden per user request -->
+                    <!-- <li class="nav-item">
                         <a class="nav-link px-2" href="{{ url_for('workorders.create_workorder') }}">
                             <i class="fas fa-plus-circle me-1"></i> Create Order
                         </a>
-                    </li>
+                    </li> -->
                     <li class="nav-item">
                         <a class="nav-link px-2" href="{{ url_for('users.list_users') }}">
                             <i class="fas fa-users me-1"></i> Team
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-2" href="{{ url_for('reporting.dashboard') }}">
-                            <i class="fas fa-chart-line me-1"></i> Analytics
                         </a>
                     </li>
                     {% endif %}

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-alt"></i> Knowledge Articles</h2>
+        <a href="{{ url_for('knowledge.create_article') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Article
+        </a>
+    </div>
+
+    <!-- Search and Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                {{ filter_form.hidden_tag() }}
+                
+                <div class="col-md-3">
+                    {{ filter_form.status.label(class="form-label") }}
+                    {{ filter_form.status(class="form-select", multiple=true) }}
+                </div>
+                
+                <div class="col-md-3">
+                    {{ filter_form.article_type.label(class="form-label") }}
+                    {{ filter_form.article_type(class="form-select", multiple=true) }}
+                </div>
+                
+                <div class="col-md-3">
+                    {{ filter_form.category_id.label(class="form-label") }}
+                    {{ filter_form.category_id(class="form-select", multiple=true) }}
+                </div>
+                
+                <div class="col-md-3 d-flex align-items-end">
+                    {{ filter_form.apply_filters(class="btn btn-outline-primary me-2") }}
+                    {{ filter_form.clear_filters(class="btn btn-outline-secondary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Articles List -->
+    <div class="row">
+        {% if articles.items %}
+            {% for article in articles.items %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a href="{{ url_for('knowledge.view_article', id=article.id) }}" class="text-decoration-none">
+                                {{ article.title }}
+                            </a>
+                        </h5>
+                        
+                        <p class="card-text text-muted small">
+                            {{ article.summary[:150] }}{% if article.summary|length > 150 %}...{% endif %}
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-user"></i> {{ article.author.first_name }} {{ article.author.last_name }}
+                            </small>
+                            <small class="text-muted">
+                                <i class="fas fa-eye"></i> {{ article.view_count or 0 }}
+                            </small>
+                        </div>
+                        
+                        <div class="mt-2">
+                            {% if article.category %}
+                                <span class="badge bg-secondary">{{ article.category.name }}</span>
+                            {% endif %}
+                            
+                            {% if article.status %}
+                                {% if article.status.name == 'published' %}
+                                    <span class="badge bg-success">{{ article.status.name|title }}</span>
+                                {% elif article.status.name == 'draft' %}
+                                    <span class="badge bg-warning">{{ article.status.name|title }}</span>
+                                {% else %}
+                                    <span class="badge bg-info">{{ article.status.name|title }}</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <small class="text-muted">
+                            Updated {{ article.updated_at.strftime('%B %d, %Y') }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Articles Found</h4>
+                    <p class="text-muted">There are no articles matching your criteria.</p>
+                    <a href="{{ url_for('knowledge.create_article') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create First Article
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if articles.pages > 1 %}
+    <nav aria-label="Articles pagination">
+        <ul class="pagination justify-content-center">
+            {% if articles.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('knowledge.list_articles', page=articles.prev_num) }}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for page_num in articles.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != articles.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('knowledge.list_articles', page=page_num) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">…</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if articles.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('knowledge.list_articles', page=articles.next_num) }}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

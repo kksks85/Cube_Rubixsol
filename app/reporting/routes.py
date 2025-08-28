@@ -1,480 +1,625 @@
 """
-Reporting Engine Routes
+Reporting Routes
+Flask routes for the reporting module
 """
 
+from flask import render_template, request, jsonify, flash, redirect, url_for, make_response, send_file
+from flask_login import login_required, current_user
+from app.reporting import bp
+from app.reporting.models import Report, ReportSchedule, ReportExecution, ReportShare
+from app.reporting.engine import ReportEngine, ReportValidator
+from app.reporting.forms import NewReportForm, ShareReportForm, ScheduleReportForm
+from app import db
+from datetime import datetime, timedelta
 import json
 import io
-from datetime import datetime, timezone
-from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, abort
-from flask_login import login_required, current_user
-from sqlalchemy import desc
-from app import db
-from app.models import User
-from app.reporting import bp
-from app.reporting.forms import ReportBuilderForm, ReportFilterForm, SavedReportForm, ReportScheduleForm
-from app.reporting.models import SavedReport, ReportSchedule, ReportExecutionLog
-from app.reporting.engine import ReportEngine, ReportValidator
+import pandas as pd
 
-# Initialize report engine lazily
-def get_report_engine():
-    return ReportEngine()
 
 @bp.route('/')
+@bp.route('/dashboard')
 @login_required
 def dashboard():
-    """Reporting dashboard"""
-    if not (current_user.has_role('admin') or current_user.has_role('manager')):
-        flash('You do not have permission to access reporting.', 'error')
-        return redirect(url_for('main.dashboard'))
+    """Reporting dashboard with statistics and recent activity"""
     
-    # Get recent reports
-    recent_reports = SavedReport.query.filter_by(created_by_id=current_user.id)\
-                                    .order_by(desc(SavedReport.updated_at))\
-                                    .limit(5).all()
+    # Get user's reports
+    user_reports = Report.query.filter_by(created_by=current_user.id).all()
     
-    # Get public reports
-    public_reports = SavedReport.query.filter_by(is_public=True)\
-                                    .order_by(desc(SavedReport.view_count))\
-                                    .limit(5).all()
-    
-    # Get recent executions
-    recent_executions = ReportExecutionLog.query.filter_by(executed_by_id=current_user.id)\
-                                               .order_by(desc(ReportExecutionLog.started_at))\
-                                               .limit(10).all()
-    
-    # Get statistics
+    # Calculate statistics
     stats = {
-        'total_reports': SavedReport.query.filter_by(created_by_id=current_user.id).count(),
-        'public_reports': SavedReport.query.filter_by(is_public=True).count(),
-        'total_executions': ReportExecutionLog.query.filter_by(executed_by_id=current_user.id).count(),
-        'scheduled_reports': ReportSchedule.query.filter_by(created_by_id=current_user.id, is_active=True).count()
+        'total_reports': len(user_reports),
+        'active_reports': len([r for r in user_reports if r.status == 'active']),
+        'scheduled_reports': ReportSchedule.query.filter(
+            ReportSchedule.report_id.in_([r.id for r in user_reports]),
+            ReportSchedule.is_active == True
+        ).count(),
+        'recent_executions': ReportExecution.query.filter(
+            ReportExecution.report_id.in_([r.id for r in user_reports]),
+            ReportExecution.executed_at >= datetime.utcnow() - timedelta(days=7)
+        ).count()
     }
     
-    return render_template('reporting/dashboard.html',
-                         recent_reports=recent_reports,
-                         public_reports=public_reports,
-                         recent_executions=recent_executions,
-                         stats=stats)
-
-@bp.route('/builder')
-@login_required
-def report_builder():
-    """Report builder interface"""
-    if not (current_user.has_role('admin') or current_user.has_role('manager')):
-        flash('You do not have permission to create reports.', 'error')
-        return redirect(url_for('reporting.dashboard'))
+    # Get recent reports
+    recent_reports = Report.query.filter_by(created_by=current_user.id)\
+                          .order_by(Report.updated_at.desc())\
+                          .limit(5).all()
     
-    return render_template('reporting/builder_new.html',
-                         available_tables=get_report_engine().available_tables)
+    # Get recent executions
+    recent_executions = ReportExecution.query.join(Report)\
+                                           .filter(Report.created_by == current_user.id)\
+                                           .order_by(ReportExecution.executed_at.desc())\
+                                           .limit(10).all()
+    
+    # Get scheduled reports
+    scheduled_reports = ReportSchedule.query.join(Report)\
+                                          .filter(Report.created_by == current_user.id,
+                                                 ReportSchedule.is_active == True)\
+                                          .order_by(ReportSchedule.next_run.asc())\
+                                          .limit(5).all()
+    
+    return render_template('reporting/dashboard.html',
+                         stats=stats,
+                         recent_reports=recent_reports,
+                         recent_executions=recent_executions,
+                         scheduled_reports=scheduled_reports)
+
+
+@bp.route('/reports')
+@login_required
+def reports_list():
+    """List all reports for the current user"""
+    
+    # Get filter parameters
+    search = request.args.get('search', '')
+    category = request.args.get('category', '')
+    status = request.args.get('status', '')
+    filter_type = request.args.get('filter', '')
+    
+    # Base query
+    query = Report.query.filter_by(created_by=current_user.id)
+    
+    # Apply filters
+    if search:
+        query = query.filter(Report.name.contains(search))
+    
+    if category:
+        query = query.filter_by(category=category)
+    
+    if status:
+        query = query.filter_by(status=status)
+    
+    if filter_type == 'scheduled':
+        query = query.join(ReportSchedule).filter(ReportSchedule.is_active == True)
+    elif filter_type == 'shared':
+        query = query.join(ReportShare).filter(ReportShare.is_active == True)
+    
+    # Get reports
+    reports = query.order_by(Report.updated_at.desc()).all()
+    
+    return render_template('reporting/reports_list.html', reports=reports)
+
+
+@bp.route('/reports/new', methods=['GET', 'POST'])
+@login_required
+def new_report():
+    """Create a new report"""
+    
+    form = NewReportForm()
+    
+    if form.validate_on_submit():
+        # Create new report
+        report = Report(
+            name=form.name.data,
+            description=form.description.data,
+            category=form.category.data,
+            data_source=form.data_source.data,
+            tags=form.tags.data,
+            template_type=form.template.data,
+            created_by=current_user.id
+        )
+        
+        db.session.add(report)
+        db.session.commit()
+        
+        flash('Report created successfully!', 'success')
+        return redirect(url_for('reporting.report_builder', id=report.id))
+    
+    return render_template('reporting/new_report.html', form=form)
+
+
+@bp.route('/reports/<int:id>/builder')
+@login_required
+def report_builder(id):
+    """Report builder interface"""
+    
+    report = Report.query.get_or_404(id)
+    
+    # Check if user owns the report
+    if report.created_by != current_user.id:
+        flash('You do not have permission to edit this report.', 'error')
+        return redirect(url_for('reporting.reports_list'))
+    
+    # Get available tables
+    engine = ReportEngine()
+    available_tables = engine.get_available_tables()
+    
+    return render_template('reporting/report_builder.html',
+                         report=report,
+                         available_tables=available_tables)
+
+
+@bp.route('/reports/<int:id>/execute', methods=['GET', 'POST'])
+@login_required
+def execute_report(id):
+    """Execute a report"""
+    
+    report = Report.query.get_or_404(id)
+    
+    # Check if user owns the report or has access
+    if report.created_by != current_user.id:
+        flash('You do not have permission to execute this report.', 'error')
+        return redirect(url_for('reporting.reports_list'))
+    
+    try:
+        engine = ReportEngine()
+        result = engine.execute_report(report)
+        
+        # Create execution record
+        execution = ReportExecution(
+            report_id=report.id,
+            executed_by=current_user.id,
+            status='completed',
+            row_count=result.get('row_count', 0),
+            execution_time=result.get('execution_time', 0)
+        )
+        db.session.add(execution)
+        
+        # Update report last execution
+        report.last_execution = datetime.utcnow()
+        report.execution_count = (report.execution_count or 0) + 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': result.get('data', []),
+            'columns': result.get('columns', []),
+            'row_count': result.get('row_count', 0),
+            'execution_time': result.get('execution_time', 0)
+        })
+        
+    except Exception as e:
+        # Create failed execution record
+        execution = ReportExecution(
+            report_id=report.id,
+            executed_by=current_user.id,
+            status='failed',
+            error_message=str(e)
+        )
+        db.session.add(execution)
+        db.session.commit()
+        
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 
 @bp.route('/api/tables')
 @login_required
 def api_tables():
     """API endpoint to get available tables"""
-    return jsonify(get_report_engine().available_tables)
+    
+    try:
+        engine = ReportEngine()
+        tables = engine.get_available_tables()
+        return jsonify({
+            'success': True,
+            'tables': tables
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
-@bp.route('/api/table/<table_name>/columns')
+
+@bp.route('/api/tables/<table_name>/columns')
 @login_required
 def api_table_columns(table_name):
-    """API endpoint to get formatted columns for a table"""
+    """API endpoint to get table columns"""
+    
     try:
-        engine = get_report_engine()
+        engine = ReportEngine()
+        columns = engine.get_table_columns(table_name)
+        return jsonify(columns)
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@bp.route('/api/tables/<table_name>/info')
+@login_required
+def api_table_info(table_name):
+    """API endpoint to get table information"""
+    
+    try:
+        engine = ReportEngine()
+        info = engine.get_table_info(table_name)
+        return jsonify({
+            'success': True,
+            **info
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@bp.route('/api/reports/<int:id>/execute', methods=['POST'])
+@login_required
+def api_execute_report(id):
+    """API endpoint to execute a report with configuration"""
+    
+    print(f"API Execute Report called for ID: {id}")
+    print(f"Request data: {request.get_json()}")
+    
+    try:
+        report = Report.query.get_or_404(id)
+        print(f"Report found: {report.name}")
         
-        if table_name not in engine.available_tables:
-            return jsonify({'success': False, 'error': 'Table not found'}), 404
+        # Check permissions
+        if report.created_by != current_user.id:
+            print("Permission denied - user not owner")
+            return jsonify({
+                'success': False,
+                'error': 'Permission denied'
+            }), 403
+
+        try:
+            # Get configuration from request
+            config = request.get_json() or {}
+            print(f"Configuration received: {config}")
+            
+            # Update report configuration
+            if config.get('data_source'):
+                report.data_source = config['data_source']
+                print(f"Updated data_source to: {report.data_source}")
+            if config.get('columns'):
+                report.columns = json.dumps(config['columns'])
+                print(f"Updated columns to: {report.columns}")
+            if config.get('filters'):
+                report.filters = json.dumps(config['filters'])
+                print(f"Updated filters to: {report.filters}")
+            if config.get('visualizations'):
+                report.visualizations = json.dumps(config['visualizations'])
+                print(f"Updated visualizations to: {report.visualizations}")
+            
+            db.session.commit()
+            print("Database committed successfully")
+            
+            # Execute report
+            print("Creating ReportEngine...")
+            engine = ReportEngine()
+            print("Executing report...")
+            result = engine.execute_report(report)
+            print(f"Report execution result: {result}")
+            
+            # Create execution record
+            execution = ReportExecution(
+                report_id=report.id,
+                executed_by=current_user.id,
+                status='completed',
+                row_count=result.get('row_count', 0),
+                execution_time=result.get('execution_time', 0)
+            )
+            db.session.add(execution)
+            
+            # Update report
+            report.last_execution = datetime.utcnow()
+            report.execution_count = (report.execution_count or 0) + 1
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'data': result.get('data', []),
+                'columns': result.get('columns', []),
+                'row_count': result.get('row_count', 0),
+                'execution_time': result.get('execution_time', 0)
+            })
+            
+        except Exception as e:
+            print(f"ERROR during report execution: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            # Create failed execution record
+            try:
+                execution = ReportExecution(
+                    report_id=report.id,
+                    executed_by=current_user.id,
+                    status='failed',
+                    error_message=str(e)
+                )
+                db.session.add(execution)
+                db.session.commit()
+            except:
+                pass  # Ignore errors when logging failed execution
+            
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500
+            
+    except Exception as e:
+        print(f"OUTER ERROR in api_execute_report: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Server error: {str(e)}'
+        }), 500
+
+
+@bp.route('/api/reports/<int:id>/save', methods=['POST'])
+@login_required
+def api_save_report(id):
+    """API endpoint to save report configuration"""
+    
+    report = Report.query.get_or_404(id)
+    
+    # Check permissions
+    if report.created_by != current_user.id:
+        return jsonify({
+            'success': False,
+            'error': 'Permission denied'
+        }), 403
+    
+    try:
+        # Get configuration from request
+        config = request.get_json() or {}
         
-        # Use enhanced columns that include foreign key relationships
-        enhanced_columns = engine.get_enhanced_table_columns(table_name)
+        # Update report configuration
+        if config.get('data_source'):
+            report.data_source = config['data_source']
+        if config.get('columns'):
+            report.columns = config['columns']
+        if config.get('filters'):
+            report.filters = config['filters']
+        if config.get('visualizations'):
+            report.visualizations = config['visualizations']
+        
+        report.updated_at = datetime.utcnow()
+        db.session.commit()
         
         return jsonify({
             'success': True,
-            'columns': enhanced_columns
+            'message': 'Report saved successfully'
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
-@bp.route('/api/columns/<table_name>')
+
+@bp.route('/reports/<int:id>/export/<format>')
 @login_required
-def api_columns(table_name):
-    """API endpoint to get columns for a table"""
-    engine = get_report_engine()
-    columns = engine.get_table_columns(table_name)
-    column_info = []
+def export_report(id, format):
+    """Export report in specified format"""
     
-    for col in columns:
-        col_type = engine.get_column_type(table_name, col)
-        column_info.append({
-            'name': col,
-            'display_name': col.replace('_', ' ').title(),
-            'type': col_type
-        })
-    
-    return jsonify(column_info)
-
-@bp.route('/api/suggested-joins/<primary_table>/<target_table>')
-@login_required
-def api_suggested_joins(primary_table, target_table):
-    """API endpoint to get suggested joins between tables"""
-    suggestions = get_report_engine().get_suggested_joins(primary_table, target_table)
-    return jsonify(suggestions)
-
-@bp.route('/api/execute', methods=['POST'])
-@login_required
-def api_execute_report():
-    """API endpoint to execute a report"""
-    try:
-        config = request.get_json()
-        
-        # Validate configuration
-        errors = ReportValidator.validate_config(config)
-        if errors:
-            return jsonify({'success': False, 'errors': errors}), 400
-        
-        # Build and validate query
-        engine = get_report_engine()
-        query = engine.build_query(config)
-        is_safe, safety_message = ReportValidator.validate_query_safety(query)
-        
-        if not is_safe:
-            return jsonify({'success': False, 'error': safety_message}), 400
-        
-        # Execute query
-        result = engine.execute_query(query)
-        
-        # Log execution
-        if result['success']:
-            log = ReportExecutionLog(
-                executed_by_id=current_user.id,
-                execution_time=result['execution_time'],
-                row_count=result['row_count'],
-                status='success'
-            )
-            db.session.add(log)
-            db.session.commit()
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@bp.route('/api/save', methods=['POST'])
-@login_required
-def api_save_report():
-    """API endpoint to save a report"""
-    try:
-        data = request.get_json()
-        config = data.get('config')
-        metadata = data.get('metadata', {})
-        
-        # Validate configuration
-        errors = ReportValidator.validate_config(config)
-        if errors:
-            return jsonify({'success': False, 'errors': errors}), 400
-        
-        # Create or update report
-        report_id = data.get('report_id')
-        if report_id:
-            report = SavedReport.query.get_or_404(report_id)
-            if report.created_by_id != current_user.id and not current_user.has_role('admin'):
-                return jsonify({'success': False, 'error': 'Permission denied'}), 403
-        else:
-            report = SavedReport(created_by_id=current_user.id)
-        
-        report.name = metadata.get('name', 'Untitled Report')
-        report.description = metadata.get('description', '')
-        report.is_public = metadata.get('is_public', False)
-        report.tags = metadata.get('tags', '')
-        report.set_config(config)
-        
-        if not report_id:
-            db.session.add(report)
-        
-        db.session.commit()
-        
-        return jsonify({'success': True, 'report_id': report.id})
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@bp.route('/saved')
-@login_required
-def saved_reports():
-    """List saved reports"""
-    if not (current_user.has_role('admin') or current_user.has_role('manager')):
-        flash('You do not have permission to access reports.', 'error')
-        return redirect(url_for('main.dashboard'))
-    
-    # Get user's reports
-    my_reports = SavedReport.query.filter_by(created_by_id=current_user.id)\
-                                 .order_by(desc(SavedReport.updated_at)).all()
-    
-    # Get public reports
-    public_reports = SavedReport.query.filter_by(is_public=True)\
-                                     .order_by(desc(SavedReport.view_count)).all()
-    
-    return render_template('reporting/saved_reports.html',
-                         my_reports=my_reports,
-                         public_reports=public_reports)
-
-@bp.route('/saved/<int:report_id>')
-@login_required
-def view_saved_report(report_id):
-    """View and execute a saved report"""
-    report = SavedReport.query.get_or_404(report_id)
+    report = Report.query.get_or_404(id)
     
     # Check permissions
-    if not report.is_public and report.created_by_id != current_user.id:
-        if not current_user.has_role('admin'):
-            abort(403)
-    
-    # Increment view count
-    report.increment_view_count()
-    
-    config = report.get_config()
-    
-    return render_template('reporting/view_report.html',
-                         report=report,
-                         config=json.dumps(config))
-
-@bp.route('/saved/<int:report_id>/execute')
-@login_required
-def execute_saved_report(report_id):
-    """Execute a saved report and return results"""
-    report = SavedReport.query.get_or_404(report_id)
-    
-    # Check permissions
-    if not report.is_public and report.created_by_id != current_user.id:
-        if not current_user.has_role('admin'):
-            abort(403)
+    if report.created_by != current_user.id:
+        return redirect(url_for('reporting.reports_list'))
     
     try:
-        config = report.get_config()
-        
-        # Build and execute query
-        engine = get_report_engine()
-        query = engine.build_query(config)
-        result = engine.execute_query(query)
-        
-        # Log execution
-        if result['success']:
-            log = ReportExecutionLog(
-                report_id=report.id,
-                executed_by_id=current_user.id,
-                execution_time=result['execution_time'],
-                row_count=result['row_count'],
-                status='success'
-            )
-            db.session.add(log)
-            db.session.commit()
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@bp.route('/saved/<int:report_id>/export/<format>')
-@login_required
-def export_saved_report(report_id, format):
-    """Export a saved report"""
-    report = SavedReport.query.get_or_404(report_id)
-    
-    # Check permissions
-    if not report.is_public and report.created_by_id != current_user.id:
-        if not current_user.has_role('admin'):
-            abort(403)
-    
-    if format not in ['csv', 'excel']:
-        abort(400)
-    
-    try:
-        config = report.get_config()
-        
-        # Build and execute query
-        engine = get_report_engine()
-        query = engine.build_query(config)
-        result = engine.execute_query(query)
-        
-        if not result['success']:
-            flash(f'Error executing report: {result.get("error")}', 'error')
-            return redirect(url_for('reporting.view_saved_report', report_id=report_id))
-        
-        # Generate export
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        safe_name = "".join(c for c in report.name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        engine = ReportEngine()
         
         if format == 'csv':
-            content = engine.export_to_csv(result)
-            filename = f"{safe_name}_{timestamp}.csv"
-            mimetype = 'text/csv'
+            output = engine.export_to_csv(report)
+            response = make_response(output)
+            response.headers['Content-Type'] = 'text/csv'
+            response.headers['Content-Disposition'] = f'attachment; filename="{report.name}.csv"'
+            return response
             
-            return send_file(
-                io.BytesIO(content.encode('utf-8')),
-                as_attachment=True,
-                download_name=filename,
-                mimetype=mimetype
-            )
-        
         elif format == 'excel':
-            content = engine.export_to_excel(result)
-            filename = f"{safe_name}_{timestamp}.xlsx"
-            mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            output = engine.export_to_excel(report)
+            response = make_response(output)
+            response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            response.headers['Content-Disposition'] = f'attachment; filename="{report.name}.xlsx"'
+            return response
             
-            return send_file(
-                io.BytesIO(content),
-                as_attachment=True,
-                download_name=filename,
-                mimetype=mimetype
-            )
-    
+        elif format == 'pdf':
+            output = engine.export_to_pdf(report)
+            response = make_response(output)
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename="{report.name}.pdf"'
+            return response
+            
+        else:
+            flash('Invalid export format', 'error')
+            return redirect(url_for('reporting.report_builder', id=id))
+            
     except Exception as e:
-        flash(f'Error exporting report: {str(e)}', 'error')
-        return redirect(url_for('reporting.view_saved_report', report_id=report_id))
+        flash(f'Export failed: {str(e)}', 'error')
+        return redirect(url_for('reporting.report_builder', id=id))
 
-@bp.route('/saved/<int:report_id>/delete', methods=['POST'])
+
+@bp.route('/reports/<int:id>/share', methods=['GET', 'POST'])
 @login_required
-def delete_saved_report(report_id):
-    """Delete a saved report"""
-    report = SavedReport.query.get_or_404(report_id)
+def share_report(id):
+    """Share a report"""
+    
+    report = Report.query.get_or_404(id)
     
     # Check permissions
-    if report.created_by_id != current_user.id and not current_user.has_role('admin'):
-        abort(403)
+    if report.created_by != current_user.id:
+        flash('You do not have permission to share this report.', 'error')
+        return redirect(url_for('reporting.reports_list'))
     
-    report_name = report.name
-    db.session.delete(report)
-    db.session.commit()
-    
-    flash(f'Report "{report_name}" has been deleted.', 'success')
-    return redirect(url_for('reporting.saved_reports'))
-
-@bp.route('/schedules')
-@login_required
-def report_schedules():
-    """List report schedules"""
-    if not current_user.has_role('admin'):
-        flash('You do not have permission to access scheduled reports.', 'error')
-        return redirect(url_for('reporting.dashboard'))
-    
-    schedules = ReportSchedule.query.order_by(desc(ReportSchedule.created_at)).all()
-    
-    return render_template('reporting/schedules.html', schedules=schedules)
-
-@bp.route('/schedules/create/<int:report_id>', methods=['GET', 'POST'])
-@login_required
-def create_schedule(report_id):
-    """Create a new report schedule"""
-    if not current_user.has_role('admin'):
-        abort(403)
-    
-    report = SavedReport.query.get_or_404(report_id)
-    form = ReportScheduleForm()
+    form = ShareReportForm()
     
     if form.validate_on_submit():
-        schedule = ReportSchedule(
-            name=form.name.data,
+        # Create share record
+        expires_at = None
+        if form.expires_in.data:
+            expires_at = datetime.utcnow() + timedelta(days=int(form.expires_in.data))
+        
+        share = ReportShare(
             report_id=report.id,
-            frequency=form.frequency.data,
-            export_format=form.format.data,
-            is_active=form.is_active.data,
-            created_by_id=current_user.id
+            shared_by=current_user.id,
+            share_type=form.share_type.data,
+            permissions=form.permissions.data,
+            recipients=form.recipients.data,
+            message=form.message.data,
+            expires_at=expires_at
         )
         
-        # Process email recipients
-        if form.email_recipients.data:
-            recipients = [email.strip() for email in form.email_recipients.data.split('\n') if email.strip()]
-            schedule.set_recipients_list(recipients)
+        db.session.add(share)
+        db.session.commit()
         
-        schedule.calculate_next_run()
+        flash('Report shared successfully!', 'success')
+        return redirect(url_for('reporting.report_builder', id=id))
+    
+    return render_template('reporting/share_report.html', form=form, report=report)
+
+
+@bp.route('/reports/<int:id>/schedule', methods=['GET', 'POST'])
+@login_required
+def schedule_report(id):
+    """Schedule a report"""
+    
+    report = Report.query.get_or_404(id)
+    
+    # Check permissions
+    if report.created_by != current_user.id:
+        flash('You do not have permission to schedule this report.', 'error')
+        return redirect(url_for('reporting.reports_list'))
+    
+    form = ScheduleReportForm()
+    
+    if form.validate_on_submit():
+        # Calculate next run time
+        next_run = datetime.utcnow().replace(
+            hour=int(form.hour.data),
+            minute=0,
+            second=0,
+            microsecond=0
+        )
+        
+        # Adjust for frequency
+        if form.frequency.data == 'daily':
+            if next_run <= datetime.utcnow():
+                next_run += timedelta(days=1)
+        elif form.frequency.data == 'weekly':
+            # Calculate next occurrence of the specified day
+            pass  # Implementation depends on requirements
+        
+        # Create schedule
+        schedule = ReportSchedule(
+            report_id=report.id,
+            frequency=form.frequency.data,
+            day_of_week=form.day_of_week.data,
+            day_of_month=form.day_of_month.data,
+            hour=int(form.hour.data),
+            export_format=form.format.data,
+            email_recipients=form.email_recipients.data,
+            include_data=form.include_data.data,
+            next_run=next_run
+        )
         
         db.session.add(schedule)
         db.session.commit()
         
-        flash(f'Schedule "{schedule.name}" has been created.', 'success')
-        return redirect(url_for('reporting.report_schedules'))
+        flash('Report scheduled successfully!', 'success')
+        return redirect(url_for('reporting.report_builder', id=id))
     
-    return render_template('reporting/create_schedule.html', form=form, report=report)
+    return render_template('reporting/schedule_report.html', form=form, report=report)
 
-@bp.route('/api/export/<format>', methods=['POST'])
+
+@bp.route('/reports/<int:id>/duplicate', methods=['POST'])
 @login_required
-def api_export_report(format):
-    """API endpoint to export a report directly"""
-    if format not in ['csv', 'excel']:
-        abort(400)
+def duplicate_report(id):
+    """Duplicate a report"""
+    
+    original = Report.query.get_or_404(id)
+    
+    # Check permissions
+    if original.created_by != current_user.id:
+        return jsonify({
+            'success': False,
+            'error': 'Permission denied'
+        }), 403
     
     try:
-        config = request.get_json()
+        # Create duplicate
+        duplicate = Report(
+            name=f"{original.name} (Copy)",
+            description=original.description,
+            category=original.category,
+            data_source=original.data_source,
+            columns=original.columns,
+            filters=original.filters,
+            visualizations=original.visualizations,
+            tags=original.tags,
+            template_type=original.template_type,
+            created_by=current_user.id
+        )
         
-        # Validate configuration
-        errors = ReportValidator.validate_config(config)
-        if errors:
-            return jsonify({'success': False, 'errors': errors}), 400
+        db.session.add(duplicate)
+        db.session.commit()
         
-        # Build and execute query
-        engine = get_report_engine()
-        query = engine.build_query(config)
-        result = engine.execute_query(query)
+        return jsonify({
+            'success': True,
+            'report_id': duplicate.id,
+            'message': 'Report duplicated successfully'
+        })
         
-        if not result['success']:
-            return jsonify({'success': False, 'error': result.get('error')}), 400
-        
-        # Generate export
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        if format == 'csv':
-            content = engine.export_to_csv(result)
-            filename = f"custom_report_{timestamp}.csv"
-            mimetype = 'text/csv'
-            
-            return send_file(
-                io.BytesIO(content.encode('utf-8')),
-                as_attachment=True,
-                download_name=filename,
-                mimetype=mimetype
-            )
-        
-        elif format == 'excel':
-            content = engine.export_to_excel(result)
-            filename = f"custom_report_{timestamp}.xlsx"
-            mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            
-            return send_file(
-                io.BytesIO(content),
-                as_attachment=True,
-                download_name=filename,
-                mimetype=mimetype
-            )
-    
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
-@bp.route('/api/quick-stats')
+
+@bp.route('/api/reports/<int:id>', methods=['DELETE'])
 @login_required
-def api_quick_stats():
-    """API endpoint for quick dashboard statistics"""
-    if not (current_user.has_role('admin') or current_user.has_role('manager')):
-        return jsonify({'error': 'Permission denied'}), 403
+def api_delete_report(id):
+    """API endpoint to delete a report"""
+    
+    report = Report.query.get_or_404(id)
+    
+    # Check permissions
+    if report.created_by != current_user.id:
+        return jsonify({
+            'success': False,
+            'error': 'Permission denied'
+        }), 403
     
     try:
-        # Get basic counts from main tables
-        from app.models import WorkOrder, User, Company, Product
+        # Delete related records
+        ReportExecution.query.filter_by(report_id=id).delete()
+        ReportSchedule.query.filter_by(report_id=id).delete()
+        ReportShare.query.filter_by(report_id=id).delete()
         
-        stats = {
-            'workorders': {
-                'total': WorkOrder.query.count(),
-                'recent': WorkOrder.query.filter(
-                    WorkOrder.created_at >= datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-                ).count()
-            },
-            'users': {
-                'total': User.query.count(),
-                'active': User.query.filter_by(is_active=True).count()
-            },
-            'companies': Company.query.count(),
-            'products': Product.query.filter_by(is_active=True).count()
-        }
+        # Delete report
+        db.session.delete(report)
+        db.session.commit()
         
-        return jsonify(stats)
+        return jsonify({
+            'success': True,
+            'message': 'Report deleted successfully'
+        })
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}Resizable Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@7.3.0/dist/gridstack.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3">
+    <!-- Dashboard Header -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1 text-dark fw-semibold">Interactive Dashboard</h4>
+                    <p class="text-muted mb-0 small">Drag, resize, and customize your tiles • {{ current_user.first_name }} • {{ current_user.role.name|title if current_user.role else 'User' }}</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary small">Live Dashboard</span>
+                    <small class="text-muted d-block">{{ moment().format('MMMM DD, YYYY') if moment else '' }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Controls -->
+    <div class="dashboard-controls">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary" id="toggle-edit-mode">
+                            <i class="fas fa-edit"></i> Edit Layout
+                        </button>
+                        <button type="button" class="btn btn-success" id="save-layout" style="display: none;">
+                            <i class="fas fa-save"></i> Save Layout
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" id="reset-layout" style="display: none;">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                    
+                    <div class="dropdown add-tile-dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-plus"></i> Add Tile
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <button class="dropdown-item add-tile-option add-tile-btn" data-tile-type="stat">
+                                    <i class="fas fa-chart-line add-tile-icon"></i>
+                                    <div>
+                                        <div class="fw-semibold">Statistic Tile</div>
+                                        <small class="text-muted">Display numbers and metrics</small>
+                                    </div>
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item add-tile-option add-tile-btn" data-tile-type="chart">
+                                    <i class="fas fa-chart-bar add-tile-icon"></i>
+                                    <div>
+                                        <div class="fw-semibold">Chart Tile</div>
+                                        <small class="text-muted">Visual data representation</small>
+                                    </div>
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item add-tile-option add-tile-btn" data-tile-type="list">
+                                    <i class="fas fa-list add-tile-icon"></i>
+                                    <div>
+                                        <div class="fw-semibold">List Tile</div>
+                                        <small class="text-muted">Display lists and tables</small>
+                                    </div>
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item add-tile-option add-tile-btn" data-tile-type="quickAction">
+                                    <i class="fas fa-bolt add-tile-icon"></i>
+                                    <div>
+                                        <div class="fw-semibold">Quick Action</div>
+                                        <small class="text-muted">Action buttons and shortcuts</small>
+                                    </div>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resizable Dashboard Grid -->
+    <div class="dashboard-container">
+        <div class="grid-stack" id="dashboard-grid">
+            
+            <!-- Total Work Orders Tile -->
+            <div class="grid-stack-item dashboard-tile stat-tile" data-tile-id="total-orders" data-tile-type="stat" gs-w="3" gs-h="2" gs-x="0" gs-y="0">
+                <div class="grid-stack-item-content">
+                    <div class="tile-header">
+                        <h6 class="tile-title">Total Work Orders</h6>
+                        <div class="tile-actions">
+                            <button class="btn btn-sm btn-outline-light remove-tile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tile-body">
+                        <div class="stat-value text-primary" data-stat="total_workorders">{{ stats.total_workorders if stats else 0 }}</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Open Orders Tile -->
+            <div class="grid-stack-item dashboard-tile stat-tile" data-tile-id="open-orders" data-tile-type="stat" gs-w="3" gs-h="2" gs-x="3" gs-y="0">
+                <div class="grid-stack-item-content">
+                    <div class="tile-header">
+                        <h6 class="tile-title">Open Orders</h6>
+                        <div class="tile-actions">
+                            <button class="btn btn-sm btn-outline-light remove-tile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tile-body">
+                        <div class="stat-value text-warning" data-stat="open_workorders">{{ stats.open_workorders if stats else 0 }}</div>
+                        <div class="stat-label">Open Orders</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overdue Orders Tile -->
+            <div class="grid-stack-item dashboard-tile stat-tile" data-tile-id="overdue-orders" data-tile-type="stat" gs-w="3" gs-h="2" gs-x="6" gs-y="0">
+                <div class="grid-stack-item-content">
+                    <div class="tile-header">
+                        <h6 class="tile-title">Overdue Orders</h6>
+                        <div class="tile-actions">
+                            <button class="btn btn-sm btn-outline-light remove-tile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tile-body">
+                        <div class="stat-value text-danger" data-stat="overdue_workorders">{{ stats.overdue_workorders if stats else 0 }}</div>
+                        <div class="stat-label">Overdue</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Orders Tile -->
+            <div class="grid-stack-item dashboard-tile stat-tile" data-tile-id="completed-orders" data-tile-type="stat" gs-w="3" gs-h="2" gs-x="9" gs-y="0">
+                <div class="grid-stack-item-content">
+                    <div class="tile-header">
+                        <h6 class="tile-title">Completed Orders</h6>
+                        <div class="tile-actions">
+                            <button class="btn btn-sm btn-outline-light remove-tile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tile-body">
+                        <div class="stat-value text-success" data-stat="completed_workorders">{{ stats.completed_workorders if stats else 0 }}</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UAV Service Due Tile -->
+            <div class="grid-stack-item dashboard-tile stat-tile" data-tile-id="uav-service-due" data-tile-type="stat" gs-w="6" gs-h="2" gs-x="0" gs-y="2">
+                <div class="grid-stack-item-content">
+                    <div class="tile-header">
+                        <h6 class="tile-title">UAV Service Due (30 days)</h6>
+                        <div class="tile-actions">
+                            <button class="btn btn-sm btn-outline-light remove-tile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tile-body">
+                        <div class="stat-value text-warning">{{ stats.uavs_service_due_soon if stats else 0 }}</div>
+                        <div class="stat-label">UAVs requiring service soon</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UAV Service Overdue Tile -->
+            <div class="grid-stack-item dashboard-tile stat-tile" data-tile-id="uav-service-overdue" data-tile-type="stat" gs-w="6" gs-h="2" gs-x="6" gs-y="2">
+                <div class="grid-stack-item-content">
+                    <div class="tile-header">
+                        <h6 class="tile-title">UAV Service Overdue</h6>
+                        <div class="tile-actions">
+                            <button class="btn btn-sm btn-outline-light remove-tile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tile-body">
+                        <div class="stat-value text-danger">{{ stats.uavs_service_overdue if stats else 0 }}</div>
+                        <div class="stat-label">UAVs with overdue service</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Tile -->
+            <div class="grid-stack-item dashboard-tile" data-tile-id="quick-actions" data-tile-type="quickAction" gs-w="8" gs-h="3" gs-x="0" gs-y="4">
+                <div class="grid-stack-item-content">
+                    <div class="tile-header">
+                        <h6 class="tile-title">Quick Actions</h6>
+                        <div class="tile-actions">
+                            <button class="btn btn-sm btn-outline-light remove-tile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tile-body">
+                        <div class="row g-2">
+                            <div class="col-6 col-lg-3">
+                                <a href="{{ url_for('workorders.create_workorder') }}" class="btn btn-primary w-100 d-flex flex-column align-items-center py-3">
+                                    <i class="fas fa-plus-circle fa-lg mb-2"></i>
+                                    <span class="small">New Order</span>
+                                </a>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <a href="{{ url_for('workorders.list_workorders') }}" class="btn btn-outline-secondary w-100 d-flex flex-column align-items-center py-3">
+                                    <i class="fas fa-list fa-lg mb-2"></i>
+                                    <span class="small">View Orders</span>
+                                </a>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <a href="{{ url_for('products.list_products') }}" class="btn btn-outline-info w-100 d-flex flex-column align-items-center py-3">
+                                    <i class="fas fa-cubes fa-lg mb-2"></i>
+                                    <span class="small">UAV Products</span>
+                                </a>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <a href="{{ url_for('uav_service.create_incident') }}" class="btn btn-outline-success w-100 d-flex flex-column align-items-center py-3">
+                                    <i class="fas fa-wrench fa-lg mb-2"></i>
+                                    <span class="small">UAV Service</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Tile -->
+            <div class="grid-stack-item dashboard-tile" data-tile-id="recent-activity" data-tile-type="list" gs-w="4" gs-h="3" gs-x="8" gs-y="4">
+                <div class="grid-stack-item-content">
+                    <div class="tile-header">
+                        <h6 class="tile-title">Recent Activity</h6>
+                        <div class="tile-actions">
+                            <button class="btn btn-sm btn-outline-light remove-tile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tile-body">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item border-0 px-0 py-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-plus-circle text-success me-2"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="small fw-medium">New work order created</div>
+                                        <div class="text-muted small">2 minutes ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="list-group-item border-0 px-0 py-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-primary me-2"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="small fw-medium">Order #123 completed</div>
+                                        <div class="text-muted small">15 minutes ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="list-group-item border-0 px-0 py-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-wrench text-warning me-2"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="small fw-medium">UAV service scheduled</div>
+                                        <div class="text-muted small">1 hour ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Tile (Example) -->
+            <div class="grid-stack-item dashboard-tile" data-tile-id="orders-chart" data-tile-type="chart" gs-w="12" gs-h="4" gs-x="0" gs-y="7">
+                <div class="grid-stack-item-content">
+                    <div class="tile-header">
+                        <h6 class="tile-title">Work Orders Trend</h6>
+                        <div class="tile-actions">
+                            <button class="btn btn-sm btn-outline-light remove-tile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tile-body">
+                        <canvas id="ordersChart" width="100%" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/gridstack@7.3.0/dist/gridstack-all.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Initialize chart and basic functionality when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing dashboard components...');
+    
+    // Simple test to ensure buttons are clickable
+    const editBtn = document.getElementById('toggle-edit-mode');
+    if (editBtn) {
+        console.log('Found edit button, adding test click handler');
+        editBtn.addEventListener('click', function(e) {
+            console.log('EDIT BUTTON CLICKED! Event:', e);
+            e.preventDefault();
+            // This handler should work regardless of GridStack
+        });
+    } else {
+        console.error('Edit button not found!');
+    }
+    
+    // Initialize chart
+    const ctx = document.getElementById('ordersChart');
+    if (ctx) {
+        console.log('Initializing chart...');
+        try {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Work Orders',
+                        data: [12, 19, 3, 5, 2, 3],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            console.log('Chart initialized successfully');
+        } catch (error) {
+            console.error('Error initializing chart:', error);
+        }
+    }
+
+    // Update statistics in real-time (demo)
+    setInterval(() => {
+        document.querySelectorAll('[data-stat]').forEach(element => {
+            const currentValue = parseInt(element.textContent) || 0;
+            const change = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
+            const newValue = Math.max(0, currentValue + change);
+            element.textContent = newValue;
+        });
+    }, 30000); // Update every 30 seconds
+});
+</script>
+
+<!-- Load our custom dashboard script after all dependencies -->
+<script src="{{ url_for('static', filename='js/resizable-dashboard.js') }}"></script>
+{% endblock %}

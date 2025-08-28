@@ -1,0 +1,594 @@
+{% extends "base_new.html" %}
+
+{% block title %}Create Knowledge Article - {{ config.COMPANY_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('knowledge.index') }}">
+                    <i class="fas fa-book-open me-1"></i>Knowledge Base
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Create Article</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-gradient-primary text-white">
+                <div class="card-body">
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Create Knowledge Article
+                    </h1>
+                    <p class="mb-0 opacity-75">
+                        Share your knowledge and help others solve similar problems
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="articleForm">
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Basic Information -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle text-primary me-2"></i>
+                            Basic Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Title -->
+                        <div class="mb-3">
+                            {{ form.title.label(class="form-label required") }}
+                            {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.title.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Enter a clear, descriptive title (10-200 characters)</div>
+                        </div>
+
+                        <!-- Summary -->
+                        <div class="mb-3">
+                            {{ form.summary.label(class="form-label required") }}
+                            {{ form.summary(class="form-control" + (" is-invalid" if form.summary.errors else "")) }}
+                            {% if form.summary.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.summary.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Brief summary of the issue and solution (20-500 characters)</div>
+                        </div>
+
+                        <!-- Type and Category Row -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.article_type.label(class="form-label required") }}
+                                    {{ form.article_type(class="form-select" + (" is-invalid" if form.article_type.errors else "")) }}
+                                    {% if form.article_type.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.article_type.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.category_id.label(class="form-label") }}
+                                    {{ form.category_id(class="form-select") }}
+                                    <div class="form-text">Select the most appropriate category</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Priority and Visibility Row -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.priority.label(class="form-label") }}
+                                    {{ form.priority(class="form-select") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.visibility.label(class="form-label") }}
+                                    {{ form.visibility(class="form-select", onchange="toggleVisibilityOptions()") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Visibility Options -->
+                        <div id="roleVisibility" class="mb-3" style="display: none;">
+                            {{ form.visibility_roles.label(class="form-label") }}
+                            <div class="row">
+                                {% for role in form.visibility_roles %}
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        {{ role(class="form-check-input") }}
+                                        {{ role.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div id="userVisibility" class="mb-3" style="display: none;">
+                            {{ form.visibility_users.label(class="form-label") }}
+                            <div class="row">
+                                {% for user in form.visibility_users %}
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        {{ user(class="form-check-input") }}
+                                        {{ user.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Keywords and Tags -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.keywords.label(class="form-label") }}
+                                    {{ form.keywords(class="form-control") }}
+                                    <div class="form-text">Comma-separated keywords for search optimization</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.tags.label(class="form-label") }}
+                                    {{ form.tags(class="form-control", id="tagsInput") }}
+                                    <div class="form-text">Comma-separated tags (e.g., windows, network, database)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Sections -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-alt text-success me-2"></i>
+                            Article Content
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tabs for different content sections -->
+                        <ul class="nav nav-tabs mb-3" id="contentTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="description-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#description" type="button" role="tab">
+                                    <i class="fas fa-align-left me-1"></i>Description
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="solution-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#solution" type="button" role="tab">
+                                    <i class="fas fa-check-circle me-1"></i>Solution
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="kedb-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#kedb" type="button" role="tab">
+                                    <i class="fas fa-database me-1"></i>KEDB Fields
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="additional-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#additional" type="button" role="tab">
+                                    <i class="fas fa-plus me-1"></i>Additional
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="contentTabsContent">
+                            <!-- Description Tab -->
+                            <div class="tab-pane fade show active" id="description" role="tabpanel">
+                                <div class="mb-3">
+                                    {{ form.description.label(class="form-label") }}
+                                    {{ form.description(class="form-control") }}
+                                    <div class="form-text">Detailed description of the problem or topic</div>
+                                </div>
+                            </div>
+
+                            <!-- Solution Tab -->
+                            <div class="tab-pane fade" id="solution" role="tabpanel">
+                                <div class="mb-3">
+                                    {{ form.solution.label(class="form-label") }}
+                                    {{ form.solution(class="form-control") }}
+                                    <div class="form-text">Step-by-step solution or detailed information</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.resolution_steps.label(class="form-label") }}
+                                    {{ form.resolution_steps(class="form-control") }}
+                                    <div class="form-text">Numbered steps to resolve the issue</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.workaround.label(class="form-label") }}
+                                    {{ form.workaround(class="form-control") }}
+                                    <div class="form-text">Temporary workaround if available</div>
+                                </div>
+                            </div>
+
+                            <!-- KEDB Fields Tab -->
+                            <div class="tab-pane fade" id="kedb" role="tabpanel">
+                                <div class="mb-3">
+                                    {{ form.problem_statement.label(class="form-label") }}
+                                    {{ form.problem_statement(class="form-control") }}
+                                    <div class="form-text">Clear statement of the problem being addressed</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.environment.label(class="form-label") }}
+                                    {{ form.environment(class="form-control") }}
+                                    <div class="form-text">System environment, versions, configurations affected</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.cause.label(class="form-label") }}
+                                    {{ form.cause(class="form-control") }}
+                                    <div class="form-text">Underlying cause of the issue</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.prevention_steps.label(class="form-label") }}
+                                    {{ form.prevention_steps(class="form-control") }}
+                                    <div class="form-text">Steps to prevent this issue from occurring</div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Tab -->
+                            <div class="tab-pane fade" id="additional" role="tabpanel">
+                                <div class="mb-3">
+                                    {{ form.related_documents.label(class="form-label") }}
+                                    {{ form.related_documents(class="form-control") }}
+                                    <div class="form-text">Links to related documentation, tickets, or articles</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.attachments.label(class="form-label") }}
+                                    {{ form.attachments(class="form-control") }}
+                                    <div class="form-text">Upload supporting documents or images</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.expires_at.label(class="form-label") }}
+                                    {{ form.expires_at(class="form-control", type="datetime-local") }}
+                                    <div class="form-text">Optional expiration date for time-sensitive information</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workflow Actions -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tasks text-warning me-2"></i>
+                            Publication Options
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.reviewer_id.label(class="form-label") }}
+                                    {{ form.reviewer_id(class="form-select") }}
+                                    <div class="form-text">Optional: Assign a reviewer before publication</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.status.label(class="form-label") }}
+                                    {{ form.status(class="form-select") }}
+                                    <div class="form-text">Set the initial status</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.workflow_comments.label(class="form-label") }}
+                            {{ form.workflow_comments(class="form-control") }}
+                            <div class="form-text">Comments about the article creation or status</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Quick Actions -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="submit" class="btn btn-outline-secondary">
+                                <i class="fas fa-save me-1"></i>Save as Draft
+                            </button>
+                            
+                            <button type="submit" name="submit_for_review" class="btn btn-outline-warning">
+                                <i class="fas fa-eye me-1"></i>Submit for Review
+                            </button>
+                            
+                            {% if current_user.has_role('admin') or current_user.has_role('knowledge_admin') %}
+                            <button type="submit" name="publish" class="btn btn-success">
+                                <i class="fas fa-share me-1"></i>Publish Now
+                            </button>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('knowledge.index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KEDB Guidelines -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-lightbulb me-1"></i>KEDB Best Practices
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled small mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-1"></i>
+                                Use clear, descriptive titles
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-1"></i>
+                                Include step-by-step instructions
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-1"></i>
+                                Specify environment details
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-1"></i>
+                                Document root cause analysis
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-1"></i>
+                                Add prevention measures
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-check text-success me-1"></i>
+                                Use relevant tags and keywords
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Article Template -->
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-template me-1"></i>Quick Templates
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadTemplate('troubleshooting')">
+                                Troubleshooting
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadTemplate('procedure')">
+                                Procedure
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadTemplate('faq')">
+                                FAQ
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadTemplate('solution')">
+                                Solution
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Auto-save functionality
+let autoSaveTimer;
+function autoSave() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+        // Store form data in localStorage
+        const formData = new FormData(document.getElementById('articleForm'));
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        localStorage.setItem('knowledgeArticleDraft', JSON.stringify(data));
+        
+        // Show auto-save indicator
+        showAutoSaveIndicator();
+    }, 3000);
+}
+
+function showAutoSaveIndicator() {
+    // Create or update auto-save indicator
+    let indicator = document.getElementById('autoSaveIndicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'autoSaveIndicator';
+        indicator.className = 'position-fixed bottom-0 end-0 m-3 alert alert-success alert-sm';
+        indicator.style.zIndex = '1050';
+        document.body.appendChild(indicator);
+    }
+    indicator.innerHTML = '<i class="fas fa-save me-1"></i>Draft auto-saved';
+    indicator.style.display = 'block';
+    
+    setTimeout(() => {
+        indicator.style.display = 'none';
+    }, 2000);
+}
+
+// Load saved draft
+function loadDraft() {
+    const saved = localStorage.getItem('knowledgeArticleDraft');
+    if (saved) {
+        const data = JSON.parse(saved);
+        for (const [key, value] of Object.entries(data)) {
+            const field = document.querySelector(`[name="${key}"]`);
+            if (field) {
+                field.value = value;
+            }
+        }
+    }
+}
+
+// Template loader
+function loadTemplate(type) {
+    const templates = {
+        troubleshooting: {
+            problem_statement: "Describe the specific problem or error encountered.",
+            environment: "Operating System:\nSoftware Version:\nConfiguration Details:",
+            cause: "Root cause analysis findings.",
+            solution: "Step-by-step resolution:\n1. First step\n2. Second step\n3. Final verification",
+            prevention_steps: "Preventive measures:\n1. Regular maintenance\n2. Monitoring recommendations"
+        },
+        procedure: {
+            description: "Overview of the procedure and when to use it.",
+            resolution_steps: "Detailed steps:\n1. Preparation\n2. Execution\n3. Verification\n4. Documentation",
+            related_documents: "Related procedures:\n- Link to related documentation\n- Prerequisites"
+        },
+        faq: {
+            problem_statement: "Common question or issue.",
+            solution: "Clear, concise answer with any necessary steps.",
+            related_documents: "Additional resources:\n- Related articles\n- External documentation"
+        },
+        solution: {
+            problem_statement: "Problem description and symptoms.",
+            cause: "Analysis of why the problem occurs.",
+            solution: "Complete solution with verification steps.",
+            workaround: "Temporary workaround if applicable."
+        }
+    };
+    
+    const template = templates[type];
+    if (template) {
+        for (const [field, content] of Object.entries(template)) {
+            const element = document.querySelector(`[name="${field}"]`);
+            if (element && !element.value.trim()) {
+                element.value = content;
+            }
+        }
+    }
+}
+
+// Visibility options toggle
+function toggleVisibilityOptions() {
+    const visibility = document.querySelector('[name="visibility"]').value;
+    const roleDiv = document.getElementById('roleVisibility');
+    const userDiv = document.getElementById('userVisibility');
+    
+    roleDiv.style.display = visibility === 'ROLE_BASED' ? 'block' : 'none';
+    userDiv.style.display = visibility === 'PRIVATE' ? 'block' : 'none';
+}
+
+// Tag autocomplete
+document.addEventListener('DOMContentLoaded', function() {
+    const tagsInput = document.getElementById('tagsInput');
+    if (tagsInput) {
+        tagsInput.addEventListener('input', function() {
+            // Implement tag autocomplete here
+            autoSave();
+        });
+    }
+    
+    // Add auto-save to all form inputs
+    const formInputs = document.querySelectorAll('#articleForm input, #articleForm textarea, #articleForm select');
+    formInputs.forEach(input => {
+        input.addEventListener('input', autoSave);
+        input.addEventListener('change', autoSave);
+    });
+    
+    // Load any saved draft
+    loadDraft();
+    
+    // Initialize visibility options
+    toggleVisibilityOptions();
+});
+
+// Form validation
+document.getElementById('articleForm').addEventListener('submit', function(e) {
+    const title = document.querySelector('[name="title"]').value.trim();
+    const summary = document.querySelector('[name="summary"]').value.trim();
+    
+    if (!title || !summary) {
+        e.preventDefault();
+        alert('Please fill in the required fields: Title and Summary');
+        return false;
+    }
+    
+    // Clear auto-saved draft on successful submission
+    localStorage.removeItem('knowledgeArticleDraft');
+});
+</script>
+
+<style>
+.required::after {
+    content: ' *';
+    color: red;
+}
+
+.alert-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #0d6efd;
+    color: #0d6efd;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+#autoSaveIndicator {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+</style>
+{% endblock %}

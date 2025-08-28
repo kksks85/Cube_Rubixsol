@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% set active_page = "uav_service" %}
+
+{% block title %}Diagnosis & Work Order - {{ incident.incident_number_formatted }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Diagnosis & Work Order</h1>
+                <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Incident
+                </a>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Step 2: Diagnosis & Work Order - {{ incident.incident_number_formatted }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">UAV Information</h6>
+                            <p><strong>Model:</strong> {{ incident.uav_model }}</p>
+                            <p><strong>Serial Number:</strong> {{ incident.uav_serial_number or 'N/A' }}</p>
+                            <p><strong>Flight Hours:</strong> {{ incident.flight_hours or 'Unknown' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Issue Description</h6>
+                            <p><strong>Category:</strong> {{ incident.incident_category.replace('_', ' ').title() }}</p>
+                            <p><strong>Description:</strong> {{ incident.description }}</p>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Simple test: just add a hidden input to verify form submission -->
+                        <input type="hidden" name="test_submission" value="1">
+                        
+                        <!-- Debug: Show form errors -->
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <h6>Form Validation Errors:</h6>
+                            <ul class="mb-0">
+                                {% for field_name, errors in form.errors.items() %}
+                                    {% for error in errors %}
+                                        <li><strong>{{ field_name }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.diagnostic_findings.label(class="form-label") }}
+                                    <span class="text-danger fw-bold">* REQUIRED</span>
+                                    {{ form.diagnostic_findings(class="form-control border-warning", rows="6", placeholder="REQUIRED: Enter your diagnostic findings here...") }}
+                                    {% if form.diagnostic_findings.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.diagnostic_findings.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-warning">
+                                        <i class="fas fa-exclamation-triangle"></i> <strong>This field is required</strong> - Describe what you found during the diagnostic process
+                                    </small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.work_order_type.label(class="form-label") }}
+                                    <span class="text-danger fw-bold">* REQUIRED</span>
+                                    {{ form.work_order_type(class="form-control border-warning") }}
+                                    {% if form.work_order_type.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.work_order_type.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.estimated_cost.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.estimated_cost(class="form-control") }}
+                                    </div>
+                                    <small class="form-text text-muted">Estimated cost for repair/maintenance</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.technician_notes.label(class="form-label") }}
+                                    {{ form.technician_notes(class="form-control", rows="6") }}
+                                    <small class="form-text text-muted">Additional notes and recommendations</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.parts_requested(class="form-check-input", id="parts-checkbox") }}
+                                        {{ form.parts_requested.label(class="form-check-label") }}
+                                    </div>
+                                    <small class="form-text text-muted">Check if parts need to be ordered from inventory</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <!-- Assignment Section -->
+                                <div class="border rounded p-3 mb-3 bg-light">
+                                    <h6 class="text-primary mb-3"><i class="fas fa-users me-2"></i>Assignment</h6>
+                                    
+                                    <div class="mb-3">
+                                        {{ form.assignment_group_id.label(class="form-label") }}
+                                        {{ form.assignment_group_id(class="form-control", id="assignment-group-select") }}
+                                        <small class="form-text text-muted">
+                                            <a href="javascript:void(0)" onclick="viewAllGroups()" class="text-primary">
+                                                <i class="fas fa-external-link-alt"></i> View All Groups
+                                            </a>
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ form.assigned_to_id.label(class="form-label") }}
+                                        {{ form.assigned_to_id(class="form-control", id="assigned-user-select") }}
+                                        <small class="form-text text-muted">Select user after choosing assignment group</small>
+                                    </div>
+                                </div>
+
+                                <!-- Work Order Type Explanation -->
+                                <div class="border rounded p-3 mb-3 bg-info bg-opacity-10">
+                                    <h6 class="text-info mb-2"><i class="fas fa-info-circle me-2"></i>Work Order Types</h6>
+                                    <ul class="small mb-0">
+                                        <li><strong>REPAIR:</strong> Fix identified issues</li>
+                                        <li><strong>REPLACE:</strong> Component replacement needed</li>
+                                        <li><strong>MAINTENANCE:</strong> Preventive maintenance</li>
+                                        <li><strong>INSPECTION:</strong> Detailed inspection only</li>
+                                        <li><strong>CALIBRATION:</strong> System calibration</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Simple Parts Request Section -->
+                        <div class="row mt-3" id="parts-section" style="display: none;">
+                            <div class="col-12">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-cogs me-2"></i>Parts Request</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            <strong>Available Parts:</strong> DJ-M300-FRAME-001, CF-QUAD-450-001, LG-ASSY-STD-001, MT-2216-900-001, ESC-30A-BLH-001
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Part Number *</label>
+                                                    <input type="text" class="form-control" name="simple_part_number" placeholder="e.g., DJ-M300-FRAME-001">
+                                                    <small class="form-text text-muted">Enter exact part number from inventory</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Quantity *</label>
+                                                    <input type="number" class="form-control" name="simple_part_quantity" min="1" value="1">
+                                                    <small class="form-text text-muted">Number of parts needed</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Parts Notes</label>
+                                                    <textarea class="form-control" name="simple_parts_notes" rows="3" placeholder="Describe the parts needed and any special requirements..."></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Diagnostic Checklist -->
+                        <div class="mt-4">
+                            <h6 class="text-primary">Diagnostic Checklist</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check1">
+                                        <label class="form-check-label" for="check1">Visual inspection completed</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check2">
+                                        <label class="form-check-label" for="check2">System diagnostics run</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check3">
+                                        <label class="form-check-label" for="check3">Component testing performed</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check4">
+                                        <label class="form-check-label" for="check4">Flight controller checked</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check5">
+                                        <label class="form-check-label" for="check5">Communication systems tested</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check6">
+                                        <label class="form-check-label" for="check6">Documentation updated</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Incident
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check"></i> Complete Diagnosis & Create Work Order
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - diagnosis_workflow.html');
+    
+    // Add form validation
+    const form = document.querySelector('form');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    
+    if (form && submitBtn) {
+        form.addEventListener('submit', function(e) {
+            const diagnosticFindings = document.querySelector('[name="diagnostic_findings"]');
+            const workOrderType = document.querySelector('[name="work_order_type"]');
+            
+            let hasErrors = false;
+            let errorMsg = 'Please complete the following required fields:\n\n';
+            
+            if (!diagnosticFindings || !diagnosticFindings.value.trim()) {
+                hasErrors = true;
+                errorMsg += '• Diagnostic Findings\n';
+            }
+            
+            if (!workOrderType || !workOrderType.value) {
+                hasErrors = true;
+                errorMsg += '• Work Order Type\n';
+            }
+            
+            if (hasErrors) {
+                alert(errorMsg + '\nPlease fill in these fields and try again.');
+                e.preventDefault();
+                return false;
+            }
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        });
+    }
+    
+    // Parts Request Section Visibility
+    const partsRequestedCheckbox = document.getElementById('parts-requested-checkbox');
+    const partsRequestSection = document.getElementById('parts-request-section');
+
+    // Show/hide parts section based on checkbox with smooth transition
+    partsRequestedCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            partsRequestSection.style.display = 'block';
+            // Add fade-in class after a short delay to ensure display is set
+            setTimeout(() => {
+                partsRequestSection.classList.add('fade-in');
+                partsRequestSection.classList.remove('fade-out');
+            }, 10);
+        } else {
+            partsRequestSection.classList.add('fade-out');
+            partsRequestSection.classList.remove('fade-in');
+            
+            // Hide the section after transition completes
+            setTimeout(() => {
+                partsRequestSection.style.display = 'none';
+                // Clear any existing parts when hiding the section
+                if (typeof requestedParts !== 'undefined') {
+                    requestedParts = [];
+                    if (typeof updatePartsTable === 'function') updatePartsTable();
+                    if (typeof updateFormData === 'function') updateFormData();
+                }
+            }, 300);
+        }
+    });
+
+    // Check initial state on page load
+    if (partsRequestedCheckbox.checked) {
+        partsRequestSection.style.display = 'block';
+        partsRequestSection.classList.add('fade-in');
+    }
+
+    // Assignment Group and User Selection
+    const assignmentGroupSelect = document.getElementById('assignment-group-select');
+    const assignedUserSelect = document.getElementById('assigned-user-select');
+
+    assignmentGroupSelect.addEventListener('change', function() {
+        const groupId = this.value;
+        
+        // Clear user selection
+        assignedUserSelect.innerHTML = '<option value="">-- Select User --</option>';
+        
+        if (groupId) {
+            // Fetch users for this assignment group
+            fetch(`/uav-service/api/assignment-group-users/${groupId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.users && data.users.length > 0) {
+                        data.users.forEach(user => {
+                            const option = document.createElement('option');
+                            option.value = user.id;
+                            option.textContent = `${user.full_name} (${user.username})`;
+                            if (user.is_leader) {
+                                option.textContent += ' [Lead]';
+                            }
+                            assignedUserSelect.appendChild(option);
+                        });
+                    } else {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'No users available in this group';
+                        assignedUserSelect.appendChild(option);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading assignment group users:', error);
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Error loading users';
+                    assignedUserSelect.appendChild(option);
+                });
+        }
+    });
+
+    function viewAllGroups() {
+        // Open assignment groups page in new tab
+        window.open('/users/assignment-groups', '_blank');
+    }
+
+    // Simple Parts System Functions
+    function togglePartsSection() {
+        const partsCheckbox = document.querySelector('input[name="parts_requested"]') || document.getElementById('parts-checkbox');
+        const partsSection = document.getElementById('parts-section');
+        
+        if (partsCheckbox && partsSection) {
+            if (partsCheckbox.checked) {
+                partsSection.style.display = 'block';
+            } else {
+                partsSection.style.display = 'none';
+                clearPartsFields();
+            }
+        }
+    }
+
+    function clearPartsFields() {
+        const partNumber = document.querySelector('input[name="simple_part_number"]');
+        const partQuantity = document.querySelector('input[name="simple_part_quantity"]');
+        const partNotes = document.querySelector('textarea[name="simple_parts_notes"]');
+        
+        if (partNumber) partNumber.value = '';
+        if (partQuantity) partQuantity.value = '1';
+        if (partNotes) partNotes.value = '';
+    }
+
+    // Initialize parts section visibility and add event listener
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const partsCheckbox = document.querySelector('input[name="parts_requested"]') || document.getElementById('parts-checkbox');
+            
+            if (partsCheckbox) {
+                // Set initial state
+                togglePartsSection();
+                
+                // Add event listeners
+                partsCheckbox.addEventListener('change', togglePartsSection);
+                partsCheckbox.addEventListener('click', function() {
+                    setTimeout(togglePartsSection, 10);
+                });
+            }
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

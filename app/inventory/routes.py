@@ -162,6 +162,7 @@ def create_item():
             quantity_in_stock=form.quantity_in_stock.data,
             minimum_stock_level=form.minimum_stock_level.data,
             maximum_stock_level=form.maximum_stock_level.data,
+            condition=form.condition.data,
             unit_cost=form.unit_cost.data,
             weight=form.weight.data,
             dimensions=form.dimensions.data,
@@ -243,6 +244,7 @@ def edit_item(id):
         item.model = form.model.data
         item.minimum_stock_level = form.minimum_stock_level.data
         item.maximum_stock_level = form.maximum_stock_level.data
+        item.condition = form.condition.data
         item.unit_cost = form.unit_cost.data
         item.weight = form.weight.data
         item.dimensions = form.dimensions.data

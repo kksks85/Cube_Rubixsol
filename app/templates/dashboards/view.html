@@ -1,0 +1,393 @@
+{% extends "base_new.html" %}
+
+{% block title %}{{ dashboard.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@7.3.0/dist/gridstack.min.css">
+<style>
+.dashboard-container {
+    min-height: 600px;
+}
+
+.grid-stack-item-content {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 100%;
+    overflow: hidden;
+}
+
+.widget-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.widget-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.widget-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.kpi-widget {
+    text-align: center;
+}
+
+.kpi-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #007bff;
+    line-height: 1;
+}
+
+.kpi-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.kpi-change {
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.kpi-change.positive {
+    color: #28a745;
+}
+
+.kpi-change.negative {
+    color: #dc3545;
+}
+
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quick-action-btn {
+    text-decoration: none;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    color: #495057;
+    transition: all 0.2s;
+}
+
+.quick-action-btn:hover {
+    background: #e9ecef;
+    color: #495057;
+    text-decoration: none;
+}
+
+.edit-mode .widget-actions {
+    display: flex !important;
+}
+
+.widget-actions {
+    display: none;
+}
+
+.btn-toggle-edit {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">{{ dashboard.name }}</h1>
+                    {% if dashboard.description %}
+                    <p class="text-muted mb-0">{{ dashboard.description }}</p>
+                    {% endif %}
+                    <small class="text-muted">
+                        {% if dashboard.is_public %}
+                        <span class="badge bg-success">Public</span>
+                        {% endif %}
+                        Created by {{ dashboard.creator.username }}
+                        {% if is_home %}
+                        <span class="badge bg-primary ms-2">Home Dashboard</span>
+                        {% endif %}
+                    </small>
+                </div>
+                <div>
+                    {% if can_edit %}
+                    <button type="button" class="btn btn-outline-secondary" id="toggleEditMode">
+                        <i class="fas fa-edit"></i> Edit Mode
+                    </button>
+                    <a href="{{ url_for('dashboards.add_widget', dashboard_id=dashboard.id) }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Widget
+                    </a>
+                    <a href="{{ url_for('dashboards.edit', id=dashboard.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('dashboards.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="dashboard-container">
+                <div class="grid-stack" id="dashboard-grid">
+                    {% for widget in widgets %}
+                    <div class="grid-stack-item" 
+                         gs-x="{{ widget.position_x }}" 
+                         gs-y="{{ widget.position_y }}" 
+                         gs-w="{{ widget.width }}" 
+                         gs-h="{{ widget.height }}"
+                         data-widget-id="{{ widget.id }}">
+                        <div class="grid-stack-item-content">
+                            <div class="widget-header">
+                                <h5 class="widget-title">{{ widget.title }}</h5>
+                                <div class="widget-actions">
+                                    <a href="{{ url_for('dashboards.edit_widget', widget_id=widget.id) }}" 
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteWidget({{ widget.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="widget-content" data-widget-type="{{ widget.widget_type }}" data-widget-id="{{ widget.id }}">
+                                <!-- Widget content will be loaded here -->
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if not widgets %}
+            <div class="text-center py-5">
+                <i class="fas fa-th-large fa-3x text-muted mb-3"></i>
+                <h4>No widgets yet</h4>
+                <p class="text-muted">Add some widgets to get started with your dashboard.</p>
+                {% if can_edit %}
+                <a href="{{ url_for('dashboards.add_widget', dashboard_id=dashboard.id) }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Your First Widget
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Toggle Edit Mode Button -->
+{% if can_edit %}
+<button type="button" class="btn btn-primary btn-lg rounded-circle btn-toggle-edit" id="saveLayoutBtn" style="display: none;">
+    <i class="fas fa-save"></i>
+</button>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/gridstack@7.3.0/dist/gridstack-all.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let grid;
+let editMode = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize GridStack
+    grid = GridStack.init({
+        cellHeight: 80,
+        margin: 10,
+        resizable: {
+            handles: 'se'
+        },
+        removable: false,
+        staticGrid: true  // Start in view mode
+    });
+
+    // Load widget data
+    loadAllWidgets();
+
+    // Edit mode toggle
+    document.getElementById('toggleEditMode').addEventListener('click', toggleEditMode);
+    document.getElementById('saveLayoutBtn').addEventListener('click', saveLayout);
+});
+
+function toggleEditMode() {
+    editMode = !editMode;
+    const toggleBtn = document.getElementById('toggleEditMode');
+    const saveBtn = document.getElementById('saveLayoutBtn');
+    const dashboardContainer = document.querySelector('.dashboard-container');
+
+    if (editMode) {
+        grid.enableMove(true);
+        grid.enableResize(true);
+        toggleBtn.innerHTML = '<i class="fas fa-eye"></i> View Mode';
+        toggleBtn.className = 'btn btn-success';
+        saveBtn.style.display = 'block';
+        dashboardContainer.classList.add('edit-mode');
+    } else {
+        grid.enableMove(false);
+        grid.enableResize(false);
+        toggleBtn.innerHTML = '<i class="fas fa-edit"></i> Edit Mode';
+        toggleBtn.className = 'btn btn-outline-secondary';
+        saveBtn.style.display = 'none';
+        dashboardContainer.classList.remove('edit-mode');
+    }
+}
+
+function saveLayout() {
+    const widgets = [];
+    document.querySelectorAll('.grid-stack-item').forEach(item => {
+        const gridStackEl = item.gridstackNode;
+        widgets.push({
+            id: parseInt(item.dataset.widgetId),
+            x: gridStackEl.x,
+            y: gridStackEl.y,
+            width: gridStackEl.w,
+            height: gridStackEl.h
+        });
+    });
+
+    fetch(`{{ url_for('dashboards.save_layout', dashboard_id=dashboard.id) }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ widgets: widgets })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Error saving layout');
+    });
+}
+
+function loadAllWidgets() {
+    document.querySelectorAll('.widget-content').forEach(loadWidgetData);
+}
+
+function loadWidgetData(widgetElement) {
+    const widgetId = widgetElement.dataset.widgetId;
+    const widgetType = widgetElement.dataset.widgetType;
+
+    fetch(`{{ url_for('dashboards.widget_data', widget_id=0) }}`.replace('0', widgetId))
+        .then(response => response.json())
+        .then(data => {
+            renderWidget(widgetElement, widgetType, data);
+        })
+        .catch(error => {
+            widgetElement.innerHTML = '<div class="text-center text-danger">Error loading widget</div>';
+        });
+}
+
+function renderWidget(element, type, data) {
+    switch (type) {
+        case 'kpi':
+            element.innerHTML = `
+                <div class="kpi-widget">
+                    <div class="kpi-value">${data.value}</div>
+                    <div class="kpi-label">${data.label}</div>
+                    <div class="kpi-change ${data.trend === 'up' ? 'positive' : 'negative'}">
+                        <i class="fas fa-arrow-${data.trend}"></i> ${data.change}
+                    </div>
+                </div>
+            `;
+            break;
+        case 'chart':
+            const chartId = 'chart-' + Math.random().toString(36).substr(2, 9);
+            element.innerHTML = `<canvas id="${chartId}"></canvas>`;
+            setTimeout(() => {
+                new Chart(document.getElementById(chartId), {
+                    type: data.type,
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }, 100);
+            break;
+        case 'quick_action':
+            const actionsHtml = data.actions.map(action => 
+                `<a href="${action.url}" class="quick-action-btn">
+                    <i class="fas fa-external-link-alt"></i> ${action.name}
+                </a>`
+            ).join('');
+            element.innerHTML = `<div class="quick-actions">${actionsHtml}</div>`;
+            break;
+        default:
+            element.innerHTML = `<div class="text-center">${data.message}</div>`;
+    }
+}
+
+function deleteWidget(widgetId) {
+    if (!confirm('Are you sure you want to delete this widget?')) {
+        return;
+    }
+
+    fetch(`{{ url_for('dashboards.delete_widget', widget_id=0) }}`.replace('0', widgetId), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Error deleting widget');
+    });
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container-fluid').prepend(alertDiv);
+}
+</script>
+{% endblock %}

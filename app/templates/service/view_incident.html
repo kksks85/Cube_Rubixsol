@@ -13,12 +13,117 @@
                     <p class="text-muted mb-0">{{ incident.title }}</p>
                 </div>
                 <div>
-                    <a href="{{ url_for('service.update_status', id=incident.id) }}" class="btn btn-primary me-2">
-                        <i class="fas fa-edit me-1"></i>Update Status
+                    <a href="{{ url_for('service.update_workflow_status', id=incident.id) }}" class="btn btn-primary me-2">
+                        <i class="fas fa-cogs me-1"></i>Workflow Actions
                     </a>
                     <a href="{{ url_for('service.incidents') }}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i>Back to List
                     </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Workflow Actions -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Workflow Actions</h5>
+                        <span class="badge bg-{{ 'success' if incident.workflow_status == 'CLOSED' else 'info' }}">
+                            {{ incident.workflow_step_name }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <!-- Progress Bar -->
+                            <div class="progress mb-3" style="height: 20px;">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ incident.get_workflow_progress() }}%">
+                                    {{ incident.get_workflow_progress() }}%
+                                </div>
+                            </div>
+                            <p class="text-muted small">Current Status: {{ incident.workflow_step_name }}</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <!-- Workflow Action Buttons -->
+                            {% if incident.workflow_status == 'INCIDENT_RAISED' %}
+                                <a href="{{ url_for('service.assign_technician', id=incident.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-user-plus me-1"></i>Assign Technician
+                                </a>
+                            {% elif incident.workflow_status == 'TECHNICIAN_ASSIGNED' %}
+                                <form method="POST" action="{{ url_for('service.start_inspection', id=incident.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-play me-1"></i>Start Inspection
+                                    </button>
+                                </form>
+                            {% elif incident.workflow_status == 'INSPECTION_IN_PROGRESS' %}
+                                <a href="{{ url_for('service.complete_inspection', id=incident.id) }}" class="btn btn-warning">
+                                    <i class="fas fa-check me-1"></i>Complete Inspection
+                                </a>
+                            {% elif incident.workflow_status == 'PARTS_REQUIRED' %}
+                                <a href="{{ url_for('service.create_work_order', id=incident.id) }}" class="btn btn-info">
+                                    <i class="fas fa-clipboard-list me-1"></i>Create Work Order
+                                </a>
+                            {% elif incident.workflow_status == 'WO_RAISED' %}
+                                <a href="{{ url_for('service.collect_parts', id=incident.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-boxes me-1"></i>Collect Parts
+                                </a>
+                            {% elif incident.workflow_status == 'PARTS_COLLECTED' %}
+                                <a href="{{ url_for('service.complete_service', id=incident.id) }}" class="btn btn-success">
+                                    <i class="fas fa-check-circle me-1"></i>Complete Service
+                                </a>
+                            {% elif incident.workflow_status == 'SERVICE_COMPLETED' %}
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('service.collect_faulty_parts', id=incident.id) }}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-recycle me-1"></i>Collect Faulty Parts
+                                    </a>
+                                    <a href="{{ url_for('service.close_incident', id=incident.id) }}" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-times-circle me-1"></i>Close Directly
+                                    </a>
+                                </div>
+                            {% elif incident.workflow_status == 'FAULTY_PARTS_COLLECTED' %}
+                                <a href="{{ url_for('service.update_inventory', id=incident.id) }}" class="btn btn-info">
+                                    <i class="fas fa-warehouse me-1"></i>Update Inventory
+                                </a>
+                            {% elif incident.workflow_status == 'INVENTORY_UPDATED' %}
+                                <a href="{{ url_for('service.close_incident', id=incident.id) }}" class="btn btn-dark">
+                                    <i class="fas fa-times-circle me-1"></i>Close Incident
+                                </a>
+                            {% elif incident.workflow_status == 'CLOSED' %}
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-check-circle me-1"></i>Incident Closed
+                                </span>
+                            {% endif %}
+                            
+                            <!-- Manual Status Update -->
+                            <div class="mt-2">
+                                <a href="{{ url_for('service.update_workflow_status', id=incident.id) }}" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-edit me-1"></i>Manual Status Update
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Info -->
+                    {% if incident.related_work_order_id %}
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Related Work Order: <a href="{{ url_for('workorders.view', id=incident.related_work_order_id) }}">#{{ incident.related_work_order_id }}</a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if incident.inspection_report %}
+                    <div class="mt-3">
+                        <h6>Inspection Report:</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ incident.inspection_report }}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -46,52 +151,53 @@
                         </div>
                     </div>
                     
-                    <!-- Workflow Steps -->
+                    <!-- New 7-Step Workflow Process Visualization -->
                     <div class="workflow-steps">
                         <div class="row">
-                            {% for step_info in incident.status_workflow %}
-                            <div class="col-md-3 col-lg-1-5 mb-3">
+                            {% set workflow_steps = [
+                                ('NEW', '1', 'New', 'Item received and logged', 'fas fa-inbox'),
+                                ('ASSESS', '2', 'Assess', 'Initial inspection', 'fas fa-search'),
+                                ('AUTHORIZE', '3', 'Authorize', 'Customer approval', 'fas fa-check-circle'),
+                                ('SCHEDULED', '4', 'Scheduled', 'Work scheduled', 'fas fa-calendar-alt'),
+                                ('IMPLEMENT', '5', 'Implement', 'Repair execution', 'fas fa-tools'),
+                                ('REVIEW', '6', 'Review', 'Quality testing', 'fas fa-clipboard-check'),
+                                ('CLOSED', '7', 'Closed', 'Ready for delivery', 'fas fa-flag-checkered')
+                            ] %}
+                            
+                            {% for step_status, step_number, step_name, step_description, step_icon in workflow_steps %}
+                            <div class="col-md mb-3">
                                 <div class="step-item text-center">
-                                    <div class="step-circle {{ 'active' if step_info.step == incident.status_step else 'completed' if step_info.step < incident.status_step else 'pending' }}">
-                                        {% if step_info.step < incident.status_step %}
-                                            <i class="fas fa-check"></i>
-                                        {% elif step_info.step == incident.status_step %}
-                                            <i class="fas fa-clock"></i>
+                                    <div class="step-circle-process 
+                                        {% if incident.workflow_step_number == step_number|int %}
+                                            active
+                                        {% elif incident.workflow_step_number > step_number|int %}
+                                            completed
                                         {% else %}
-                                            {{ step_info.step }}
+                                            pending
+                                        {% endif %}">
+                                        {% if incident.workflow_step_number > step_number|int %}
+                                            <i class="fas fa-check"></i>
+                                        {% elif incident.workflow_step_number == step_number|int %}
+                                            {{ step_number }}
+                                        {% else %}
+                                            {{ step_number }}
                                         {% endif %}
                                     </div>
-                                    <h6 class="step-label mt-2 {{ 'text-primary' if step_info.step == incident.status_step else 'text-success' if step_info.step < incident.status_step else 'text-muted' }}">
-                                        {{ step_info.label }}
+                                    <h6 class="step-label-process mt-2 
+                                        {% if incident.workflow_step_number == step_number|int %}
+                                            text-primary
+                                        {% elif incident.workflow_step_number > step_number|int %}
+                                            text-success
+                                        {% else %}
+                                            text-muted
+                                        {% endif %}">
+                                        {{ step_name }}
                                     </h6>
-                                    <small class="text-muted">{{ step_info.description }}</small>
-                                    
-                                    <!-- Show timestamp if available -->
-                                    {% set timestamp_field = 'step' + step_info.step|string + '_' + step_info.status.lower() + '_at' %}
-                                    {% if incident[timestamp_field] %}
-                                    <div class="step-timestamp">
-                                        <small class="text-success">
-                                            <i class="fas fa-check-circle me-1"></i>
-                                            {{ incident[timestamp_field].strftime('%m/%d %H:%M') }}
-                                        </small>
-                                    </div>
-                                    {% endif %}
+                                    <small class="text-muted">{{ step_description }}</small>
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
-                    </div>
-                    
-                    <!-- Quick Actions -->
-                    <div class="mt-3 text-center">
-                        {% if incident.can_advance_status %}
-                        <button id="quickAdvanceBtn" class="btn btn-success btn-sm">
-                            <i class="fas fa-arrow-right me-1"></i>Quick Advance to Next Step
-                        </button>
-                        {% endif %}
-                        <a href="{{ url_for('service.update_status', id=incident.id) }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-edit me-1"></i>Detailed Status Update
-                        </a>
                     </div>
                 </div>
             </div>
@@ -108,12 +214,12 @@
                 </div>
                 <div class="card-body">
                     <div class="row mb-3">
-                        <div class="col-sm-3"><strong>Status:</strong></div>
+                        <div class="col-sm-3"><strong>Workflow Status:</strong></div>
                         <div class="col-sm-9">
-                            <span class="badge bg-{{ 'success' if incident.status == 'COMPLETED' else 'primary' if incident.status == 'IN_PROGRESS' else 'warning' if incident.status == 'DIAGNOSED' else 'secondary' }} me-2">
-                                {{ incident.status }}
+                            <span class="badge bg-{{ 'success' if incident.workflow_status == 'CLOSED' else 'primary' if incident.workflow_status in ['INSPECTION_IN_PROGRESS', 'SERVICE_COMPLETED'] else 'warning' if incident.workflow_status in ['PARTS_REQUIRED', 'PARTS_COLLECTED'] else 'info' }} me-2">
+                                {{ incident.workflow_step_name }}
                             </span>
-                            <span class="text-muted">{{ incident.current_status_info.description }}</span>
+                            <span class="text-muted">{{ incident.get_workflow_progress() }}% Complete</span>
                         </div>
                     </div>
                     
@@ -354,8 +460,8 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('service.update_status', id=incident.id) }}" class="btn btn-primary">
-                            <i class="fas fa-edit me-1"></i>Update Status
+                        <a href="{{ url_for('service.update_workflow_status', id=incident.id) }}" class="btn btn-primary">
+                            <i class="fas fa-cogs me-1"></i>Workflow Actions
                         </a>
                         <a href="{{ url_for('service.add_part', id=incident.id) }}" class="btn btn-outline-secondary">
                             <i class="fas fa-plus me-1"></i>Add Part

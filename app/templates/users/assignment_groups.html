@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0"><i class="fas fa-users me-2"></i>Assignment Groups</h1>
+                    <p class="text-muted">Manage user assignment groups for work order distribution</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('users.create_assignment_group') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Group
+                    </a>
+                    <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Users
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ stats.total_groups }}</h3>
+                                    <p class="mb-0">Total Groups</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-users fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ stats.active_groups }}</h3>
+                                    <p class="mb-0">Active Groups</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ stats.total_members }}</h3>
+                                    <p class="mb-0">Total Members</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-user-friends fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ stats.pending_assignments }}</h3>
+                                    <p class="mb-0">Pending Assignments</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-clock fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment Groups Table -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">Assignment Groups</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search groups...">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Groups will be displayed here when created -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Group Name</th>
+                                    <th>Code</th>
+                                    <th>Department</th>
+                                    <th>Members</th>
+                                    <th>Status</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if groups %}
+                                    {% for group in groups %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0">
+                                                    <i class="fas fa-users text-primary me-2"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-semibold">{{ group.name }}</div>
+                                                    {% if group.description %}
+                                                    <small class="text-muted">{{ group.description[:50] }}{% if group.description|length > 50 %}...{% endif %}</small>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><code>{{ group.code }}</code></td>
+                                        <td>
+                                            {% if group.department %}
+                                                <span class="badge bg-secondary">{{ group.department.title() }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ group.member_count }} members</span>
+                                        </td>
+                                        <td>
+                                            {% if group.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                            {% if group.auto_assign %}
+                                                <span class="badge bg-primary ms-1">Auto</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ group.updated_at.strftime('%Y-%m-%d %H:%M') if group.updated_at else 'N/A' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-primary btn-sm" title="Edit Group">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <a href="{{ url_for('users.manage_group_members') }}" class="btn btn-outline-info btn-sm" title="Manage Members">
+                                                    <i class="fas fa-users-cog"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" title="Delete Group">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="fas fa-users fa-3x mb-3 d-block"></i>
+                                                <h5>No Assignment Groups Created Yet</h5>
+                                                <p class="mb-3">Create your first assignment group to organize users and streamline work order assignments.</p>
+                                                <a href="{{ url_for('users.create_assignment_group') }}" class="btn btn-primary">
+                                                    <i class="fas fa-plus me-2"></i>Create Your First Group
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted">
+                            <small>Showing {{ groups|length }} of {{ stats.total_groups }} groups</small>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('users.manage_group_members') }}" class="btn btn-outline-primary btn-sm me-2">
+                                <i class="fas fa-users-cog me-1"></i>Manage Members
+                            </a>
+                            <a href="{{ url_for('users.group_permissions') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-shield-alt me-1"></i>Permissions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

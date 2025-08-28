@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-plus-circle text-primary me-2"></i>
+                Create New Report
+            </h1>
+            <p class="text-muted mb-0">Start building your custom report</p>
+        </div>
+        <a href="{{ url_for('reporting.reports_list') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Reports
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Report Name -->
+                        <div class="mb-4">
+                            {{ form.name.label(class="form-label fw-bold") }}
+                            {{ form.name(class="form-control form-control-lg", placeholder="Enter a descriptive name for your report") }}
+                            {% if form.name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.name.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            {{ form.description.label(class="form-label fw-bold") }}
+                            {{ form.description(class="form-control", rows="3", placeholder="Describe what this report will show and its purpose") }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.description.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Category -->
+                        <div class="mb-4">
+                            {{ form.category.label(class="form-label fw-bold") }}
+                            {{ form.category(class="form-select") }}
+                            {% if form.category.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.category.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Choose a category to help organize your reports</div>
+                        </div>
+
+                        <!-- Data Source -->
+                        <div class="mb-4">
+                            {{ form.data_source.label(class="form-label fw-bold") }}
+                            {{ form.data_source(class="form-select", onchange="loadTableInfo()") }}
+                            {% if form.data_source.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.data_source.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Select the primary data source for your report</div>
+                        </div>
+
+                        <!-- Table Info -->
+                        <div id="tableInfo" class="mb-4" style="display: none;">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-info-circle text-info me-2"></i>
+                                        Table Information
+                                    </h6>
+                                    <div id="tableDetails">
+                                        <!-- Table info will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Report Template -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Report Template</label>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card template-card" data-template="blank">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-file-alt fa-2x text-secondary mb-2"></i>
+                                            <h6 class="card-title">Blank Report</h6>
+                                            <p class="card-text small text-muted">Start from scratch with a blank report</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card template-card" data-template="table">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-table fa-2x text-primary mb-2"></i>
+                                            <h6 class="card-title">Data Table</h6>
+                                            <p class="card-text small text-muted">Simple table view of your data</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card template-card" data-template="chart">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-chart-bar fa-2x text-success mb-2"></i>
+                                            <h6 class="card-title">Chart Report</h6>
+                                            <p class="card-text small text-muted">Visualize data with charts and graphs</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card template-card" data-template="dashboard">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-tachometer-alt fa-2x text-warning mb-2"></i>
+                                            <h6 class="card-title">Dashboard</h6>
+                                            <p class="card-text small text-muted">Multi-widget dashboard layout</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="template" id="selectedTemplate" value="blank">
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="mb-4">
+                            {{ form.tags.label(class="form-label fw-bold") }}
+                            {{ form.tags(class="form-control", placeholder="Enter tags separated by commas (e.g., monthly, sales, analysis)") }}
+                            {% if form.tags.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.tags.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Tags help with searching and organizing reports</div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('reporting.reports_list') }}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-arrow-right me-2"></i>Create & Continue
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Template selection
+document.addEventListener('DOMContentLoaded', function() {
+    const templateCards = document.querySelectorAll('.template-card');
+    const selectedTemplateInput = document.getElementById('selectedTemplate');
+    
+    templateCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove active class from all cards
+            templateCards.forEach(c => c.classList.remove('border-primary', 'bg-light'));
+            
+            // Add active class to selected card
+            this.classList.add('border-primary', 'bg-light');
+            
+            // Update hidden input
+            selectedTemplateInput.value = this.dataset.template;
+        });
+    });
+    
+    // Set default template as active
+    templateCards[0].classList.add('border-primary', 'bg-light');
+});
+
+function loadTableInfo() {
+    const select = document.getElementById('data_source');
+    const tableName = select.value;
+    const tableInfo = document.getElementById('tableInfo');
+    const tableDetails = document.getElementById('tableDetails');
+    
+    if (!tableName) {
+        tableInfo.style.display = 'none';
+        return;
+    }
+    
+    // Show loading state
+    tableDetails.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading table information...</div>';
+    tableInfo.style.display = 'block';
+    
+    fetch(`/reporting/api/tables/${tableName}/info`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let html = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Table:</strong> ${data.table_name}<br>
+                            <strong>Columns:</strong> ${data.column_count}<br>
+                            <strong>Records:</strong> ${data.row_count || 'Unknown'}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Sample Columns:</strong><br>
+                            <small class="text-muted">
+                `;
+                
+                data.columns.slice(0, 5).forEach(col => {
+                    html += `${col.name} (${col.type})<br>`;
+                });
+                
+                if (data.columns.length > 5) {
+                    html += `... and ${data.columns.length - 5} more`;
+                }
+                
+                html += '</small></div></div>';
+                tableDetails.innerHTML = html;
+            } else {
+                tableDetails.innerHTML = '<div class="text-danger">Error loading table information</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            tableDetails.innerHTML = '<div class="text-danger">Error loading table information</div>';
+        });
+}
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const name = document.getElementById('name').value.trim();
+    const dataSource = document.getElementById('data_source').value;
+    
+    if (!name) {
+        e.preventDefault();
+        alert('Please enter a report name');
+        return;
+    }
+    
+    if (!dataSource) {
+        e.preventDefault();
+        alert('Please select a data source');
+        return;
+    }
+});
+</script>
+
+<style>
+.template-card {
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border: 2px solid transparent;
+}
+
+.template-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.template-card.border-primary {
+    border-color: #007bff !important;
+    background-color: #f8f9fa !important;
+}
+
+.form-control-lg, .form-select {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+.fw-bold {
+    font-weight: 600 !important;
+}
+</style>
+{% endblock %}

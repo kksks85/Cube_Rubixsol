@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-users me-2"></i>Create Assignment Group</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('users.create_assignment_group') }}">
+                        <!-- Group Basic Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="group_name" class="form-label">Group Name *</label>
+                                <input type="text" class="form-control" id="group_name" name="group_name" required 
+                                       placeholder="Enter group name">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="group_code" class="form-label">Group Code *</label>
+                                <input type="text" class="form-control" id="group_code" name="group_code" required 
+                                       placeholder="Enter unique code">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Enter group description"></textarea>
+                        </div>
+
+                        <!-- Group Configuration -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="department" class="form-label">Department</label>
+                                <select class="form-select" id="department" name="department">
+                                    <option value="">Select Department</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="operations">Operations</option>
+                                    <option value="engineering">Engineering</option>
+                                    <option value="quality">Quality Control</option>
+                                    <option value="safety">Safety</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="priority_level" class="form-label">Priority Level</label>
+                                <select class="form-select" id="priority_level" name="priority_level">
+                                    <option value="standard">Standard</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Group Settings -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Group Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="auto_assign" name="auto_assign" value="1">
+                                            <label class="form-check-label" for="auto_assign">
+                                                Enable Auto Assignment
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="round_robin" name="round_robin" value="1">
+                                            <label class="form-check-label" for="round_robin">
+                                                Use Round Robin Assignment
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="notification_enabled" name="notification_enabled" value="1" checked>
+                                            <label class="form-check-label" for="notification_enabled">
+                                                Enable Notifications
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" checked>
+                                            <label class="form-check-label" for="is_active">
+                                                Active Group
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Assignment Criteria -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Assignment Criteria</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="work_order_types" class="form-label">Work Order Types</label>
+                                        <select class="form-select" id="work_order_types" name="work_order_types" multiple>
+                                            <option value="preventive">Preventive Maintenance</option>
+                                            <option value="corrective">Corrective Maintenance</option>
+                                            <option value="emergency">Emergency Repair</option>
+                                            <option value="inspection">Inspection</option>
+                                            <option value="calibration">Calibration</option>
+                                        </select>
+                                        <div class="form-text">Hold Ctrl to select multiple types</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="priority_filter" class="form-label">Priority Filter</label>
+                                        <select class="form-select" id="priority_filter" name="priority_filter" multiple>
+                                            <option value="low">Low Priority</option>
+                                            <option value="medium">Medium Priority</option>
+                                            <option value="high">High Priority</option>
+                                            <option value="critical">Critical Priority</option>
+                                        </select>
+                                        <div class="form-text">Leave empty to accept all priorities</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('users.assignment_groups') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2">
+                                    <i class="fas fa-eye me-2"></i>Preview
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Create Group
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate group code from group name
+    const groupNameInput = document.getElementById('group_name');
+    const groupCodeInput = document.getElementById('group_code');
+    
+    groupNameInput.addEventListener('input', function() {
+        const name = this.value;
+        const code = name.toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '')
+            .replace(/\s+/g, '_')
+            .substring(0, 20);
+        groupCodeInput.value = code;
+    });
+    
+    // Preview functionality
+    document.querySelector('.btn-outline-primary').addEventListener('click', function() {
+        alert('Preview functionality will show how this group configuration will work.');
+    });
+});
+</script>
+{% endblock %}

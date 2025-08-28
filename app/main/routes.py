@@ -170,6 +170,8 @@ def dashboard():
     return response
 
 
+
+
 @bp.route('/api/dashboard-stats')
 @login_required
 def dashboard_stats_api():

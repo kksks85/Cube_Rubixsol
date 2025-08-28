@@ -1,0 +1,390 @@
+{% extends "base_new.html" %}
+
+{% block title %}Search Knowledge Base - {{ config.COMPANY_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('knowledge.index') }}">
+                    <i class="fas fa-book-open me-1"></i>Knowledge Base
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Search</li>
+        </ol>
+    </nav>
+
+    <!-- Search Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-gradient-info text-white">
+                <div class="card-body">
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-search me-2"></i>
+                        Advanced Search
+                    </h1>
+                    <p class="mb-0 opacity-75">
+                        Find the information you need with powerful search filters
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Search Filters -->
+        <div class="col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-filter text-primary me-2"></i>
+                        Search Filters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('knowledge.search') }}">
+                        <!-- Text Search -->
+                        <div class="mb-3">
+                            {{ form.query.label(class="form-label") }}
+                            {{ form.query(class="form-control", value=request.args.get('query', '')) }}
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div class="mb-3">
+                            {{ form.category_id.label(class="form-label") }}
+                            {{ form.category_id(class="form-select") }}
+                        </div>
+
+                        <!-- Type Filter -->
+                        <div class="mb-3">
+                            {{ form.article_type.label(class="form-label") }}
+                            {{ form.article_type(class="form-select") }}
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="mb-3">
+                            {{ form.status.label(class="form-label") }}
+                            {{ form.status(class="form-select") }}
+                        </div>
+
+                        <!-- Priority Filter -->
+                        <div class="mb-3">
+                            {{ form.priority.label(class="form-label") }}
+                            {{ form.priority(class="form-select") }}
+                        </div>
+
+                        <!-- Author Filter -->
+                        <div class="mb-3">
+                            {{ form.author_id.label(class="form-label") }}
+                            {{ form.author_id(class="form-select") }}
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            {{ form.tags.label(class="form-label") }}
+                            {{ form.tags(class="form-control", value=request.args.get('tags', '')) }}
+                            <div class="form-text">Comma-separated tags</div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="mb-3">
+                            {{ form.date_from.label(class="form-label") }}
+                            {{ form.date_from(class="form-control", type="date") }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.date_to.label(class="form-label") }}
+                            {{ form.date_to(class="form-control", type="date") }}
+                        </div>
+
+                        <!-- Sort Options -->
+                        <div class="mb-3">
+                            {{ form.sort_by.label(class="form-label") }}
+                            {{ form.sort_by(class="form-select") }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.sort_order.label(class="form-label") }}
+                            {{ form.sort_order(class="form-select") }}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i>Search
+                        </button>
+                        
+                        <a href="{{ url_for('knowledge.search') }}" class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="fas fa-times me-1"></i>Clear Filters
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <div class="col-lg-9">
+            {% if request.args.get('query') or total_count > 0 %}
+            <!-- Results Header -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-0">
+                                Search Results
+                                {% if request.args.get('query') %}
+                                for "{{ request.args.get('query') }}"
+                                {% endif %}
+                            </h5>
+                            <small class="text-muted">{{ total_count }} article{{ 's' if total_count != 1 else '' }} found</small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary" onclick="toggleView('list')" id="listViewBtn">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary active" onclick="toggleView('card')" id="cardViewBtn">
+                                    <i class="fas fa-th-large"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="resultsContainer">
+                {% if articles %}
+                    {% for article in articles %}
+                    <div class="card mb-3 search-result-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-start mb-2">
+                                        <span class="badge bg-primary me-2">{{ article.kb_id }}</span>
+                                        <span class="badge bg-{{ 'success' if article.status.value == 'PUBLISHED' else 'warning' }} me-2">
+                                            {{ article.status.value.title() }}
+                                        </span>
+                                        <span class="badge bg-info me-2">
+                                            {{ article.article_type.value.replace('_', ' ').title() }}
+                                        </span>
+                                        {% if article.priority in ['HIGH', 'CRITICAL'] %}
+                                        <span class="badge bg-{{ 'danger' if article.priority == 'CRITICAL' else 'warning' }}">
+                                            {{ article.priority }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <h5 class="card-title">
+                                        <a href="{{ url_for('knowledge.view_article', id=article.id) }}" class="text-decoration-none">
+                                            {{ article.title }}
+                                        </a>
+                                    </h5>
+                                    
+                                    <p class="card-text text-muted">{{ article.summary }}</p>
+                                    
+                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                        {% for tag in article.tags[:5] %}
+                                        <a href="{{ url_for('knowledge.search', tags=tag.name) }}" class="badge bg-light text-dark text-decoration-none">
+                                            <i class="fas fa-tag me-1"></i>{{ tag.name }}
+                                        </a>
+                                        {% endfor %}
+                                        {% if article.tags|length > 5 %}
+                                        <span class="badge bg-light text-muted">+{{ article.tags|length - 5 }} more</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <small class="text-muted">
+                                        <i class="fas fa-user me-1"></i>{{ article.author.username }}
+                                        <i class="fas fa-calendar ms-2 me-1"></i>{{ article.created_at.strftime('%m/%d/%Y') }}
+                                        {% if article.category %}
+                                        <i class="fas fa-folder ms-2 me-1"></i>{{ article.category.name }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                
+                                <div class="col-md-4 text-end">
+                                    <div class="mb-2">
+                                        {% if article.average_rating > 0 %}
+                                        <div class="text-warning mb-1">
+                                            <i class="fas fa-star"></i> {{ "%.1f"|format(article.average_rating) }}/5
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <div class="text-muted small">
+                                            <i class="fas fa-eye me-1"></i>{{ article.view_count }} views
+                                        </div>
+                                        
+                                        {% if article.helpfulness_percentage > 0 %}
+                                        <div class="text-success small">
+                                            <i class="fas fa-thumbs-up me-1"></i>{{ article.helpfulness_percentage }}% helpful
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <a href="{{ url_for('knowledge.view_article', id=article.id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-arrow-right me-1"></i>View Article
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Pagination -->
+                    {% if pagination and pagination.pages > 1 %}
+                    <nav aria-label="Search results pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('knowledge.search', page=pagination.prev_num, **request.args) }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in pagination.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != pagination.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('knowledge.search', page=page_num, **request.args) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('knowledge.search', page=pagination.next_num, **request.args) }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                {% else %}
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h4>No Results Found</h4>
+                            <p class="text-muted">
+                                {% if request.args.get('query') %}
+                                No articles found matching "{{ request.args.get('query') }}" with the current filters.
+                                {% else %}
+                                No articles found with the current filters.
+                                {% endif %}
+                            </p>
+                            <a href="{{ url_for('knowledge.search') }}" class="btn btn-primary">
+                                <i class="fas fa-times me-1"></i>Clear All Filters
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <!-- No Search Yet -->
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-search fa-3x text-primary mb-3"></i>
+                    <h4>Start Your Search</h4>
+                    <p class="text-muted">
+                        Use the search box above or the filters on the left to find knowledge articles.
+                    </p>
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-lightbulb text-warning fa-2x mb-2"></i>
+                                    <h6>Search Tips</h6>
+                                    <small class="text-muted">Use specific keywords for better results</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-filter text-info fa-2x mb-2"></i>
+                                    <h6>Use Filters</h6>
+                                    <small class="text-muted">Narrow down results by category, type, or date</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-tags text-success fa-2x mb-2"></i>
+                                    <h6>Browse Tags</h6>
+                                    <small class="text-muted">Search by tags for related content</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleView(viewType) {
+    const listBtn = document.getElementById('listViewBtn');
+    const cardBtn = document.getElementById('cardViewBtn');
+    const container = document.getElementById('resultsContainer');
+    
+    if (viewType === 'list') {
+        listBtn.classList.add('active');
+        cardBtn.classList.remove('active');
+        container.classList.add('list-view');
+    } else {
+        cardBtn.classList.add('active');
+        listBtn.classList.remove('active');
+        container.classList.remove('list-view');
+    }
+}
+
+// Auto-submit form on filter change
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const selects = form.querySelectorAll('select');
+    const dateInputs = form.querySelectorAll('input[type="date"]');
+    
+    [...selects, ...dateInputs].forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.value || document.querySelector('[name="query"]').value) {
+                form.submit();
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.search-result-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-2px);
+    transition: all 0.2s ease-in-out;
+}
+
+.list-view .search-result-card {
+    margin-bottom: 1rem !important;
+}
+
+.list-view .search-result-card .card-body {
+    padding: 1rem !important;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+</style>
+{% endblock %}

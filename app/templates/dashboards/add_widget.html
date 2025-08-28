@@ -1,0 +1,111 @@
+{% extends "base_new.html" %}
+
+{% block title %}Add Widget{% endblock %}
+
+{% block page_content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Add Widget to "{{ dashboard.name }}"</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.widget_type.label(class="form-label") }}
+                                    {{ form.widget_type(class="form-control") }}
+                                    {% if form.widget_type.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.widget_type.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.title.label(class="form-label") }}
+                                    {{ form.title(class="form-control") }}
+                                    {% if form.title.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.title.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="report-field" style="display: none;">
+                            {{ form.report_id.label(class="form-label") }}
+                            {{ form.report_id(class="form-control") }}
+                            <small class="form-text text-muted">Select a report to display in this widget</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.position_x.label(class="form-label") }}
+                                    {{ form.position_x(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.position_y.label(class="form-label") }}
+                                    {{ form.position_y(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.width.label(class="form-label") }}
+                                    {{ form.width(class="form-control") }}
+                                    <small class="form-text text-muted">1-12 columns</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.height.label(class="form-label") }}
+                                    {{ form.height(class="form-control") }}
+                                    <small class="form-text text-muted">Grid rows</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Widget
+                            </button>
+                            <a href="{{ url_for('dashboards.view', id=dashboard.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('widget_type').addEventListener('change', function() {
+    const reportField = document.getElementById('report-field');
+    if (this.value === 'report') {
+        reportField.style.display = 'block';
+    } else {
+        reportField.style.display = 'none';
+    }
+});
+
+// Trigger on page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('widget_type').dispatchEvent(new Event('change'));
+});
+</script>
+{% endblock %}

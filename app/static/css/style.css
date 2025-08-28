@@ -1165,3 +1165,458 @@ html[data-bs-theme="dark"] .chart-container {
     font-size: 0.875rem;
     color: var(--gray-400);
 }
+
+/* New Workflow Steps Styling */
+.step-circle-new {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-size: 18px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.step-circle-new.completed {
+    background-color: var(--success-color);
+    color: white;
+    border: 2px solid var(--success-color);
+}
+
+.step-circle-new.active {
+    background-color: var(--primary-color);
+    color: white;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(1, 118, 211, 0.2);
+}
+
+.step-circle-new.pending {
+    background-color: var(--gray-200);
+    color: var(--gray-500);
+    border: 2px solid var(--gray-300);
+}
+
+.step-label-new {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.workflow-steps .col-md-2 {
+    flex: 0 0 10%;
+    max-width: 10%;
+}
+
+@media (max-width: 768px) {
+    .workflow-steps .col-md-2 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    .step-circle-new {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .step-label-new {
+        font-size: 0.75rem;
+    }
+}
+
+/* Resizable Dashboard Styles */
+.dashboard-container {
+    position: relative;
+    min-height: 600px;
+}
+
+.grid-stack {
+    background: transparent;
+}
+
+.grid-stack-item {
+    transition: all 0.2s ease;
+}
+
+.grid-stack-item.ui-draggable-dragging {
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.grid-stack-item-content {
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    height: 100%;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.grid-stack-item-content:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+}
+
+.edit-mode .grid-stack-item-content {
+    border-style: dashed;
+    border-color: var(--primary-color);
+}
+
+.edit-mode .grid-stack-item-content:hover {
+    border-color: var(--primary-dark);
+    background-color: var(--gray-50);
+}
+
+.tile-header {
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-200);
+    padding: var(--spacing-sm) var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+    min-height: 40px;
+}
+
+.edit-mode .tile-header {
+    background: var(--primary-color);
+    color: white;
+    cursor: grab;
+}
+
+.edit-mode .tile-header:active {
+    cursor: grabbing;
+}
+
+.tile-title {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.edit-mode .tile-title {
+    color: white;
+}
+
+.tile-actions {
+    display: none;
+    gap: var(--spacing-xs);
+}
+
+.edit-mode .tile-actions {
+    display: flex;
+}
+
+.tile-body {
+    padding: var(--spacing-md);
+    height: calc(100% - 40px);
+    overflow: auto;
+}
+
+.dashboard-tile {
+    background: transparent;
+}
+
+.dashboard-tile.stat-tile .tile-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2.5rem !important;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--gray-600);
+}
+
+/* GridStack resize handles */
+.ui-resizable-handle {
+    background: var(--primary-color);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.edit-mode .ui-resizable-handle {
+    opacity: 0.3;
+}
+
+.edit-mode .ui-resizable-handle:hover {
+    opacity: 0.7;
+}
+
+.ui-resizable-se {
+    width: 12px;
+    height: 12px;
+    right: 1px;
+    bottom: 1px;
+    background: var(--primary-color);
+    border-radius: 2px;
+}
+
+/* Dashboard controls */
+.dashboard-controls {
+    position: sticky;
+    top: 70px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--gray-200);
+    padding: var(--spacing-sm) 0;
+    margin-bottom: var(--spacing-lg);
+}
+
+.dashboard-controls .btn {
+    margin-right: var(--spacing-sm);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .grid-stack {
+        margin: 0 -10px;
+    }
+    
+    .tile-header {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        min-height: 35px;
+    }
+    
+    .tile-body {
+        padding: var(--spacing-sm);
+        height: calc(100% - 35px);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem !important;
+    }
+}
+
+/* Add tile dropdown */
+.add-tile-dropdown .dropdown-menu {
+    min-width: 200px;
+}
+
+.add-tile-option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    transition: background-color 0.2s ease;
+}
+
+.add-tile-option:hover {
+    background-color: var(--gray-100);
+}
+
+.add-tile-icon {
+    width: 24px;
+    text-align: center;
+    color: var(--primary-color);
+}
+
+/* Chart tiles */
+.chart-canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* List tiles */
+.tile-body .list-group {
+    border: none;
+}
+
+.tile-body .list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: var(--spacing-xs) 0;
+}
+
+/* Animation for new tiles */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.grid-stack-item.new-tile {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Dashboard grid responsive breakpoints */
+@media (min-width: 1200px) {
+    .grid-stack {
+        --gs-columns: 12;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+    .grid-stack {
+        --gs-columns: 10;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+    .grid-stack {
+        --gs-columns: 8;
+    }
+}
+
+@media (max-width: 767px) {
+    .grid-stack {
+        --gs-columns: 4;
+    }
+}
+
+/* Multiple Parts Request System Styles */
+#parts-request-table {
+    font-size: 0.9rem;
+}
+
+#parts-request-table th {
+    background-color: var(--gray-100);
+    border-color: var(--gray-300);
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+#parts-request-table td {
+    vertical-align: middle;
+    border-color: var(--gray-200);
+}
+
+#parts-request-table .form-control-sm {
+    border-radius: 0.25rem;
+    border-color: var(--gray-300);
+}
+
+#parts-request-table .form-control-sm:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(1, 118, 211, 0.25);
+}
+
+#parts-request-table .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+#parts-request-table .badge {
+    font-size: 0.75rem;
+}
+
+.modal-lg {
+    max-width: 800px;
+}
+
+.parts-table-actions {
+    white-space: nowrap;
+}
+
+#no-parts-row td {
+    padding: 2rem;
+    color: var(--gray-500);
+    font-style: italic;
+}
+
+/* Stock status indicators */
+.stock-warning {
+    color: var(--warning-color);
+    font-weight: 500;
+}
+
+.stock-danger {
+    color: var(--danger-color);
+    font-weight: 500;
+}
+
+.stock-success {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+/* Parts count badge */
+#parts-count {
+    font-weight: 600;
+}
+
+/* Add part button hover effect */
+#add-part-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+/* Modal enhancements */
+.modal-header {
+    background-color: var(--gray-50);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.modal-title {
+    color: var(--gray-800);
+}
+
+/* Form validation styles for modal */
+.modal .form-control:invalid {
+    border-color: var(--danger-color);
+}
+
+.modal .form-control:valid {
+    border-color: var(--success-color);
+}
+
+/* Responsive table improvements */
+@media (max-width: 768px) {
+    #parts-request-table {
+        font-size: 0.8rem;
+    }
+    
+    #parts-request-table th,
+    #parts-request-table td {
+        padding: 0.5rem 0.25rem;
+    }
+}
+
+/* Parts Request Section Transition */
+#parts-request-section {
+    transition: opacity 0.3s ease-in-out;
+}
+
+#parts-request-section.fade-in {
+    opacity: 1;
+}
+
+#parts-request-section.fade-out {
+    opacity: 0;
+}
+
+/* Checkbox styling enhancements */
+.form-check-input:checked + .form-check-label {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.form-check-input:focus + .form-check-label {
+    color: var(--primary-dark);
+}

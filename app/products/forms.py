@@ -3,11 +3,11 @@ Product Management Forms
 """
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SelectField, FloatField, IntegerField, BooleanField, DecimalField
+from wtforms import StringField, TextAreaField, SelectField, FloatField, IntegerField, BooleanField, DecimalField, ValidationError
 from wtforms.fields import DateField
 from wtforms.validators import DataRequired, Length, Optional, NumberRange, Email, URL
 from wtforms.widgets import TextArea
-from app.models import ProductCategory, Company, User
+from app.models import ProductCategory, Company, User, Product
 
 
 class CompanyForm(FlaskForm):
@@ -41,6 +41,7 @@ class ProductForm(FlaskForm):
     # Basic Information
     product_code = StringField('Product Code', validators=[DataRequired(), Length(min=2, max=50)])
     product_name = StringField('Product Name', validators=[DataRequired(), Length(min=2, max=200)])
+    serial_number = StringField('Serial Number', validators=[Optional(), Length(max=40)])
     description = TextAreaField('Description', validators=[Optional()], widget=TextArea())
     category_id = SelectField('Category', coerce=int, validators=[Optional()])
     owner_company_id = SelectField('Owner Company', coerce=int, validators=[DataRequired()])
@@ -129,6 +130,26 @@ class ProductForm(FlaskForm):
         self.owner_company_id.choices = [
             (company.id, company.name) for company in Company.query.order_by(Company.name).all()
         ]
+
+    def validate_serial_number(self, field):
+        """Validate that serial number is unique if provided"""
+        if field.data:  # Only validate if serial number is provided
+            # Check if serial number already exists
+            existing_product = Product.query.filter_by(serial_number=field.data).first()
+            
+            # For editing, we need to check if we're editing the same product
+            # In WTForms, when using form = ProductForm(obj=product), the obj is stored
+            if existing_product:
+                # If this form is bound to an object (editing mode)
+                if hasattr(self, '_obj') and self._obj and existing_product.id == self._obj.id:
+                    # Same product, serial number is okay
+                    return
+                elif not hasattr(self, '_obj') or not self._obj:
+                    # New product creation, check if serial exists
+                    raise ValidationError('This serial number is already assigned to another product.')
+                else:
+                    # Editing different product, serial number conflict
+                    raise ValidationError('This serial number is already assigned to another product.')
 
 
 class ProductSpecificationForm(FlaskForm):

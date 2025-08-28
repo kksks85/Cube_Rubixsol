@@ -49,6 +49,7 @@ def list_products():
             or_(
                 Product.product_name.ilike(search_term),
                 Product.product_code.ilike(search_term),
+                Product.serial_number.ilike(search_term),
                 Product.description.ilike(search_term),
                 Product.manufacturer.ilike(search_term)
             )
@@ -118,6 +119,7 @@ def create_product():
         product = Product(
             product_code=form.product_code.data,
             product_name=form.product_name.data,
+            serial_number=form.serial_number.data if form.serial_number.data else None,
             description=form.description.data,
             category_id=form.category_id.data if form.category_id.data > 0 else None,
             owner_company_id=form.owner_company_id.data,

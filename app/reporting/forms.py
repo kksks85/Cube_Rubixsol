@@ -1,88 +1,206 @@
 """
-Reporting Engine Forms
+Reporting Forms
+WTForms for the reporting module
 """
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, TextAreaField, SelectMultipleField, DateField, FloatField, IntegerField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, Optional
-from wtforms.widgets import TextArea, Select, CheckboxInput, DateInput
+from wtforms import StringField, TextAreaField, SelectField, HiddenField, SubmitField
+from wtforms.validators import DataRequired, Length, Optional, ValidationError
+from app.reporting.engine import ReportEngine
 
-class ReportBuilderForm(FlaskForm):
-    """Main report builder form"""
-    report_name = StringField('Report Name', validators=[DataRequired()])
-    description = TextAreaField('Description', validators=[Optional()])
+
+class NewReportForm(FlaskForm):
+    """Form for creating new reports"""
     
-    # Table Selection
-    primary_table = SelectField('Primary Table', validators=[DataRequired()], coerce=str)
+    name = StringField('Report Name', validators=[
+        DataRequired(message='Report name is required'),
+        Length(min=3, max=100, message='Report name must be between 3 and 100 characters')
+    ])
     
-    # Column Selection
-    columns = SelectMultipleField('Select Columns', validators=[DataRequired()], coerce=str)
+    description = TextAreaField('Description', validators=[
+        Optional(),
+        Length(max=500, message='Description must not exceed 500 characters')
+    ])
     
-    # Join Configuration
-    join_tables = SelectMultipleField('Join Tables', validators=[Optional()], coerce=str)
+    category = SelectField('Category', choices=[
+        ('', 'Select Category'),
+        ('financial', 'Financial'),
+        ('operational', 'Operational'),
+        ('analytics', 'Analytics'),
+        ('custom', 'Custom')
+    ], validators=[Optional()])
     
-    # Group By
-    group_by_columns = SelectMultipleField('Group By', validators=[Optional()], coerce=str)
+    data_source = SelectField('Data Source', validators=[
+        DataRequired(message='Please select a data source')
+    ])
     
-    # Order By
-    order_by_column = SelectField('Order By', validators=[Optional()], coerce=str)
-    order_direction = SelectField('Order Direction', 
-                                choices=[('ASC', 'Ascending'), ('DESC', 'Descending')],
-                                default='ASC', validators=[Optional()])
+    tags = StringField('Tags', validators=[
+        Optional(),
+        Length(max=200, message='Tags must not exceed 200 characters')
+    ])
     
-    # Limit
-    limit_results = IntegerField('Limit Results', validators=[Optional()])
+    template = HiddenField('Template', default='blank')
     
-    submit = SubmitField('Generate Report')
+    submit = SubmitField('Create Report')
+    
+    def __init__(self, *args, **kwargs):
+        super(NewReportForm, self).__init__(*args, **kwargs)
+        
+        # Populate data source choices
+        try:
+            engine = ReportEngine()
+            tables = engine.get_available_tables()
+            self.data_source.choices = [('', 'Select Table')] + [
+                (table_name, table_info.get('display_name', table_name))
+                for table_name, table_info in tables.items()
+            ]
+        except Exception as e:
+            self.data_source.choices = [('', 'No tables available')]
+    
+    def validate_name(self, field):
+        """Custom validation for report name"""
+        # Check for reserved words or special characters
+        reserved_words = ['admin', 'system', 'root', 'test']
+        if field.data.lower() in reserved_words:
+            raise ValidationError('This name is reserved. Please choose a different name.')
+
 
 class ReportFilterForm(FlaskForm):
-    """Dynamic filter form for reports"""
-    column = SelectField('Column', validators=[DataRequired()], coerce=str)
-    operator = SelectField('Operator', validators=[DataRequired()], 
-                         choices=[
-                             ('eq', 'Equals'),
-                             ('ne', 'Not Equals'),
-                             ('gt', 'Greater Than'),
-                             ('ge', 'Greater Than or Equal'),
-                             ('lt', 'Less Than'),
-                             ('le', 'Less Than or Equal'),
-                             ('like', 'Contains'),
-                             ('ilike', 'Contains (Case Insensitive)'),
-                             ('in', 'In List'),
-                             ('not_in', 'Not In List'),
-                             ('between', 'Between'),
-                             ('is_null', 'Is Null'),
-                             ('is_not_null', 'Is Not Null'),
-                             ('starts_with', 'Starts With'),
-                             ('ends_with', 'Ends With')
-                         ])
-    value = StringField('Value', validators=[Optional()])
-    value2 = StringField('Value 2 (for between)', validators=[Optional()])
+    """Form for report filtering and search"""
     
-class SavedReportForm(FlaskForm):
-    """Form for managing saved reports"""
-    name = StringField('Report Name', validators=[DataRequired()])
-    description = TextAreaField('Description', validators=[Optional()])
-    is_public = BooleanField('Make Public', default=False)
-    tags = StringField('Tags (comma separated)', validators=[Optional()])
-    submit = SubmitField('Save Report')
+    search = StringField('Search Reports', validators=[Optional()])
+    
+    category = SelectField('Category', choices=[
+        ('', 'All Categories'),
+        ('financial', 'Financial'),
+        ('operational', 'Operational'),
+        ('analytics', 'Analytics'),
+        ('custom', 'Custom')
+    ], validators=[Optional()])
+    
+    status = SelectField('Status', choices=[
+        ('', 'All Status'),
+        ('active', 'Active'),
+        ('draft', 'Draft'),
+        ('archived', 'Archived')
+    ], validators=[Optional()])
+    
+    data_source = SelectField('Data Source', choices=[('', 'All Sources')], validators=[Optional()])
+    
+    submit = SubmitField('Filter')
 
-class ReportScheduleForm(FlaskForm):
-    """Form for scheduling automatic reports"""
-    name = StringField('Schedule Name', validators=[DataRequired()])
-    frequency = SelectField('Frequency', validators=[DataRequired()],
-                          choices=[
-                              ('daily', 'Daily'),
-                              ('weekly', 'Weekly'),
-                              ('monthly', 'Monthly'),
-                              ('quarterly', 'Quarterly')
-                          ])
-    email_recipients = TextAreaField('Email Recipients (one per line)', validators=[Optional()])
-    format = SelectField('Export Format', validators=[DataRequired()],
-                       choices=[
-                           ('csv', 'CSV'),
-                           ('excel', 'Excel'),
-                           ('pdf', 'PDF')
-                       ])
-    is_active = BooleanField('Active', default=True)
+
+class ShareReportForm(FlaskForm):
+    """Form for sharing reports"""
+    
+    share_type = SelectField('Share Type', choices=[
+        ('link', 'Public Link'),
+        ('email', 'Email Share'),
+        ('internal', 'Internal Users')
+    ], validators=[DataRequired()])
+    
+    recipients = TextAreaField('Recipients', validators=[
+        Optional(),
+        Length(max=1000, message='Recipients list is too long')
+    ])
+    
+    message = TextAreaField('Message', validators=[
+        Optional(),
+        Length(max=500, message='Message is too long')
+    ])
+    
+    permissions = SelectField('Permissions', choices=[
+        ('view', 'View Only'),
+        ('execute', 'View & Execute'),
+        ('edit', 'View, Execute & Edit')
+    ], default='view', validators=[DataRequired()])
+    
+    expires_in = SelectField('Link Expires', choices=[
+        ('', 'Never'),
+        ('1', '1 Day'),
+        ('7', '1 Week'),
+        ('30', '1 Month'),
+        ('90', '3 Months')
+    ], validators=[Optional()])
+    
+    submit = SubmitField('Share Report')
+
+
+class ScheduleReportForm(FlaskForm):
+    """Form for scheduling reports"""
+    
+    frequency = SelectField('Frequency', choices=[
+        ('once', 'Run Once'),
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly')
+    ], validators=[DataRequired()])
+    
+    day_of_week = SelectField('Day of Week', choices=[
+        ('monday', 'Monday'),
+        ('tuesday', 'Tuesday'),
+        ('wednesday', 'Wednesday'),
+        ('thursday', 'Thursday'),
+        ('friday', 'Friday'),
+        ('saturday', 'Saturday'),
+        ('sunday', 'Sunday')
+    ], validators=[Optional()])
+    
+    day_of_month = SelectField('Day of Month', choices=[
+        (str(i), str(i)) for i in range(1, 32)
+    ], validators=[Optional()])
+    
+    hour = SelectField('Hour', choices=[
+        (str(i), f"{i:02d}:00") for i in range(24)
+    ], default='9', validators=[DataRequired()])
+    
+    format = SelectField('Export Format', choices=[
+        ('csv', 'CSV'),
+        ('excel', 'Excel'),
+        ('pdf', 'PDF')
+    ], default='csv', validators=[DataRequired()])
+    
+    email_recipients = TextAreaField('Email Recipients', validators=[
+        Optional(),
+        Length(max=1000, message='Recipients list is too long')
+    ])
+    
+    include_data = SelectField('Include Data', choices=[
+        ('summary', 'Summary Only'),
+        ('full', 'Full Dataset'),
+        ('filtered', 'Filtered Data')
+    ], default='full', validators=[DataRequired()])
+    
     submit = SubmitField('Schedule Report')
+
+
+class QuickReportForm(FlaskForm):
+    """Form for quick report generation"""
+    
+    table = SelectField('Table', validators=[DataRequired()])
+    columns = StringField('Columns (comma-separated)', validators=[Optional()])
+    limit = SelectField('Limit Results', choices=[
+        ('', 'No Limit'),
+        ('10', '10 rows'),
+        ('50', '50 rows'),
+        ('100', '100 rows'),
+        ('500', '500 rows'),
+        ('1000', '1000 rows')
+    ], validators=[Optional()])
+    
+    submit = SubmitField('Generate Report')
+    
+    def __init__(self, *args, **kwargs):
+        super(QuickReportForm, self).__init__(*args, **kwargs)
+        
+        # Populate table choices
+        try:
+            engine = ReportEngine()
+            tables = engine.get_available_tables()
+            self.table.choices = [
+                (table_name, table_info.get('display_name', table_name))
+                for table_name, table_info in tables.items()
+            ]
+        except Exception as e:
+            self.table.choices = [('', 'No tables available')]

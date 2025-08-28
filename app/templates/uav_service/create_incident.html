@@ -1,0 +1,785 @@
+{% extends "base.html" %}
+{% set active_page = "uav_service" %}
+
+{% block title %}Create UAV Service Incident{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('uav_service.dashboard') }}">UAV Service</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('uav_service.incident_list') }}">Incidents</a></li>
+                <li class="breadcrumb-item active">Create Incident</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-plus me-2"></i>Create UAV Service Incident</h2>
+        <p class="text-muted">Enter comprehensive incident details and customer information</p>
+    </div>
+</div>
+
+<!-- Workflow Progress -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-route me-2"></i>Service Workflow Progress</h5>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3" style="height: 20px;">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: 20%" 
+                         aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
+                        Step 1 of 5 - 20%
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="workflow-step active">
+                            <div class="step-circle bg-info text-white">1</div>
+                            <small class="d-block">Incident Request</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="workflow-step">
+                            <div class="step-circle bg-light">2</div>
+                            <small class="d-block">Diagnosis</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="workflow-step">
+                            <div class="step-circle bg-light">3</div>
+                            <small class="d-block">Repair</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="workflow-step">
+                            <div class="step-circle bg-light">4</div>
+                            <small class="d-block">Quality Check</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="workflow-step">
+                            <div class="step-circle bg-light">5</div>
+                            <small class="d-block">Maintenance</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="POST" novalidate>
+    {{ form.hidden_tag() }}
+    
+    <!-- UAV Equipment Details -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-drone me-2"></i>UAV Equipment Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.serial_number.label(class="form-label fw-semibold") }}
+                                <div class="input-group">
+                                    {{ form.serial_number(class="form-control", id="serial_number_input") }}
+                                    <button class="btn btn-outline-secondary" type="button" id="lookup_serial_btn" title="Lookup product details">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                {% if form.serial_number.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.serial_number.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Enter serial number and click search to auto-populate details</small>
+                                <div id="serial_lookup_feedback" class="mt-1"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.product_name.label(class="form-label fw-semibold") }}
+                                {{ form.product_name(class="form-control", id="product_name_input") }}
+                                {% if form.product_name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.product_name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">UAV model/product name (auto-populated)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.owner_company.label(class="form-label fw-semibold") }}
+                                {{ form.owner_company(class="form-control", id="owner_company_input") }}
+                                {% if form.owner_company.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.owner_company.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">UAV manufacturer company (auto-populated)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.last_service_date.label(class="form-label fw-semibold") }}
+                                {{ form.last_service_date(class="form-control", id="last_service_date_input") }}
+                                {% if form.last_service_date.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.last_service_date.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Date of last service (auto-populated from history)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incident Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Incident Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                {{ form.title.label(class="form-label") }}
+                                {{ form.title(class="form-control") }}
+                                {% if form.title.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.title.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.priority.label(class="form-label") }}
+                                {{ form.priority(class="form-select") }}
+                                {% if form.priority.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.priority.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows="4") }}
+                        {% if form.description.errors %}
+                            <div class="text-danger">
+                                {% for error in form.description.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.incident_category.label(class="form-label") }}
+                                {{ form.incident_category(class="form-select") }}
+                                {% if form.incident_category.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.incident_category.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.sla_category.label(class="form-label") }}
+                                {{ form.sla_category(class="form-select") }}
+                                {% if form.sla_category.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.sla_category.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="form-check">
+                                    {{ form.is_warranty_service(class="form-check-input") }}
+                                    {{ form.is_warranty_service.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Hidden field for customer user ID -->
+                    {{ form.customer_user_id() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.customer_name.label(class="form-label fw-semibold") }}
+                                <div class="input-group">
+                                    {{ form.customer_name(class="form-control", id="customer_name_input", autocomplete="off") }}
+                                    <button class="btn btn-outline-secondary" type="button" id="clear_customer_btn" title="Clear selection">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div id="customer_suggestions" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;"></div>
+                                {% if form.customer_name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.customer_name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Start typing to search for registered users</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.customer_email.label(class="form-label") }}
+                                {{ form.customer_email(class="form-control", id="customer_email_input") }}
+                                {% if form.customer_email.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.customer_email.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.customer_phone.label(class="form-label") }}
+                                {{ form.customer_phone(class="form-control", id="customer_phone_input") }}
+                                {% if form.customer_phone.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.customer_phone.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.customer_address.label(class="form-label") }}
+                                {{ form.customer_address(class="form-control", rows="3") }}
+                                {% if form.customer_address.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.customer_address.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('uav_service.incident_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Create Service Incident
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+/* Workflow Step Styling */
+.workflow-step {
+    text-align: center;
+    padding: 10px;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px auto;
+    font-weight: bold;
+    border: 2px solid #dee2e6;
+}
+
+.workflow-step.active .step-circle {
+    box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.25);
+}
+
+/* Form styling to match product form */
+.card {
+    border: 1px solid #e3e6f0;
+    border-radius: 0.35rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 0.75rem 1.25rem;
+}
+
+.card-header h5 {
+    color: #5a5c69;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.form-label {
+    color: #5a5c69;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.form-control,
+.form-select {
+    border: 1px solid #d1d3e2;
+    border-radius: 0.35rem;
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #bac8f3;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.btn {
+    border-radius: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    padding: 0.375rem 0.75rem;
+}
+
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+}
+
+.btn-secondary {
+    background-color: #858796;
+    border-color: #858796;
+}
+
+.btn-secondary:hover {
+    background-color: #717384;
+    border-color: #6b6d7d;
+}
+
+.text-danger {
+    color: #e74a3b !important;
+}
+
+.text-muted {
+    color: #858796 !important;
+}
+
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #858796;
+}
+
+.breadcrumb-item a {
+    color: #5a5c69;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: #4e73df;
+}
+
+.breadcrumb-item.active {
+    color: #858796;
+}
+
+/* Progress bar styling */
+.progress {
+    height: 20px;
+    background-color: #f8f9fc;
+    border-radius: 0.35rem;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: #36b9cc;
+    transition: width 0.6s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .card-header {
+        padding: 0.5rem 1rem;
+    }
+    
+    .workflow-step {
+        padding: 5px;
+    }
+    
+    .step-circle {
+        width: 30px;
+        height: 30px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Serial number lookup styles */
+.lookup-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.lookup-success {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+}
+
+.lookup-error {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.auto-populated {
+    background-color: #f8f9fc !important;
+    border-color: #28a745 !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Serial number lookup functionality
+    const serialNumberInput = document.getElementById('serial_number_input');
+    const lookupBtn = document.getElementById('lookup_serial_btn');
+    const productNameInput = document.getElementById('product_name_input');
+    const ownerCompanyInput = document.getElementById('owner_company_input');
+    const lastServiceDateInput = document.getElementById('last_service_date_input');
+    const feedbackDiv = document.getElementById('serial_lookup_feedback');
+
+    function showFeedback(message, type) {
+        feedbackDiv.innerHTML = `<small class="text-${type}">${message}</small>`;
+        setTimeout(() => {
+            if (type !== 'success') {
+                feedbackDiv.innerHTML = '';
+            }
+        }, 5000);
+    }
+
+    function setLoading(isLoading) {
+        if (isLoading) {
+            lookupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            lookupBtn.disabled = true;
+            serialNumberInput.classList.add('lookup-loading');
+        } else {
+            lookupBtn.innerHTML = '<i class="fas fa-search"></i>';
+            lookupBtn.disabled = false;
+            serialNumberInput.classList.remove('lookup-loading');
+        }
+    }
+
+    function clearAutoPopulatedFields() {
+        productNameInput.value = '';
+        ownerCompanyInput.value = '';
+        lastServiceDateInput.value = '';
+        
+        // Remove auto-populated styling
+        [productNameInput, ownerCompanyInput, lastServiceDateInput].forEach(input => {
+            input.classList.remove('auto-populated');
+        });
+    }
+
+    function populateFields(productData) {
+        productNameInput.value = productData.product_name || '';
+        ownerCompanyInput.value = productData.owner_company || '';
+        lastServiceDateInput.value = productData.last_service_date || '';
+        
+        // Add auto-populated styling
+        [productNameInput, ownerCompanyInput, lastServiceDateInput].forEach(input => {
+            if (input.value) {
+                input.classList.add('auto-populated');
+            }
+        });
+        
+        // Show success styling on serial number input
+        serialNumberInput.classList.remove('lookup-error');
+        serialNumberInput.classList.add('lookup-success');
+    }
+
+    function lookupSerialNumber() {
+        const serialNumber = serialNumberInput.value.trim();
+        
+        if (!serialNumber) {
+            showFeedback('Please enter a serial number', 'warning');
+            return;
+        }
+
+        setLoading(true);
+        clearAutoPopulatedFields();
+        
+        // Clear previous styling
+        serialNumberInput.classList.remove('lookup-success', 'lookup-error');
+
+        fetch(`/uav-service/api/product-lookup/${encodeURIComponent(serialNumber)}`)
+            .then(response => response.json())
+            .then(data => {
+                setLoading(false);
+                
+                if (data.success) {
+                    populateFields(data);
+                    showFeedback(`✓ Product found: ${data.product_name}`, 'success');
+                } else {
+                    serialNumberInput.classList.add('lookup-error');
+                    showFeedback(data.error || 'Product not found', 'danger');
+                }
+            })
+            .catch(error => {
+                setLoading(false);
+                serialNumberInput.classList.add('lookup-error');
+                showFeedback('Error looking up serial number. Please try again.', 'danger');
+                console.error('Serial number lookup error:', error);
+            });
+    }
+
+    // Event listeners
+    lookupBtn.addEventListener('click', lookupSerialNumber);
+    
+    // Allow Enter key in serial number input to trigger lookup
+    serialNumberInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            lookupSerialNumber();
+        }
+    });
+
+    // Auto-lookup on blur if field has value
+    serialNumberInput.addEventListener('blur', function() {
+        const serialNumber = this.value.trim();
+        if (serialNumber && !productNameInput.value) {
+            lookupSerialNumber();
+        }
+    });
+
+    // Clear auto-populated styling when user manually changes fields
+    [productNameInput, ownerCompanyInput, lastServiceDateInput].forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('auto-populated');
+        });
+    });
+
+    // Customer User Lookup Functionality
+    const customerNameInput = document.getElementById('customer_name_input');
+    const customerEmailInput = document.getElementById('customer_email_input');
+    const customerPhoneInput = document.getElementById('customer_phone_input');
+    const customerUserIdInput = document.getElementById('customer_user_id');
+    const customerSuggestions = document.getElementById('customer_suggestions');
+    const clearCustomerBtn = document.getElementById('clear_customer_btn');
+    
+    let customerSearchTimeout;
+    let selectedCustomerId = null;
+
+    function searchCustomers(searchTerm) {
+        if (searchTerm.length < 2) {
+            customerSuggestions.style.display = 'none';
+            return;
+        }
+
+        fetch(`/uav-service/api/user-lookup?q=${encodeURIComponent(searchTerm)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.users && data.users.length > 0) {
+                    displayCustomerSuggestions(data.users);
+                } else {
+                    customerSuggestions.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Customer lookup error:', error);
+                customerSuggestions.style.display = 'none';
+            });
+    }
+
+    function displayCustomerSuggestions(users) {
+        customerSuggestions.innerHTML = '';
+        
+        users.forEach(user => {
+            const item = document.createElement('a');
+            item.className = 'dropdown-item';
+            item.href = '#';
+            item.innerHTML = `
+                <div>
+                    <strong>${user.name}</strong>
+                    <br>
+                    <small class="text-muted">${user.username} - ${user.email}</small>
+                </div>
+            `;
+            
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                selectCustomer(user);
+            });
+            
+            customerSuggestions.appendChild(item);
+        });
+        
+        customerSuggestions.style.display = 'block';
+    }
+
+    function selectCustomer(user) {
+        selectedCustomerId = user.id;
+        customerUserIdInput.value = user.id;
+        customerNameInput.value = user.name;
+        customerEmailInput.value = user.email;
+        customerPhoneInput.value = user.phone || '';
+        
+        // Add styling to show auto-populated fields
+        customerNameInput.classList.add('auto-populated');
+        customerEmailInput.classList.add('auto-populated');
+        if (user.phone) {
+            customerPhoneInput.classList.add('auto-populated');
+        }
+        
+        customerSuggestions.style.display = 'none';
+    }
+
+    function clearCustomerSelection() {
+        selectedCustomerId = null;
+        customerUserIdInput.value = '';
+        customerNameInput.value = '';
+        customerEmailInput.value = '';
+        customerPhoneInput.value = '';
+        
+        // Remove auto-populated styling
+        [customerNameInput, customerEmailInput, customerPhoneInput].forEach(input => {
+            input.classList.remove('auto-populated');
+        });
+        
+        customerSuggestions.style.display = 'none';
+        customerNameInput.focus();
+    }
+
+    // Customer search event listeners
+    customerNameInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        
+        // Clear previous selection if user is typing
+        if (selectedCustomerId && this.value !== customerNameInput.value) {
+            selectedCustomerId = null;
+            customerUserIdInput.value = '';
+        }
+        
+        // Clear timeout and start new search
+        clearTimeout(customerSearchTimeout);
+        customerSearchTimeout = setTimeout(() => {
+            searchCustomers(searchTerm);
+        }, 300);
+    });
+
+    customerNameInput.addEventListener('blur', function() {
+        // Delay hiding suggestions to allow for clicks
+        setTimeout(() => {
+            customerSuggestions.style.display = 'none';
+        }, 200);
+    });
+
+    customerNameInput.addEventListener('focus', function() {
+        if (this.value.length >= 2) {
+            searchCustomers(this.value);
+        }
+    });
+
+    clearCustomerBtn.addEventListener('click', clearCustomerSelection);
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!customerNameInput.contains(e.target) && !customerSuggestions.contains(e.target)) {
+            customerSuggestions.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

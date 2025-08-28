@@ -26,10 +26,11 @@
                     <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Row 1: Product Code and Product Name -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                {{ form.product_code.label(class="form-label") }}
+                                {{ form.product_code.label(class="form-label fw-semibold") }}
                                 {{ form.product_code(class="form-control") }}
                                 {% if form.product_code.errors %}
                                     <div class="text-danger">
@@ -38,11 +39,12 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
+                                <small class="form-text text-muted">Unique product identifier code</small>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                {{ form.product_name.label(class="form-label") }}
+                                {{ form.product_name.label(class="form-label fw-semibold") }}
                                 {{ form.product_name(class="form-control") }}
                                 {% if form.product_name.errors %}
                                     <div class="text-danger">
@@ -51,27 +53,30 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
+                                <small class="form-text text-muted">Full name of the UAV product</small>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Row 2: Serial Number and Owner Company -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                {{ form.category_id.label(class="form-label") }}
-                                {{ form.category_id(class="form-select") }}
-                                {% if form.category_id.errors %}
+                                {{ form.serial_number.label(class="form-label fw-semibold") }}
+                                {{ form.serial_number(class="form-control", placeholder="Enter unique serial number (optional)") }}
+                                {% if form.serial_number.errors %}
                                     <div class="text-danger">
-                                        {% for error in form.category_id.errors %}
+                                        {% for error in form.serial_number.errors %}
                                             <small>{{ error }}</small>
                                         {% endfor %}
                                     </div>
                                 {% endif %}
+                                <small class="form-text text-muted">Unique identifier for this specific UAV unit (max 40 characters)</small>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                {{ form.owner_company_id.label(class="form-label") }}
+                                {{ form.owner_company_id.label(class="form-label fw-semibold") }}
                                 {{ form.owner_company_id(class="form-select") }}
                                 {% if form.owner_company_id.errors %}
                                     <div class="text-danger">
@@ -80,13 +85,33 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
+                                <small class="form-text text-muted">Manufacturer or owner company</small>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Row 3: Category (full width for better visual balance) -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.category_id.label(class="form-label fw-semibold") }}
+                                {{ form.category_id(class="form-select") }}
+                                {% if form.category_id.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.category_id.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Product category classification</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Description (full width) -->
                     <div class="mb-3">
-                        {{ form.description.label(class="form-label") }}
-                        {{ form.description(class="form-control", rows="3") }}
+                        {{ form.description.label(class="form-label fw-semibold") }}
+                        {{ form.description(class="form-control", rows="3", placeholder="Detailed description of the UAV product, features, and capabilities...") }}
                         {% if form.description.errors %}
                             <div class="text-danger">
                                 {% for error in form.description.errors %}
@@ -94,6 +119,7 @@
                                 {% endfor %}
                             </div>
                         {% endif %}
+                        <small class="form-text text-muted">Comprehensive product description and key features</small>
                     </div>
                 </div>
             </div>

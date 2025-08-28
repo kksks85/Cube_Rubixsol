@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% set active_page = "uav_service" %}
+
+{% block title %}UAV Service Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">UAV Service Dashboard</h1>
+        <a href="{{ url_for('uav_service.create_incident') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Service Incident
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Incidents</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-incidents">-</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Open Incidents</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="open-incidents">-</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                SLA Breached</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="sla-breached">-</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Maintenance Due</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="maintenance-due">-</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Incidents -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Service Incidents</h6>
+                    <a href="{{ url_for('uav_service.incident_list') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_incidents %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Incident #</th>
+                                        <th>UAV Model</th>
+                                        <th>Category</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for incident in recent_incidents %}
+                                    <tr>
+                                        <td>{{ incident.incident_number_formatted }}</td>
+                                        <td>{{ incident.uav_model }}</td>
+                                        <td>
+                                            <span class="badge badge-info badge-sm">
+                                                {{ incident.incident_category.replace('_', ' ').title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-primary badge-sm">
+                                                Step {{ incident.workflow_step_info.step }}/5
+                                            </span>
+                                        </td>
+                                        <td>{{ incident.created_at.strftime('%m/%d/%Y') }}</td>
+                                        <td>
+                                            <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">View</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No recent incidents found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- SLA Critical Incidents -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-danger">SLA Critical Incidents</h6>
+                </div>
+                <div class="card-body">
+                    {% if sla_critical %}
+                        {% for incident in sla_critical %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <span class="badge badge-danger">Critical</span>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-bold">{{ incident.incident_number_formatted }}</div>
+                                <div class="small text-muted">{{ incident.uav_model }}</div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" 
+                                   class="btn btn-sm btn-outline-danger">View</a>
+                            </div>
+                        </div>
+                        {% if not loop.last %}<hr>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small">No critical SLA incidents.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Maintenance Due -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">Maintenance Due Soon</h6>
+                </div>
+                <div class="card-body">
+                    {% if maintenance_due %}
+                        {% for schedule in maintenance_due %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <span class="badge badge-warning">Due</span>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-bold">{{ schedule.uav_model }}</div>
+                                <div class="small text-muted">SN: {{ schedule.uav_serial_number }}</div>
+                                <div class="small text-muted">Due: {{ schedule.next_maintenance_due.strftime('%m/%d/%Y') if schedule.next_maintenance_due }}</div>
+                            </div>
+                        </div>
+                        {% if not loop.last %}<hr>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small">No maintenance due soon.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('uav_service.create_incident') }}" class="btn btn-primary btn-block mb-2">
+                        <i class="fas fa-plus"></i> New Service Incident
+                    </a>
+                    <a href="{{ url_for('uav_service.incident_list') }}" class="btn btn-outline-primary btn-block mb-2">
+                        <i class="fas fa-list"></i> View All Incidents
+                    </a>
+                    <a href="{{ url_for('uav_service.maintenance_schedules') }}" class="btn btn-outline-info btn-block">
+                        <i class="fas fa-calendar-alt"></i> Maintenance Schedules
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load dashboard statistics
+function loadDashboardStats() {
+    fetch('{{ url_for("uav_service.api_dashboard_stats") }}')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total-incidents').textContent = data.total_incidents;
+            document.getElementById('open-incidents').textContent = data.open_incidents;
+            document.getElementById('sla-breached').textContent = data.sla_breached;
+            document.getElementById('maintenance-due').textContent = data.maintenance_due;
+        })
+        .catch(error => {
+            console.error('Error loading dashboard stats:', error);
+        });
+}
+
+// Load stats on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+    
+    // Refresh stats every 60 seconds
+    setInterval(loadDashboardStats, 60000);
+});
+
+// Add missing Bootstrap utility classes
+.ms-3 { margin-left: 1rem !important; }
+.btn-block { width: 100%; }
+.badge-sm { font-size: 0.75em; }
+</script>
+{% endblock %}

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% set active_page = "uav_service" %}
+
+{% block title %}Create Maintenance Schedule{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Create Maintenance Schedule</h1>
+                <a href="{{ url_for('uav_service.maintenance_schedules') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Schedules
+                </a>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">New Maintenance Schedule</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.uav_model.label(class="form-label") }}
+                                    {{ form.uav_model(class="form-control") }}
+                                    {% if form.uav_model.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.uav_model.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.uav_serial_number.label(class="form-label") }}
+                                    {{ form.uav_serial_number(class="form-control") }}
+                                    {% if form.uav_serial_number.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.uav_serial_number.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.customer_id.label(class="form-label") }}
+                                    {{ form.customer_id(class="form-control") }}
+                                    {% if form.customer_id.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.customer_id.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Select the customer who owns this UAV</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.maintenance_type.label(class="form-label") }}
+                                    {{ form.maintenance_type(class="form-control") }}
+                                    {% if form.maintenance_type.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.maintenance_type.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.current_flight_hours.label(class="form-label") }}
+                                    {{ form.current_flight_hours(class="form-control") }}
+                                    {% if form.current_flight_hours.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.current_flight_hours.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Current total flight hours</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.maintenance_hours_interval.label(class="form-label") }}
+                                    {{ form.maintenance_hours_interval(class="form-control") }}
+                                    {% if form.maintenance_hours_interval.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.maintenance_hours_interval.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Flight hours between maintenance cycles</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.last_maintenance_date.label(class="form-label") }}
+                                    {{ form.last_maintenance_date(class="form-control", type="date") }}
+                                    {% if form.last_maintenance_date.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.last_maintenance_date.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Date of last maintenance (if any)</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.next_maintenance_due.label(class="form-label") }}
+                                    {{ form.next_maintenance_due(class="form-control", type="date") }}
+                                    {% if form.next_maintenance_due.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.next_maintenance_due.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Scheduled date for next maintenance</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    {{ form.notes.label(class="form-label") }}
+                                    {{ form.notes(class="form-control", rows="4") }}
+                                    {% if form.notes.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.notes.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Additional notes about this maintenance schedule</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end">
+                            <a href="{{ url_for('uav_service.maintenance_schedules') }}" class="btn btn-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Schedule
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-calculate next maintenance due date based on current flight hours and interval
+    const currentHoursInput = document.getElementById('current_flight_hours');
+    const intervalInput = document.getElementById('maintenance_hours_interval');
+    const nextDueInput = document.getElementById('next_maintenance_due');
+    
+    function calculateNextDue() {
+        const currentHours = parseFloat(currentHoursInput.value) || 0;
+        const interval = parseFloat(intervalInput.value) || 0;
+        
+        if (currentHours > 0 && interval > 0) {
+            // Calculate when next maintenance will be due based on typical flight hours per month
+            const avgFlightHoursPerMonth = 20; // Assumption: 20 hours per month
+            const hoursUntilMaintenance = interval - (currentHours % interval);
+            const monthsUntilMaintenance = hoursUntilMaintenance / avgFlightHoursPerMonth;
+            
+            const nextDate = new Date();
+            nextDate.setMonth(nextDate.getMonth() + Math.ceil(monthsUntilMaintenance));
+            
+            // Format date as YYYY-MM-DD for HTML date input
+            const formattedDate = nextDate.toISOString().split('T')[0];
+            nextDueInput.value = formattedDate;
+        }
+    }
+    
+    if (currentHoursInput && intervalInput && nextDueInput) {
+        currentHoursInput.addEventListener('change', calculateNextDue);
+        intervalInput.addEventListener('change', calculateNextDue);
+    }
+});
+</script>
+{% endblock %}

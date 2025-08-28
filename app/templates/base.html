@@ -34,21 +34,22 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link px-2" href="{{ url_for('main.dashboard') }}">
-                            <i class="fas fa-home me-1"></i> Dashboard
+                            Home
                         </a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle px-2" href="#" id="workordersDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-clipboard-list me-1"></i> Work Orders
+                            Work Orders
                         </a>
                         <ul class="dropdown-menu shadow-sm">
                             <li><a class="dropdown-item py-1" href="{{ url_for('workorders.list_workorders') }}">
                                 <i class="fas fa-list me-2 text-primary"></i> All Work Orders
                             </a></li>
                             {% if current_user.role and (current_user.role.name == 'admin' or current_user.role.name == 'manager') %}
-                            <li><a class="dropdown-item py-1" href="{{ url_for('workorders.create_workorder') }}">
+                            <!-- Create Order menu item hidden per user request -->
+                            <!-- <li><a class="dropdown-item py-1" href="{{ url_for('workorders.create_workorder') }}">
                                 <i class="fas fa-plus-circle me-2 text-success"></i> Create Order
-                            </a></li>
+                            </a></li> -->
                             <li><hr class="dropdown-divider my-1"></li>
                             <li><h6 class="dropdown-header text-muted px-3">
                                 <i class="fas fa-cubes me-2"></i>Products & Assets
@@ -71,11 +72,11 @@
                     {% if current_user.role and (current_user.role.name == 'admin' or current_user.role.name == 'manager') %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle px-2" href="#" id="inventoryDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-boxes me-1"></i> Inventory
+                            Inventory
                         </a>
                         <ul class="dropdown-menu shadow-sm">
                             <li><a class="dropdown-item py-1" href="{{ url_for('inventory.dashboard') }}">
-                                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Dashboard
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Home
                             </a></li>
                             <li><a class="dropdown-item py-1" href="{{ url_for('inventory.items') }}">
                                 <i class="fas fa-cubes me-2 text-info"></i> All Items
@@ -96,38 +97,28 @@
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle px-2" href="#" id="serviceDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-tools me-1"></i> Service
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="uavServiceDropdown" role="button" data-bs-toggle="dropdown">
+                            UAV Service
                         </a>
                         <ul class="dropdown-menu shadow-sm">
-                            <li><a class="dropdown-item py-1" href="{{ url_for('service.dashboard') }}">
-                                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Service Dashboard
+                            <li><a class="dropdown-item py-1" href="{{ url_for('uav_service.dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Home
                             </a></li>
-                            <li><a class="dropdown-item py-1" href="{{ url_for('service.incidents') }}">
-                                <i class="fas fa-ticket-alt me-2 text-info"></i> All Incidents
+                            <li><a class="dropdown-item py-1" href="{{ url_for('uav_service.incident_list') }}">
+                                <i class="fas fa-clipboard-list me-2 text-info"></i> Service Incidents
                             </a></li>
-                            <li><a class="dropdown-item py-1" href="{{ url_for('service.create_incident') }}">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('uav_service.create_incident') }}">
                                 <i class="fas fa-plus me-2 text-success"></i> New Incident
                             </a></li>
                             <li><hr class="dropdown-divider my-1"></li>
-                            <li><a class="dropdown-item py-1" href="{{ url_for('service.categories') }}">
-                                <i class="fas fa-tags me-2 text-secondary"></i> Service Categories
-                            </a></li>
-                            <li><a class="dropdown-item py-1" href="{{ url_for('service.templates') }}">
-                                <i class="fas fa-file-alt me-2 text-warning"></i> Service Templates
-                            </a></li>
-                            <li><hr class="dropdown-divider my-1"></li>
-                            <li><a class="dropdown-item py-1" href="{{ url_for('service.incidents') }}?status=URGENT">
-                                <i class="fas fa-exclamation-triangle me-2 text-danger"></i> Urgent Services
-                            </a></li>
-                            <li><a class="dropdown-item py-1" href="{{ url_for('service.incidents') }}?status=WAITING_PARTS">
-                                <i class="fas fa-clock me-2 text-warning"></i> Waiting Parts
+                            <li><a class="dropdown-item py-1" href="{{ url_for('uav_service.maintenance_schedules') }}">
+                                <i class="fas fa-calendar-alt me-2 text-secondary"></i> Maintenance Schedules
                             </a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle px-2" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-cogs me-1"></i> Administration
+                            Administration
                         </a>
                         <ul class="dropdown-menu shadow-sm">
                             <li><a class="dropdown-item py-1" href="{{ url_for('users.list_users') }}">
@@ -144,10 +135,51 @@
                             {% endif %}
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-2" href="{{ url_for('reporting.dashboard') }}">
-                            <i class="fas fa-chart-line me-1"></i> Analytics
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="knowledgeDropdown" role="button" data-bs-toggle="dropdown">
+                            Knowledge Base
                         </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.index') }}">
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Home
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.list_articles') }}">
+                                <i class="fas fa-file-alt me-2 text-info"></i> All Articles
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.create_article') }}">
+                                <i class="fas fa-plus me-2 text-success"></i> New Article
+                            </a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.list_categories') }}">
+                                <i class="fas fa-tags me-2 text-secondary"></i> Categories
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.search') }}">
+                                <i class="fas fa-search me-2 text-warning"></i> Search
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown">
+                            Reports
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('reporting.dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('reporting.reports_list') }}">
+                                <i class="fas fa-chart-line me-2 text-info"></i> My Reports
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('reporting.new_report') }}">
+                                <i class="fas fa-plus me-2 text-success"></i> New Report
+                            </a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('reporting.reports_list', filter='scheduled') }}">
+                                <i class="fas fa-clock me-2 text-secondary"></i> Scheduled Reports
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('reporting.reports_list', filter='shared') }}">
+                                <i class="fas fa-share me-2 text-warning"></i> Shared Reports
+                            </a></li>
+                        </ul>
                     </li>
                     {% endif %}
                 </ul>

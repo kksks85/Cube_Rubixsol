@@ -111,6 +111,7 @@
                                         <th>Category</th>
                                         <th>Manufacturer</th>
                                         <th>Stock</th>
+                                        <th>Condition</th>
                                         <th>Status</th>
                                         <th>Unit Cost</th>
                                         <th class="text-end">Actions</th>
@@ -150,6 +151,11 @@
                                                 {% endif %}
                                             </div>
                                             <small class="text-muted">Min: {{ item.minimum_stock_level }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if item.condition == 'new' else 'warning' }}">
+                                                {{ item.condition.title() }}
+                                            </span>
                                         </td>
                                         <td>
                                             {% if item.quantity_in_stock == 0 %}

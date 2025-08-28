@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% set active_page = "uav_service" %}
+
+{% block title %}Repair & Maintenance - {{ incident.incident_number_formatted }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Repair & Maintenance</h1>
+                <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Incident
+                </a>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Step 3: Repair & Maintenance - {{ incident.incident_number_formatted }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Work Order Details</h6>
+                            <p><strong>Type:</strong> {{ incident.work_order_type or 'N/A' }}</p>
+                            <p><strong>Parts Required:</strong> {{ 'Yes' if incident.parts_requested else 'No' }}</p>
+                            <p><strong>Estimated Cost:</strong> ${{ "%.2f"|format(incident.estimated_cost|float) if incident.estimated_cost else '0.00' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Previous Diagnosis</h6>
+                            <p><strong>Findings:</strong></p>
+                            <p class="text-muted">{{ incident.diagnostic_findings or 'No diagnostic findings recorded' }}</p>
+                        </div>
+                    </div>
+
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.technician_hours.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.technician_hours(class="form-control") }}
+                                        <span class="input-group-text">hours</span>
+                                    </div>
+                                    {% if form.technician_hours.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.technician_hours.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Hours worked on this session</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.service_status.label(class="form-label") }}
+                                    {{ form.service_status(class="form-control") }}
+                                    <small class="form-text text-muted">Current status of the repair/maintenance work</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.parts_received(class="form-check-input") }}
+                                        {{ form.parts_received.label(class="form-check-label") }}
+                                    </div>
+                                    <small class="form-text text-muted">Check if all required parts have been received</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.actual_cost.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.actual_cost(class="form-control") }}
+                                    </div>
+                                    <small class="form-text text-muted">Actual cost incurred (parts + labor)</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.technician_notes.label(class="form-label") }}
+                                    {{ form.technician_notes(class="form-control", rows="10") }}
+                                    {% if form.technician_notes.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.technician_notes.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Detailed description of work performed, parts replaced, etc.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Work Performed Checklist -->
+                        <div class="mt-4">
+                            <h6 class="text-primary">Work Performed Checklist</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="work1">
+                                        <label class="form-check-label" for="work1">Parts replacement completed</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="work2">
+                                        <label class="form-check-label" for="work2">Hardware repairs performed</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="work3">
+                                        <label class="form-check-label" for="work3">Software/firmware updated</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="work4">
+                                        <label class="form-check-label" for="work4">Calibration completed</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="work5">
+                                        <label class="form-check-label" for="work5">Functional testing performed</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="work6">
+                                        <label class="form-check-label" for="work6">Flight test completed</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="work7">
+                                        <label class="form-check-label" for="work7">Documentation updated</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="work8">
+                                        <label class="form-check-label" for="work8">Customer notification sent</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Work Session Summary -->
+                        <div class="mt-4">
+                            <h6 class="text-primary">Work Session Summary</h6>
+                            <div class="alert alert-info">
+                                <strong>Previous Hours:</strong> {{ incident.technician_hours or 0 }} hours<br>
+                                <strong>Previous Cost:</strong> ${{ "%.2f"|format(incident.actual_cost|float) if incident.actual_cost else '0.00' }}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Progress
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

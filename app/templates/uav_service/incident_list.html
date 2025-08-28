@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% set active_page = "uav_service" %}
+
+{% block title %}UAV Service Incidents{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">UAV Service Incidents</h1>
+                <a href="{{ url_for('uav_service.create_incident') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Service Incident
+                </a>
+            </div>
+
+            <!-- Filters -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="row">
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" id="status" class="form-control">
+                                <option value="all" {{ 'selected' if status_filter == 'all' }}>All Status</option>
+                                <option value="INCIDENT_RAISED" {{ 'selected' if status_filter == 'INCIDENT_RAISED' }}>Incident Raised</option>
+                                <option value="DIAGNOSIS_WO" {{ 'selected' if status_filter == 'DIAGNOSIS_WO' }}>Diagnosis & Work Order</option>
+                                <option value="REPAIR_MAINTENANCE" {{ 'selected' if status_filter == 'REPAIR_MAINTENANCE' }}>Repair/Maintenance</option>
+                                <option value="QUALITY_CHECK" {{ 'selected' if status_filter == 'QUALITY_CHECK' }}>Quality Check</option>
+                                <option value="PREVENTIVE_MAINTENANCE" {{ 'selected' if status_filter == 'PREVENTIVE_MAINTENANCE' }}>Preventive Maintenance</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="category" class="form-label">Category</label>
+                            <select name="category" id="category" class="form-control">
+                                <option value="all" {{ 'selected' if category_filter == 'all' }}>All Categories</option>
+                                <option value="BATTERY" {{ 'selected' if category_filter == 'BATTERY' }}>Battery Issue</option>
+                                <option value="CAMERA" {{ 'selected' if category_filter == 'CAMERA' }}>Camera Issue</option>
+                                <option value="CRASH_REPAIR" {{ 'selected' if category_filter == 'CRASH_REPAIR' }}>Crash Repair</option>
+                                <option value="ROUTINE_MAINTENANCE" {{ 'selected' if category_filter == 'ROUTINE_MAINTENANCE' }}>Routine Maintenance</option>
+                                <option value="OTHER" {{ 'selected' if category_filter == 'OTHER' }}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">Filter</button>
+                            <a href="{{ url_for('uav_service.incident_list') }}" class="btn btn-secondary">Reset</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Incidents Table -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Service Incidents</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Incident #</th>
+                                    <th>Title</th>
+                                    <th>UAV Model</th>
+                                    <th>Customer</th>
+                                    <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>SLA Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for incident in incidents.items %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="text-decoration-none">
+                                            {{ incident.incident_number_formatted }}
+                                        </a>
+                                    </td>
+                                    <td>{{ incident.title[:50] }}{% if incident.title|length > 50 %}...{% endif %}</td>
+                                    <td>{{ incident.uav_model }}</td>
+                                    <td>{{ incident.customer_name }}</td>
+                                    <td>
+                                        <span class="badge badge-info">{{ incident.incident_category.replace('_', ' ').title() }}</span>
+                                    </td>
+                                    <td>
+                                        {% if incident.priority == 'URGENT' %}
+                                            <span class="badge badge-danger">{{ incident.priority }}</span>
+                                        {% elif incident.priority == 'HIGH' %}
+                                            <span class="badge badge-warning">{{ incident.priority }}</span>
+                                        {% elif incident.priority == 'MEDIUM' %}
+                                            <span class="badge badge-primary">{{ incident.priority }}</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ incident.priority }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="mb-1">
+                                            <small class="text-muted">Step {{ incident.workflow_step_info.step }}/5</small>
+                                        </div>
+                                        <span class="badge badge-primary">{{ incident.workflow_step_info.name }}</span>
+                                    </td>
+                                    <td>
+                                        {% if incident.sla_status == 'BREACHED' %}
+                                            <span class="badge badge-danger">SLA Breached</span>
+                                        {% elif incident.sla_status == 'CRITICAL' %}
+                                            <span class="badge badge-warning">Critical</span>
+                                        {% elif incident.sla_status == 'WARNING' %}
+                                            <span class="badge badge-info">Warning</span>
+                                        {% else %}
+                                            <span class="badge badge-success">On Track</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ incident.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if incidents.pages > 1 %}
+                    <nav aria-label="Incidents pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if incidents.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('uav_service.incident_list', page=incidents.prev_num, status=status_filter, category=category_filter) }}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page_num in incidents.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != incidents.page %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('uav_service.incident_list', page=page_num, status=status_filter, category=category_filter) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page_num }}</span>
+                                        </li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if incidents.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('uav_service.incident_list', page=incidents.next_num, status=status_filter, category=category_filter) }}">Next</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

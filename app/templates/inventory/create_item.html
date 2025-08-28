@@ -109,7 +109,7 @@
                                     <i class="fas fa-boxes me-1"></i> Stock Information
                                 </h6>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="mb-3">
                                     {{ form.quantity_in_stock.label(class="form-label fw-medium") }}
                                     {{ form.quantity_in_stock(class="form-control" + (" is-invalid" if form.quantity_in_stock.errors else "")) }}
@@ -120,7 +120,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="mb-3">
                                     {{ form.minimum_stock_level.label(class="form-label fw-medium") }}
                                     {{ form.minimum_stock_level(class="form-control" + (" is-invalid" if form.minimum_stock_level.errors else "")) }}
@@ -131,13 +131,24 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="mb-3">
                                     {{ form.maximum_stock_level.label(class="form-label fw-medium") }}
                                     {{ form.maximum_stock_level(class="form-control" + (" is-invalid" if form.maximum_stock_level.errors else "")) }}
                                     {% if form.maximum_stock_level.errors %}
                                         <div class="invalid-feedback">
                                             {% for error in form.maximum_stock_level.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.condition.label(class="form-label fw-medium") }}
+                                    {{ form.condition(class="form-select" + (" is-invalid" if form.condition.errors else "")) }}
+                                    {% if form.condition.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.condition.errors %}{{ error }}{% endfor %}
                                         </div>
                                     {% endif %}
                                 </div>

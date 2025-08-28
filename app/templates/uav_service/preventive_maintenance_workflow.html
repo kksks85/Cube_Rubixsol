@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% set active_page = "uav_service" %}
+
+{% block title %}Preventive Maintenance Setup - {{ incident.incident_number_formatted }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Preventive Maintenance Setup</h1>
+                <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Incident
+                </a>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Step 5: Preventive Maintenance Setup - {{ incident.incident_number_formatted }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">UAV Information</h6>
+                            <p><strong>Model:</strong> {{ incident.uav_model }}</p>
+                            <p><strong>Serial Number:</strong> {{ incident.uav_serial_number or 'N/A' }}</p>
+                            <p><strong>Current Flight Hours:</strong> {{ incident.flight_hours or 0 }} hours</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Service Completion</h6>
+                            <p><strong>Service Completed:</strong> {{ incident.service_completed_at.strftime('%Y-%m-%d %H:%M') if incident.service_completed_at else 'Not completed' }}</p>
+                            <p><strong>QA Verified:</strong> {{ 'Yes' if incident.qa_verified else 'No' }}</p>
+                            <p><strong>Airworthiness Certified:</strong> {{ 'Yes' if incident.airworthiness_certified else 'No' }}</p>
+                        </div>
+                    </div>
+
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">Maintenance Schedule Configuration</h6>
+                                
+                                <div class="mb-3">
+                                    {{ form.maintenance_type.label(class="form-label") }}
+                                    {{ form.maintenance_type(class="form-control") }}
+                                    <small class="form-text text-muted">Select how maintenance should be scheduled</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.flight_hours_interval.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.flight_hours_interval(class="form-control") }}
+                                        <span class="input-group-text">hours</span>
+                                    </div>
+                                    <small class="form-text text-muted">Schedule maintenance every X flight hours</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.time_interval_days.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.time_interval_days(class="form-control") }}
+                                        <span class="input-group-text">days</span>
+                                    </div>
+                                    <small class="form-text text-muted">Schedule maintenance every X days</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">Recommended Maintenance Intervals</h6>
+                                
+                                <div class="alert alert-info">
+                                    <h6 class="alert-heading">Standard Recommendations:</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Commercial UAVs:</strong> Every 25-50 flight hours or 3-6 months</li>
+                                        <li><strong>Professional UAVs:</strong> Every 50-100 flight hours or 6-12 months</li>
+                                        <li><strong>Industrial UAVs:</strong> Every 15-25 flight hours or 2-3 months</li>
+                                        <li><strong>Recreational UAVs:</strong> Every 100+ flight hours or 12+ months</li>
+                                    </ul>
+                                </div>
+
+                                <div class="alert alert-warning">
+                                    <h6 class="alert-heading">Factors to Consider:</h6>
+                                    <ul class="mb-0">
+                                        <li>Operating environment (dusty, humid, etc.)</li>
+                                        <li>Flight patterns (aggressive vs. gentle)</li>
+                                        <li>Payload weight and usage</li>
+                                        <li>Weather conditions</li>
+                                        <li>Manufacturer recommendations</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Maintenance Checklist Template -->
+                        <div class="mt-4">
+                            <h6 class="text-primary">Preventive Maintenance Checklist Template</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-secondary">Regular Inspection Items:</h6>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" id="maint1" checked disabled>
+                                        <label class="form-check-label text-muted" for="maint1">Visual inspection of frame and body</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" id="maint2" checked disabled>
+                                        <label class="form-check-label text-muted" for="maint2">Propeller inspection and replacement</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" id="maint3" checked disabled>
+                                        <label class="form-check-label text-muted" for="maint3">Motor and ESC performance check</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" id="maint4" checked disabled>
+                                        <label class="form-check-label text-muted" for="maint4">Battery health assessment</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" id="maint5" checked disabled>
+                                        <label class="form-check-label text-muted" for="maint5">Gimbal and camera calibration</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-secondary">System Updates & Calibration:</h6>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" id="maint6" checked disabled>
+                                        <label class="form-check-label text-muted" for="maint6">Firmware and software updates</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" id="maint7" checked disabled>
+                                        <label class="form-check-label text-muted" for="maint7">Sensor calibration (IMU, compass)</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" id="maint8" checked disabled>
+                                        <label class="form-check-label text-muted" for="maint8">GPS and navigation system check</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" id="maint9" checked disabled>
+                                        <label class="form-check-label text-muted" for="maint9">Flight control system test</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" id="maint10" checked disabled>
+                                        <label class="form-check-label text-muted" for="maint10">Communication system verification</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notification Settings -->
+                        <div class="mt-4">
+                            <h6 class="text-primary">Notification Settings</h6>
+                            <div class="alert alert-success">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="autoNotify" checked>
+                                    <label class="form-check-label" for="autoNotify">
+                                        <strong>Enable Automatic Notifications</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted">
+                                    When enabled, both the customer and service center will be automatically notified 
+                                    when maintenance is due. Notifications will be sent 7 days before the due date.
+                                </small>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-calendar-plus"></i> Setup Preventive Maintenance Schedule
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dynamic form updates based on maintenance type selection
+document.addEventListener('DOMContentLoaded', function() {
+    const maintenanceType = document.getElementById('maintenance_type');
+    const flightHoursField = document.getElementById('flight_hours_interval').closest('.mb-3');
+    const timeIntervalField = document.getElementById('time_interval_days').closest('.mb-3');
+    
+    function updateFields() {
+        const value = maintenanceType.value;
+        
+        if (value === 'FLIGHT_HOURS') {
+            flightHoursField.style.display = 'block';
+            timeIntervalField.style.display = 'none';
+        } else if (value === 'TIME_BASED') {
+            flightHoursField.style.display = 'none';
+            timeIntervalField.style.display = 'block';
+        } else if (value === 'BOTH') {
+            flightHoursField.style.display = 'block';
+            timeIntervalField.style.display = 'block';
+        } else {
+            flightHoursField.style.display = 'none';
+            timeIntervalField.style.display = 'none';
+        }
+    }
+    
+    maintenanceType.addEventListener('change', updateFields);
+    updateFields(); // Initialize on page load
+});
+</script>
+{% endblock %}

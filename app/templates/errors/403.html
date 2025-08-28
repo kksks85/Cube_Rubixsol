@@ -1,0 +1,60 @@
+{% extends "base_new.html" %}
+
+{% block title %}Access Denied - CUBE{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="text-center py-5">
+                <!-- Error Icon -->
+                <div class="mb-4">
+                    <i class="fas fa-lock fa-5x text-warning"></i>
+                </div>
+                
+                <!-- Error Message -->
+                <h1 class="display-4 text-danger mb-3">403</h1>
+                <h2 class="h4 mb-3">Access Denied</h2>
+                <p class="text-muted mb-4">
+                    Sorry, you don't have permission to access this resource. 
+                    Please contact your administrator if you believe this is an error.
+                </p>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Go Back
+                    </a>
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Dashboard
+                    </a>
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('knowledge.index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-book-open me-2"></i>Knowledge Base
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <!-- Additional Help -->
+                <div class="mt-5">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-question-circle me-2"></i>Need Help?
+                            </h6>
+                            <p class="card-text small text-muted mb-2">
+                                If you believe you should have access to this resource:
+                            </p>
+                            <ul class="list-unstyled small text-muted text-start">
+                                <li><i class="fas fa-check me-2"></i>Check if you're logged in with the correct account</li>
+                                <li><i class="fas fa-check me-2"></i>Verify you have the necessary permissions</li>
+                                <li><i class="fas fa-check me-2"></i>Contact your system administrator</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

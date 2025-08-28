@@ -50,6 +50,16 @@
                                 <td>{{ product.product_code }}</td>
                             </tr>
                             <tr>
+                                <td><strong>Serial Number:</strong></td>
+                                <td>
+                                    {% if product.serial_number %}
+                                        <span class="badge bg-info">{{ product.serial_number }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Not assigned</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
                                 <td><strong>Manufacturer:</strong></td>
                                 <td>{{ product.manufacturer or 'Not specified' }}</td>
                             </tr>

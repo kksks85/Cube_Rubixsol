@@ -24,6 +24,10 @@ class InventoryItemForm(FlaskForm):
     quantity_in_stock = IntegerField('Current Stock', validators=[DataRequired(), NumberRange(min=0)])
     minimum_stock_level = IntegerField('Minimum Stock Level', validators=[DataRequired(), NumberRange(min=0)])
     maximum_stock_level = IntegerField('Maximum Stock Level', validators=[DataRequired(), NumberRange(min=1)])
+    condition = SelectField('Part Condition', 
+                          choices=[('new', 'New'), ('faulty', 'Faulty')],
+                          validators=[DataRequired()],
+                          default='new')
     unit_cost = DecimalField('Unit Cost ($)', validators=[Optional(), NumberRange(min=0)], places=2)
     
     # Item Details

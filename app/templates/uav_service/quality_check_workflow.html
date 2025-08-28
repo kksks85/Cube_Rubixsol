@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% set active_page = "uav_service" %}
+
+{% block title %}Quality Check & Handover - {{ incident.incident_number_formatted }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Quality Check & Handover</h1>
+                <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Incident
+                </a>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Step 4: Quality Check & Handover - {{ incident.incident_number_formatted }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Service Summary</h6>
+                            <p><strong>Service Status:</strong> {{ incident.service_status or 'N/A' }}</p>
+                            <p><strong>Total Hours:</strong> {{ incident.technician_hours or 0 }} hours</p>
+                            <p><strong>Current Cost:</strong> ${{ "%.2f"|format(incident.actual_cost|float) if incident.actual_cost else '0.00' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Customer Information</h6>
+                            <p><strong>Customer:</strong> {{ incident.customer_name }}</p>
+                            <p><strong>UAV Model:</strong> {{ incident.uav_model }}</p>
+                            <p><strong>Warranty Service:</strong> {{ 'Yes' if incident.is_warranty_service else 'No' }}</p>
+                        </div>
+                    </div>
+
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- Quality Assurance -->
+                                <h6 class="text-primary mb-3">Quality Assurance</h6>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.qa_verified(class="form-check-input") }}
+                                        {{ form.qa_verified.label(class="form-check-label") }}
+                                    </div>
+                                    <small class="form-text text-muted">Confirm that all quality checks have passed</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.airworthiness_certified(class="form-check-input") }}
+                                        {{ form.airworthiness_certified.label(class="form-check-label") }}
+                                    </div>
+                                    <small class="form-text text-muted">Confirm airworthiness compliance</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.qa_notes.label(class="form-label") }}
+                                    {{ form.qa_notes(class="form-control", rows="6") }}
+                                    <small class="form-text text-muted">QA inspection notes and observations</small>
+                                </div>
+
+                                <!-- Billing (for non-warranty services) -->
+                                {% if not incident.is_warranty_service %}
+                                <h6 class="text-primary mb-3 mt-4">Billing Information</h6>
+                                
+                                <div class="mb-3">
+                                    {{ form.invoice_number.label(class="form-label") }}
+                                    {{ form.invoice_number(class="form-control") }}
+                                    <small class="form-text text-muted">Invoice number for billing</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.final_cost.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.final_cost(class="form-control") }}
+                                    </div>
+                                    <small class="form-text text-muted">Final cost to be charged to customer</small>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <!-- QA Inspection Checklist -->
+                                <div class="card border-primary mb-4">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-clipboard-check"></i> QA Inspection Checklist
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="qa1">
+                                                    <label class="form-check-label" for="qa1">
+                                                        All repair work completed satisfactorily
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="qa2">
+                                                    <label class="form-check-label" for="qa2">
+                                                        UAV powers on correctly
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="qa3">
+                                                    <label class="form-check-label" for="qa3">
+                                                        All systems functional
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="qa4">
+                                                    <label class="form-check-label" for="qa4">
+                                                        Camera/gimbal working properly
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="qa5">
+                                                    <label class="form-check-label" for="qa5">
+                                                        GPS and navigation systems tested
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="qa6">
+                                                    <label class="form-check-label" for="qa6">
+                                                        Battery performance verified
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="qa7">
+                                                    <label class="form-check-label" for="qa7">
+                                                        Physical inspection completed
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="qa8">
+                                                    <label class="form-check-label" for="qa8">
+                                                        Documentation complete
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Compliance Checklist -->
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-shield-alt"></i> Compliance Checklist
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="comp1">
+                                                    <label class="form-check-label" for="comp1">
+                                                        Weight within specifications
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="comp2">
+                                                    <label class="form-check-label" for="comp2">
+                                                        Performance meets standards
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="comp3">
+                                                    <label class="form-check-label" for="comp3">
+                                                        Safety features operational
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="comp4">
+                                                    <label class="form-check-label" for="comp4">
+                                                        Regulatory compliance verified
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Service Summary -->
+                        <div class="mt-4">
+                            <h6 class="text-primary">Service Summary</h6>
+                            <div class="alert alert-info">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Work Performed:</strong><br>
+                                        {{ incident.technician_notes or 'No detailed notes available' }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Time & Cost:</strong><br>
+                                        Total Hours: {{ incident.technician_hours or 0 }}<br>
+                                        Total Cost: ${{ "%.2f"|format(incident.actual_cost|float) if incident.actual_cost else '0.00' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check-circle"></i> Complete QA & Approve for Handover
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom styles for better checkbox alignment */
+.form-check {
+    padding-left: 1.75rem;
+}
+
+.form-check-input {
+    margin-top: 0.25rem;
+    margin-left: -1.75rem;
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: #495057;
+    line-height: 1.4;
+    margin-left: 0.25rem;
+}
+
+.card-header h6 {
+    font-weight: 600;
+    letter-spacing: 0.025em;
+}
+
+.card.border-primary .card-header {
+    border-bottom: 2px solid #007bff;
+}
+
+.card.border-success .card-header {
+    border-bottom: 2px solid #28a745;
+}
+
+/* Hover effects for better UX */
+.form-check:hover {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem 0.5rem -0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-check-input:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Card styling improvements */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+</style>
+{% endblock %}

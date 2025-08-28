@@ -11,6 +11,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
+from markupsafe import Markup
 from datetime import datetime
 import os
 
@@ -49,6 +50,14 @@ def create_app():
             return delta.days
         return 0
     
+    @app.template_filter('nl2br')
+    def nl2br_filter(text):
+        """Convert newlines to <br> tags"""
+        if text:
+            # Replace newlines with <br> tags and return as safe HTML
+            return Markup(text.replace('\n', '<br>').replace('\r\n', '<br>'))
+        return ''
+    
     # Import and register blueprints
     from app.auth import bp as auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -65,17 +74,20 @@ def create_app():
     from app.products import bp as products_bp
     app.register_blueprint(products_bp, url_prefix='/products')
     
-    from app.reporting import bp as reporting_bp
-    app.register_blueprint(reporting_bp, url_prefix='/reporting')
-    
     from app.email_management import bp as email_management_bp
     app.register_blueprint(email_management_bp, url_prefix='/email-management')
     
     from app.inventory import bp as inventory_bp
     app.register_blueprint(inventory_bp, url_prefix='/inventory')
     
-    from app.service import bp as service_bp
-    app.register_blueprint(service_bp, url_prefix='/service')
+    from app.knowledge import knowledge as knowledge_bp
+    app.register_blueprint(knowledge_bp, url_prefix='/knowledge')
+    
+    from app.uav_service import bp as uav_service_bp
+    app.register_blueprint(uav_service_bp, url_prefix='/uav-service')
+    
+    from app.reporting import bp as reporting_bp
+    app.register_blueprint(reporting_bp, url_prefix='/reporting')
     
     # Create database tables
     with app.app_context():
@@ -97,6 +109,17 @@ def create_app():
         if not technician_role:
             technician_role = Role(name='technician', description='Technician')
             db.session.add(technician_role)
+            
+        # Knowledge management roles
+        knowledge_admin_role = Role.query.filter_by(name='knowledge_admin').first()
+        if not knowledge_admin_role:
+            knowledge_admin_role = Role(name='knowledge_admin', description='Knowledge Administrator')
+            db.session.add(knowledge_admin_role)
+            
+        knowledge_reviewer_role = Role.query.filter_by(name='knowledge_reviewer').first()
+        if not knowledge_reviewer_role:
+            knowledge_reviewer_role = Role(name='knowledge_reviewer', description='Knowledge Reviewer')
+            db.session.add(knowledge_reviewer_role)
             
         db.session.commit()
         

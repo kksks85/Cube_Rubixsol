@@ -1,0 +1,308 @@
+{% extends "base_new.html" %}
+
+{% block title %}Create Knowledge Category - {{ config.COMPANY_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('knowledge.index') }}">
+                    <i class="fas fa-book-open me-1"></i>Knowledge Base
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('knowledge.list_categories') }}">Categories</a>
+            </li>
+            <li class="breadcrumb-item active">Create Category</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-gradient-success text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="h3 mb-2">
+                                <i class="fas fa-folder-plus me-2"></i>
+                                Create Knowledge Category
+                            </h1>
+                            <p class="mb-0 opacity-75">
+                                Organize your knowledge articles with a new category
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="{{ url_for('knowledge.list_categories') }}" class="btn btn-light">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Categories
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <form method="POST" id="categoryForm">
+                {{ form.hidden_tag() }}
+                
+                <!-- Basic Information -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle text-success me-2"></i>
+                            Category Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Category Name -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.name.id }}" class="form-label">
+                                    <i class="fas fa-tag text-muted me-1"></i>
+                                    Category Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name(class="form-control", placeholder="Enter category name") }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.name.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.parent_id.id }}" class="form-label">
+                                    <i class="fas fa-sitemap text-muted me-1"></i>
+                                    Parent Category
+                                </label>
+                                {{ form.parent_id(class="form-select") }}
+                                {% if form.parent_id.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.parent_id.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="{{ form.description.id }}" class="form-label">
+                                    <i class="fas fa-align-left text-muted me-1"></i>
+                                    Description
+                                </label>
+                                {{ form.description(class="form-control", rows="3", placeholder="Enter category description") }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.description.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appearance Settings -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-palette text-info me-2"></i>
+                            Appearance Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="{{ form.icon.id }}" class="form-label">
+                                    <i class="fas fa-icons text-muted me-1"></i>
+                                    Icon
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-cube" id="iconPreview"></i>
+                                    </span>
+                                    {{ form.icon(class="form-control", placeholder="fas fa-folder", value="fas fa-folder") }}
+                                </div>
+                                <small class="text-muted">Use FontAwesome class names (e.g., fas fa-folder)</small>
+                                {% if form.icon.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.icon.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.color.id }}" class="form-label">
+                                    <i class="fas fa-palette text-muted me-1"></i>
+                                    Color
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text" id="colorPreview" style="background-color: #007bff; color: white;">
+                                        <i class="fas fa-square"></i>
+                                    </span>
+                                    {{ form.color(class="form-control", type="color", value="#007bff") }}
+                                </div>
+                                {% if form.color.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.color.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.sort_order.id }}" class="form-label">
+                                    <i class="fas fa-sort-numeric-up text-muted me-1"></i>
+                                    Sort Order
+                                </label>
+                                {{ form.sort_order(class="form-control", placeholder="0", value="0") }}
+                                <small class="text-muted">Lower numbers appear first</small>
+                                {% if form.sort_order.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.sort_order.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cog text-warning me-2"></i>
+                            Category Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    {{ form.is_active(class="form-check-input", checked=true) }}
+                                    <label class="form-check-label" for="{{ form.is_active.id }}">
+                                        <i class="fas fa-toggle-on text-success me-1"></i>
+                                        Active Category
+                                    </label>
+                                    <div class="form-text">
+                                        Only active categories are visible to users and can contain articles
+                                    </div>
+                                </div>
+                                {% if form.is_active.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.is_active.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 text-end">
+                                <a href="{{ url_for('knowledge.list_categories') }}" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-times me-1"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-1"></i> Create Category
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Icon preview
+    const iconInput = document.getElementById('{{ form.icon.id }}');
+    const iconPreview = document.getElementById('iconPreview');
+    
+    if (iconInput && iconPreview) {
+        iconInput.addEventListener('input', function() {
+            const iconClass = this.value || 'fas fa-folder';
+            iconPreview.className = iconClass;
+        });
+    }
+    
+    // Color preview
+    const colorInput = document.getElementById('{{ form.color.id }}');
+    const colorPreview = document.getElementById('colorPreview');
+    
+    if (colorInput && colorPreview) {
+        colorInput.addEventListener('input', function() {
+            colorPreview.style.backgroundColor = this.value;
+        });
+    }
+    
+    // Form validation
+    const form = document.getElementById('categoryForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const nameInput = document.getElementById('{{ form.name.id }}');
+            if (!nameInput.value.trim()) {
+                e.preventDefault();
+                nameInput.focus();
+                alert('Please enter a category name.');
+                return false;
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.bg-gradient-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.input-group-text {
+    min-width: 45px;
+    text-align: center;
+}
+
+#colorPreview {
+    border-color: #dee2e6;
+    transition: background-color 0.3s ease;
+}
+
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+</style>
+{% endblock %}

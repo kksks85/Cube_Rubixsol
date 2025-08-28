@@ -1,0 +1,253 @@
+{% extends "base_new.html" %}
+
+{% block title %}Categories - Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('knowledge.index') }}">
+                    <i class="fas fa-book-open me-1"></i>Knowledge Base
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Categories</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-gradient-info text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="h3 mb-2">
+                                <i class="fas fa-folder-open me-2"></i>
+                                Knowledge Categories
+                            </h1>
+                            <p class="mb-0 opacity-75">
+                                Manage and organize knowledge categories
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            {% if current_user.role and (current_user.role.name in ['knowledge_admin'] or current_user.role.name == 'admin') %}
+                            <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+                                <i class="fas fa-plus me-1"></i> Add Category
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories Grid -->
+    <div class="row">
+        {% for category in categories %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-folder me-2 text-primary"></i>
+                        {{ category.name }}
+                    </h6>
+                    {% if current_user.role and (current_user.role.name in ['knowledge_admin'] or current_user.role.name == 'admin') %}
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="editCategory({{ category.id }}, '{{ category.name }}', '{{ category.description or '' }}')">
+                                <i class="fas fa-edit me-2"></i>Edit
+                            </a></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteCategory({{ category.id }}, '{{ category.name }}')">
+                                <i class="fas fa-trash me-2"></i>Delete
+                            </a></li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if category.description %}
+                    <p class="card-text text-muted small">{{ category.description }}</p>
+                    {% endif %}
+                    
+                    <!-- Subcategories -->
+                    {% if category.subcategories %}
+                    <div class="mb-3">
+                        <small class="text-muted fw-medium">Subcategories:</small>
+                        <div class="mt-1">
+                            {% for subcategory in category.subcategories %}
+                            <span class="badge bg-light text-dark me-1 mb-1">{{ subcategory.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Stats -->
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <div class="h5 mb-0 text-primary">{{ category.articles|length }}</div>
+                                <small class="text-muted">Articles</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="h5 mb-0 text-success">{{ category.subcategories|length }}</div>
+                            <small class="text-muted">Subcategories</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            Created: {{ category.created_at.strftime('%m/%d/%Y') if category.created_at else 'Unknown' }}
+                        </small>
+                        <a href="{{ url_for('knowledge.index', category=category.id) }}" class="btn btn-sm btn-outline-primary">
+                            View Articles
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                    <h4>No Categories</h4>
+                    <p class="text-muted">
+                        No knowledge categories have been created yet.
+                    </p>
+                    {% if current_user.role and (current_user.role.name in ['knowledge_admin'] or current_user.role.name == 'admin') %}
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+                        <i class="fas fa-plus me-1"></i> Create First Category
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Create Category Modal -->
+{% if current_user.role and (current_user.role.name in ['knowledge_admin'] or current_user.role.name == 'admin') %}
+<div class="modal fade" id="createCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Add New Category
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('knowledge.categories') }}">
+                {{ csrf_token() }}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="categoryName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="categoryDescription" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Create Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Category
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('knowledge.categories') }}">
+                {{ csrf_token() }}
+                <input type="hidden" id="editCategoryId" name="category_id">
+                <input type="hidden" name="action" value="edit">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editCategoryName" class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="editCategoryName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCategoryDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editCategoryDescription" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Update Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Category Modal -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Category
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the category <strong id="deleteCategoryName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    This action cannot be undone. All articles in this category will become uncategorized.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('knowledge.categories') }}" style="display: inline;">
+                    {{ csrf_token() }}
+                    <input type="hidden" id="deleteCategoryId" name="category_id">
+                    <input type="hidden" name="action" value="delete">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Delete Category
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editCategory(id, name, description) {
+    document.getElementById('editCategoryId').value = id;
+    document.getElementById('editCategoryName').value = name;
+    document.getElementById('editCategoryDescription').value = description;
+    new bootstrap.Modal(document.getElementById('editCategoryModal')).show();
+}
+
+function deleteCategory(id, name) {
+    document.getElementById('deleteCategoryId').value = id;
+    document.getElementById('deleteCategoryName').textContent = name;
+    new bootstrap.Modal(document.getElementById('deleteCategoryModal')).show();
+}
+</script>
+{% endif %}
+{% endblock %}

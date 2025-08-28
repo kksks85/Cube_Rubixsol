@@ -1,0 +1,152 @@
+{% extends "base_new.html" %}
+
+{% block title %}Dashboard Management{% endblock %}
+
+{% block page_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Dashboard Management</h1>
+                <div>
+                    <a href="{{ url_for('dashboards.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Dashboard
+                    </a>
+                    <a href="{{ url_for('dashboards.reports') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-chart-bar"></i> Manage Reports
+                    </a>
+                </div>
+            </div>
+
+            {% if home_preference %}
+            <div class="alert alert-info">
+                <i class="fas fa-home"></i> 
+                Your home dashboard: <strong>{{ home_preference.dashboard.name }}</strong>
+                <a href="{{ url_for('dashboards.view', id=home_preference.dashboard.id) }}" class="btn btn-sm btn-outline-primary ms-2">View</a>
+            </div>
+            {% endif %}
+
+            <!-- User's Dashboards -->
+            <div class="row">
+                <div class="col-12">
+                    <h4>Your Dashboards</h4>
+                    {% if user_dashboards %}
+                    <div class="row">
+                        {% for dashboard in user_dashboards %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        {{ dashboard.name }}
+                                        {% if dashboard.is_public %}
+                                        <span class="badge bg-success ms-2">Public</span>
+                                        {% endif %}
+                                    </h5>
+                                    <p class="card-text">{{ dashboard.description or 'No description' }}</p>
+                                    <p class="text-muted small">
+                                        <i class="fas fa-th"></i> {{ dashboard.widget_count }} widgets
+                                        <br>
+                                        <i class="fas fa-clock"></i> Updated {{ dashboard.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                                    </p>
+                                    <div class="btn-group w-100">
+                                        <a href="{{ url_for('dashboards.view', id=dashboard.id) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{{ url_for('dashboards.edit', id=dashboard.id) }}" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setHomeDashboard({{ dashboard.id }})">
+                                            <i class="fas fa-home"></i> Set Home
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        You haven't created any dashboards yet. 
+                        <a href="{{ url_for('dashboards.create') }}" class="alert-link">Create your first dashboard</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Public Dashboards -->
+            {% if public_dashboards %}
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h4>Public Dashboards</h4>
+                    <div class="row">
+                        {% for dashboard in public_dashboards %}
+                        {% if dashboard.created_by_id != current_user.id %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        {{ dashboard.name }}
+                                        <span class="badge bg-success ms-2">Public</span>
+                                    </h5>
+                                    <p class="card-text">{{ dashboard.description or 'No description' }}</p>
+                                    <p class="text-muted small">
+                                        <i class="fas fa-th"></i> {{ dashboard.widget_count }} widgets
+                                        <br>
+                                        <i class="fas fa-user"></i> By {{ dashboard.creator.username }}
+                                    </p>
+                                    <div class="btn-group w-100">
+                                        <a href="{{ url_for('dashboards.view', id=dashboard.id) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setHomeDashboard({{ dashboard.id }})">
+                                            <i class="fas fa-home"></i> Set Home
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function setHomeDashboard(dashboardId) {
+    fetch(`{{ url_for('dashboards.set_home', id=0) }}`.replace('0', dashboardId), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Error setting home dashboard');
+    });
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container-fluid').prepend(alertDiv);
+}
+</script>
+{% endblock %}

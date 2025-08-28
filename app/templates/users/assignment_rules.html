@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0"><i class="fas fa-cogs me-2"></i>Assignment Rules</h1>
+                    <p class="text-muted">Configure automatic work order assignment rules</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('users.create_assignment_rule') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Rule
+                    </a>
+                    <a href="{{ url_for('users.rule_templates') }}" class="btn btn-outline-info">
+                        <i class="fas fa-copy me-2"></i>Templates
+                    </a>
+                    <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Users
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ stats.total_rules }}</h3>
+                                    <p class="mb-0">Total Rules</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-cogs fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ stats.active_rules }}</h3>
+                                    <p class="mb-0">Active Rules</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ stats.rules_triggered_today }}</h3>
+                                    <p class="mb-0">Triggered Today</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-play fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ stats.avg_response_time }}s</h3>
+                                    <p class="mb-0">Avg Response Time</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-clock fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">0</h3>
+                                    <p class="mb-0">Auto Assignments</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-robot fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">0</h3>
+                                    <p class="mb-0">Failed Rules</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment Rules Table -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">Assignment Rules</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search rules...">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Rules will be displayed here when created -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rule Name</th>
+                                    <th>Priority</th>
+                                    <th>Conditions</th>
+                                    <th>Assignment Type</th>
+                                    <th>Status</th>
+                                    <th>Last Used</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if rules %}
+                                    {% for rule in rules %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0">
+                                                    <i class="fas fa-cogs text-primary me-2"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-semibold">{{ rule.name }}</div>
+                                                    {% if rule.description %}
+                                                    <small class="text-muted">{{ rule.description[:50] }}{% if rule.description|length > 50 %}...{% endif %}</small>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">Priority {{ rule.priority }}</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ rule.condition_summary }}</small>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ rule.action_summary }}</small>
+                                        </td>
+                                        <td>
+                                            {% if rule.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ rule.last_triggered_at.strftime('%Y-%m-%d') if rule.last_triggered_at else 'Never' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-primary btn-sm" title="Edit Rule">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-info btn-sm" title="Test Rule">
+                                                    <i class="fas fa-vial"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-warning btn-sm" title="Toggle Status">
+                                                    <i class="fas fa-{{ 'pause' if rule.is_active else 'play' }}"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" title="Delete Rule">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="fas fa-cogs fa-3x mb-3 d-block"></i>
+                                                <h5>No Assignment Rules Created Yet</h5>
+                                                <p class="mb-3">Create your first assignment rule to automate work order distribution based on criteria like location, skill set, workload, and availability.</p>
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    <a href="{{ url_for('users.create_assignment_rule') }}" class="btn btn-primary">
+                                                        <i class="fas fa-plus me-2"></i>Create Rule
+                                                    </a>
+                                                    <a href="{{ url_for('users.rule_templates') }}" class="btn btn-outline-info">
+                                                        <i class="fas fa-copy me-2"></i>Use Template
+                                                    </a>
+                                                    <a href="{{ url_for('users.test_assignment_rules') }}" class="btn btn-outline-warning">
+                                                        <i class="fas fa-vial me-2"></i>Test Rules
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted">
+                            <small>Showing {{ rules|length if rules else 0 }} of {{ total_rules if total_rules else 0 }} rules</small>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('users.rule_templates') }}" class="btn btn-outline-info btn-sm me-2">
+                                <i class="fas fa-copy me-1"></i>Templates
+                            </a>
+                            <a href="{{ url_for('users.test_assignment_rules') }}" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-vial me-1"></i>Test Rules
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

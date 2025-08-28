@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% set active_page = "uav_service" %}
+
+{% block title %}Diagnosis & Work Order - {{ incident.incident_number_formatted }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Diagnosis & Work Order</h1>
+                <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Incident
+                </a>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Step 2: Diagnosis & Work Order - {{ incident.incident_number_formatted }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- UAV Information Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">UAV Information</h6>
+                            <p><strong>Model:</strong> {{ incident.uav_model }}</p>
+                            <p><strong>Serial Number:</strong> {{ incident.uav_serial_number or 'N/A' }}</p>
+                            <p><strong>Flight Hours:</strong> {{ incident.flight_hours or 'Unknown' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Issue Description</h6>
+                            <p><strong>Category:</strong> {{ incident.incident_category.replace('_', ' ').title() }}</p>
+                            <p><strong>Description:</strong> {{ incident.description }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Form Errors Display -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h6>Form Validation Errors:</h6>
+                        <ul class="mb-0">
+                            {% for field_name, errors in form.errors.items() %}
+                                {% for error in errors %}
+                                    <li><strong>{{ field_name }}:</strong> {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Main Form -->
+                    <form method="POST" id="diagnosis-form">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-md-6">
+                                <!-- Diagnostic Findings -->
+                                <div class="mb-3">
+                                    {{ form.diagnostic_findings.label(class="form-label") }}
+                                    {{ form.diagnostic_findings(class="form-control", rows="5", placeholder="Describe what you found during the diagnostic process...") }}
+                                    <small class="form-text text-muted">Required: Detailed findings from your diagnosis</small>
+                                </div>
+
+                                <!-- Work Order Type -->
+                                <div class="mb-3">
+                                    {{ form.work_order_type.label(class="form-label") }}
+                                    {{ form.work_order_type(class="form-control") }}
+                                    <small class="form-text text-muted">Select the type of work needed</small>
+                                </div>
+
+                                <!-- Estimated Cost -->
+                                <div class="mb-3">
+                                    {{ form.estimated_cost.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.estimated_cost(class="form-control", placeholder="0.00") }}
+                                    </div>
+                                    <small class="form-text text-muted">Estimated cost for repair/maintenance</small>
+                                </div>
+
+                                <!-- Technician Notes -->
+                                <div class="mb-3">
+                                    {{ form.technician_notes.label(class="form-label") }}
+                                    {{ form.technician_notes(class="form-control", rows="4", placeholder="Additional notes and recommendations...") }}
+                                    <small class="form-text text-muted">Additional notes and recommendations</small>
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="col-md-6">
+                                <!-- Assignment Section -->
+                                <div class="border rounded p-3 mb-3 bg-light">
+                                    <h6 class="text-primary mb-3"><i class="fas fa-users me-2"></i>Assignment</h6>
+                                    
+                                    <div class="mb-3">
+                                        {{ form.assignment_group_id.label(class="form-label") }}
+                                        {{ form.assignment_group_id(class="form-control") }}
+                                        <small class="form-text text-muted">Select assignment group</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ form.assigned_to_id.label(class="form-label") }}
+                                        {{ form.assigned_to_id(class="form-control") }}
+                                        <small class="form-text text-muted">Select user after choosing assignment group</small>
+                                    </div>
+                                </div>
+
+                                <!-- Parts Required Section -->
+                                <div class="border rounded p-3 mb-3">
+                                    <h6 class="text-primary mb-3"><i class="fas fa-cogs me-2"></i>Parts Required</h6>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" id="parts-required-checkbox" name="parts_required" value="1">
+                                        <label class="form-check-label" for="parts-required-checkbox">
+                                            Parts are needed for this repair
+                                        </label>
+                                    </div>
+
+                                    <!-- Parts Details (hidden by default) -->
+                                    <div id="parts-details" style="display: none;">
+                                        <div class="alert alert-info">
+                                            <small><strong>Available Parts:</strong> DJ-M300-FRAME-001, CF-QUAD-450-001, LG-ASSY-STD-001, MT-2216-900-001, ESC-30A-BLH-001</small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Part Number</label>
+                                            <input type="text" class="form-control" name="part_number" placeholder="e.g., DJ-M300-FRAME-001">
+                                            <small class="form-text text-muted">Enter exact part number from inventory</small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Quantity</label>
+                                            <input type="number" class="form-control" name="part_quantity" min="1" value="1">
+                                            <small class="form-text text-muted">Number of parts needed</small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Parts Notes</label>
+                                            <textarea class="form-control" name="part_notes" rows="2" placeholder="Additional notes about the parts..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Work Order Types Help -->
+                                <div class="border rounded p-3 mb-3 bg-info bg-opacity-10">
+                                    <h6 class="text-info mb-2"><i class="fas fa-info-circle me-2"></i>Work Order Types</h6>
+                                    <ul class="small mb-0">
+                                        <li><strong>REPAIR:</strong> Fix identified issues</li>
+                                        <li><strong>REPLACE:</strong> Component replacement needed</li>
+                                        <li><strong>MAINTENANCE:</strong> Preventive maintenance</li>
+                                        <li><strong>INSPECTION:</strong> Detailed inspection only</li>
+                                        <li><strong>CALIBRATION:</strong> System calibration</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Diagnostic Checklist -->
+                        <div class="mt-4">
+                            <h6 class="text-primary">Diagnostic Checklist</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check1">
+                                        <label class="form-check-label" for="check1">Visual inspection completed</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check2">
+                                        <label class="form-check-label" for="check2">System diagnostics run</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check3">
+                                        <label class="form-check-label" for="check3">Component testing performed</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check4">
+                                        <label class="form-check-label" for="check4">Flight controller checked</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check5">
+                                        <label class="form-check-label" for="check5">Communication systems tested</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="check6">
+                                        <label class="form-check-label" for="check6">Documentation updated</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Incident
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check"></i> Complete Diagnosis & Create Work Order
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Diagnosis workflow loaded');
+    
+    // Parts required functionality
+    const partsCheckbox = document.getElementById('parts-required-checkbox');
+    const partsDetails = document.getElementById('parts-details');
+    
+    if (partsCheckbox && partsDetails) {
+        partsCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                partsDetails.style.display = 'block';
+            } else {
+                partsDetails.style.display = 'none';
+                // Clear part fields when hidden
+                document.querySelector('input[name="part_number"]').value = '';
+                document.querySelector('input[name="part_quantity"]').value = '1';
+                document.querySelector('textarea[name="part_notes"]').value = '';
+            }
+        });
+    }
+    
+    // Form validation
+    const form = document.getElementById('diagnosis-form');
+    form.addEventListener('submit', function(e) {
+        const diagnosticFindings = document.querySelector('textarea[name="diagnostic_findings"]');
+        const workOrderType = document.querySelector('select[name="work_order_type"]');
+        
+        let hasErrors = false;
+        let errorMsg = 'Please complete the following required fields:\n\n';
+        
+        if (!diagnosticFindings.value.trim()) {
+            hasErrors = true;
+            errorMsg += '- Diagnostic Findings\n';
+            diagnosticFindings.classList.add('is-invalid');
+        } else {
+            diagnosticFindings.classList.remove('is-invalid');
+        }
+        
+        if (!workOrderType.value) {
+            hasErrors = true;
+            errorMsg += '- Work Order Type\n';
+            workOrderType.classList.add('is-invalid');
+        } else {
+            workOrderType.classList.remove('is-invalid');
+        }
+        
+        if (hasErrors) {
+            e.preventDefault();
+            alert(errorMsg);
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    });
+});
+</script>
+
+<style>
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+</style>
+{% endblock %}

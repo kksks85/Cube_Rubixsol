@@ -1,491 +1,377 @@
 """
-Reporting Engine Core Classes
+Reporting Engine
+Core functionality for data processing and report generation
 """
 
-import json
-from datetime import datetime, timezone
-from sqlalchemy import text, inspect
-from sqlalchemy.exc import SQLAlchemyError
-import pandas as pd
-import io
-import csv
 from app import db
-from app.models import *
+from app.models import User, WorkOrder, Product, Company, InventoryItem, UAVServiceIncident
+from app.knowledge.models import KnowledgeArticle
+import pandas as pd
+import json
+import time
+import io
+from sqlalchemy import text, inspect
+from datetime import datetime
+import csv
+import xlsxwriter
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+
 
 class ReportEngine:
-    """Core reporting engine for dynamic query building and execution"""
+    """Core engine for report execution and data processing"""
     
     def __init__(self):
-        self.available_tables = self._get_available_tables()
-        self.table_schemas = self._get_table_schemas()
+        self.inspector = inspect(db.engine)
     
-    def _get_available_tables(self):
-        """Get list of available database tables"""
-        inspector = inspect(db.engine)
-        tables = inspector.get_table_names()
+    def get_available_tables(self):
+        """Get all available tables with their metadata"""
         
-        # Filter out internal tables and add display names
-        table_mapping = {
-            'workorders': 'Work Orders',
-            'users': 'Users',
-            'companies': 'Companies',
-            'products': 'Products',
-            'priorities': 'Priorities',
-            'statuses': 'Statuses',
-            'categories': 'Categories',
-            'workorder_activities': 'Work Order Activities',
-            'product_categories': 'Product Categories',
-            'product_specifications': 'Product Specifications',
-            'saved_reports': 'Saved Reports',
-            'report_schedules': 'Report Schedules',
-            'report_execution_logs': 'Report Execution Logs'
+        tables = {
+            'work_orders': {
+                'display_name': 'Work Orders',
+                'description': 'All work order records',
+                'model': WorkOrder
+            },
+            'products': {
+                'display_name': 'Products',
+                'description': 'Product catalog',
+                'model': Product
+            },
+            'companies': {
+                'display_name': 'Companies',
+                'description': 'Company directory',
+                'model': Company
+            },
+            'users': {
+                'display_name': 'Users',
+                'description': 'System users',
+                'model': User
+            },
+            'inventory_items': {
+                'display_name': 'Inventory Items',
+                'description': 'Inventory management',
+                'model': InventoryItem
+            },
+            'uav_service_incidents': {
+                'display_name': 'UAV Service Incidents',
+                'description': 'UAV service records',
+                'model': UAVServiceIncident
+            },
+            'knowledge_articles': {
+                'display_name': 'Knowledge Articles',
+                'description': 'Knowledge base articles',
+                'model': KnowledgeArticle
+            }
         }
         
-        return {table: table_mapping.get(table, table.replace('_', ' ').title()) 
-                for table in tables if not table.startswith('alembic')}
-    
-    def _get_table_schemas(self):
-        """Get schema information for all tables"""
-        inspector = inspect(db.engine)
-        schemas = {}
-        
-        for table_name in self.available_tables.keys():
-            try:
-                columns = inspector.get_columns(table_name)
-                schemas[table_name] = {
-                    'columns': {col['name']: {
-                        'type': str(col['type']),
-                        'nullable': col['nullable'],
-                        'primary_key': col.get('primary_key', False)
-                    } for col in columns},
-                    'foreign_keys': inspector.get_foreign_keys(table_name)
-                }
-            except Exception as e:
-                print(f"Error getting schema for {table_name}: {e}")
-                schemas[table_name] = {'columns': {}, 'foreign_keys': []}
-        
-        return schemas
+        return tables
     
     def get_table_columns(self, table_name):
         """Get columns for a specific table"""
-        if table_name in self.table_schemas:
-            return list(self.table_schemas[table_name]['columns'].keys())
-        return []
-    
-    def get_enhanced_table_columns(self, table_name):
-        """Get columns for a table including suggested foreign key relationships"""
-        base_columns = self.get_table_columns(table_name)
-        enhanced_columns = []
         
-        # Add base columns
-        for col in base_columns:
-            enhanced_columns.append({
-                'name': col,
-                'display_name': col.replace('_', ' ').title(),
-                'type': self.get_column_type(table_name, col),
-                'is_foreign_key': False
-            })
-        
-        # Add suggested foreign key relationships
-        if table_name in self.table_schemas:
-            foreign_keys = self.table_schemas[table_name].get('foreign_keys', [])
-            for fk in foreign_keys:
-                fk_column = fk['constrained_columns'][0]
-                referenced_table = fk['referred_table']
-                
-                # Suggest common display columns for referenced tables
-                if referenced_table == 'statuses':
-                    enhanced_columns.append({
-                        'name': f"{referenced_table}.name",
-                        'display_name': "Status Name",
-                        'type': 'VARCHAR',
-                        'is_foreign_key': True,
-                        'join_info': {
-                            'table': referenced_table,
-                            'local_key': fk_column,
-                            'foreign_key': 'id'
-                        }
-                    })
-                elif referenced_table == 'priorities':
-                    enhanced_columns.append({
-                        'name': f"{referenced_table}.name",
-                        'display_name': "Priority Name",
-                        'type': 'VARCHAR',
-                        'is_foreign_key': True,
-                        'join_info': {
-                            'table': referenced_table,
-                            'local_key': fk_column,
-                            'foreign_key': 'id'
-                        }
-                    })
-                elif referenced_table == 'users':
-                    enhanced_columns.extend([
-                        {
-                            'name': f"{referenced_table}.username",
-                            'display_name': "User Name",
-                            'type': 'VARCHAR',
-                            'is_foreign_key': True,
-                            'join_info': {
-                                'table': referenced_table,
-                                'local_key': fk_column,
-                                'foreign_key': 'id'
-                            }
-                        },
-                        {
-                            'name': f"{referenced_table}.first_name",
-                            'display_name': "First Name",
-                            'type': 'VARCHAR',
-                            'is_foreign_key': True,
-                            'join_info': {
-                                'table': referenced_table,
-                                'local_key': fk_column,
-                                'foreign_key': 'id'
-                            }
-                        },
-                        {
-                            'name': f"{referenced_table}.last_name",
-                            'display_name': "Last Name",
-                            'type': 'VARCHAR',
-                            'is_foreign_key': True,
-                            'join_info': {
-                                'table': referenced_table,
-                                'local_key': fk_column,
-                                'foreign_key': 'id'
-                            }
-                        }
-                    ])
-        
-        return enhanced_columns
-    
-    def get_column_type(self, table_name, column_name):
-        """Get the data type of a specific column"""
-        if table_name in self.table_schemas and column_name in self.table_schemas[table_name]['columns']:
-            return self.table_schemas[table_name]['columns'][column_name]['type']
-        return 'VARCHAR'
-    
-    def build_query(self, config):
-        """Build SQL query from configuration"""
         try:
-            query_parts = []
-            required_joins = set()
+            # Get table metadata from inspector
+            columns = self.inspector.get_columns(table_name)
             
-            # SELECT clause
-            columns = config.get('columns', [])
-            if not columns:
-                raise ValueError("No columns specified")
-            
-            primary_table = config.get('primary_table')
-            if not primary_table:
-                raise ValueError("No primary table specified")
-            
-            # Get available columns and enhanced columns for validation
-            available_columns = self.get_table_columns(primary_table)
-            enhanced_columns = self.get_enhanced_table_columns(primary_table)
-            
-            # Create a lookup for enhanced columns
-            enhanced_lookup = {col['name']: col for col in enhanced_columns}
-            
-            # Handle column aliases and aggregations
-            formatted_columns = []
+            result = []
             for col in columns:
-                # Handle both string column names and column objects
-                if isinstance(col, dict):
-                    column_name = col.get('name', col)
-                else:
-                    column_name = col
-                
-                # Check if this is a foreign key column that needs a JOIN
-                if column_name in enhanced_lookup and enhanced_lookup[column_name].get('is_foreign_key'):
-                    join_info = enhanced_lookup[column_name]['join_info']
-                    required_joins.add((
-                        join_info['table'], 
-                        f"{primary_table}.{join_info['local_key']}", 
-                        f"{join_info['table']}.{join_info['foreign_key']}"
-                    ))
-                    formatted_columns.append(column_name)
-                else:
-                    # Extract column name without table prefix for validation
-                    base_column_name = column_name.split('.')[-1] if '.' in column_name else column_name
-                    
-                    # Validate column exists in primary table
-                    if base_column_name not in available_columns:
-                        raise ValueError(f"Column '{base_column_name}' does not exist in table '{primary_table}'. Available columns: {', '.join(available_columns)}")
-                        
-                    if '.' not in column_name:
-                        column_name = f"{primary_table}.{column_name}"
-                    formatted_columns.append(column_name)
+                result.append({
+                    'name': col['name'],
+                    'display_name': col['name'].replace('_', ' ').title(),
+                    'type': str(col['type']),
+                    'nullable': col.get('nullable', True)
+                })
             
-            query_parts.append(f"SELECT {', '.join(formatted_columns)}")
-            
-            # FROM clause
-            query_parts.append(f"FROM {primary_table}")
-            
-            # Add required JOINs for foreign key columns
-            for join_table, local_key, foreign_key in required_joins:
-                query_parts.append(f"LEFT JOIN {join_table} ON {local_key} = {foreign_key}")
-            
-            # Additional JOIN clauses from config
-            joins = config.get('joins', [])
-            for join in joins:
-                join_type = join.get('type', 'INNER')
-                join_table = join.get('table')
-                join_condition = join.get('condition')
-                
-                if join_table and join_condition:
-                    query_parts.append(f"{join_type} JOIN {join_table} ON {join_condition}")
-            
-            # WHERE clause
-            filters = config.get('filters', [])
-            if filters:
-                where_conditions = []
-                for filter_config in filters:
-                    condition = self._build_filter_condition(filter_config)
-                    if condition:
-                        where_conditions.append(condition)
-                
-                if where_conditions:
-                    query_parts.append(f"WHERE {' AND '.join(where_conditions)}")
-            
-            # GROUP BY clause
-            group_by = config.get('group_by', [])
-            if group_by:
-                query_parts.append(f"GROUP BY {', '.join(group_by)}")
-            
-            # ORDER BY clause
-            order_by = config.get('order_by')
-            sorting = config.get('sorting', {})
-            
-            if order_by:
-                direction = config.get('order_direction', 'ASC')
-                query_parts.append(f"ORDER BY {order_by} {direction}")
-            elif sorting and sorting.get('column'):
-                sort_column = sorting.get('column')
-                sort_order = sorting.get('order', 'ASC')
-                # Add table prefix if not present
-                if '.' not in sort_column:
-                    sort_column = f"{config['primary_table']}.{sort_column}"
-                query_parts.append(f"ORDER BY {sort_column} {sort_order}")
-            
-            # LIMIT clause
-            limit = config.get('limit')
-            if limit and isinstance(limit, int) and limit > 0:
-                query_parts.append(f"LIMIT {limit}")
-            
-            return ' '.join(query_parts)
+            return result
             
         except Exception as e:
-            raise Exception(f"Error building query: {str(e)}")
+            # Fallback: try to get columns from the model
+            tables = self.get_available_tables()
+            if table_name in tables:
+                model = tables[table_name]['model']
+                columns = []
+                for column in model.__table__.columns:
+                    columns.append({
+                        'name': column.name,
+                        'display_name': column.name.replace('_', ' ').title(),
+                        'type': str(column.type),
+                        'nullable': column.nullable
+                    })
+                return columns
+            
+            raise Exception(f"Unable to get columns for table: {table_name}")
     
-    def _build_filter_condition(self, filter_config):
-        """Build a single filter condition"""
-        column = filter_config.get('column')
-        operator = filter_config.get('operator')
-        value = filter_config.get('value')
-        value2 = filter_config.get('value2')
+    def get_table_info(self, table_name):
+        """Get detailed information about a table"""
         
-        if not column or not operator:
-            return None
-        
-        # Handle different operators
-        if operator == 'eq':
-            return f"{column} = '{value}'"
-        elif operator == 'ne':
-            return f"{column} != '{value}'"
-        elif operator == 'gt':
-            return f"{column} > '{value}'"
-        elif operator == 'ge':
-            return f"{column} >= '{value}'"
-        elif operator == 'lt':
-            return f"{column} < '{value}'"
-        elif operator == 'le':
-            return f"{column} <= '{value}'"
-        elif operator == 'like':
-            return f"{column} LIKE '%{value}%'"
-        elif operator == 'ilike':
-            return f"LOWER({column}) LIKE LOWER('%{value}%')"
-        elif operator == 'in':
-            values = [f"'{v.strip()}'" for v in value.split(',')]
-            return f"{column} IN ({', '.join(values)})"
-        elif operator == 'not_in':
-            values = [f"'{v.strip()}'" for v in value.split(',')]
-            return f"{column} NOT IN ({', '.join(values)})"
-        elif operator == 'between':
-            return f"{column} BETWEEN '{value}' AND '{value2}'"
-        elif operator == 'is_null':
-            return f"{column} IS NULL"
-        elif operator == 'is_not_null':
-            return f"{column} IS NOT NULL"
-        elif operator == 'starts_with':
-            return f"{column} LIKE '{value}%'"
-        elif operator == 'ends_with':
-            return f"{column} LIKE '%{value}'"
-        
-        return None
-    
-    def execute_query(self, query, params=None):
-        """Execute a SQL query and return results"""
         try:
-            start_time = datetime.now()
+            columns = self.get_table_columns(table_name)
+            
+            # Get row count
+            result = db.session.execute(text(f"SELECT COUNT(*) FROM {table_name}"))
+            row_count = result.scalar()
+            
+            return {
+                'table_name': table_name,
+                'columns': columns,
+                'column_count': len(columns),
+                'row_count': row_count
+            }
+            
+        except Exception as e:
+            raise Exception(f"Unable to get table info: {str(e)}")
+    
+    def execute_report(self, report):
+        """Execute a report and return results"""
+        
+        start_time = time.time()
+        
+        try:
+            # Build the query
+            query = self.build_query(report)
             
             # Execute query
-            result = db.session.execute(text(query), params or {})
+            result = db.session.execute(text(query))
+            rows = result.fetchall()
+            columns = list(result.keys())
             
             # Convert to list of dictionaries
-            columns = result.keys()
-            rows = [dict(zip(columns, row)) for row in result.fetchall()]
+            data = []
+            for row in rows:
+                row_dict = {}
+                for i, col in enumerate(columns):
+                    value = row[i]
+                    # Convert datetime objects to strings
+                    if isinstance(value, datetime):
+                        value = value.strftime('%Y-%m-%d %H:%M:%S')
+                    row_dict[col] = value
+                data.append(row_dict)
             
-            execution_time = (datetime.now() - start_time).total_seconds()
+            execution_time = time.time() - start_time
             
             return {
                 'success': True,
-                'data': rows,
-                'columns': list(columns),
-                'row_count': len(rows),
-                'execution_time': execution_time,
-                'query': query
+                'data': data,
+                'columns': columns,
+                'row_count': len(data),
+                'execution_time': execution_time
             }
             
-        except SQLAlchemyError as e:
+        except Exception as e:
+            execution_time = time.time() - start_time
             return {
                 'success': False,
                 'error': str(e),
-                'query': query
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'error': f"Unexpected error: {str(e)}",
-                'query': query
+                'execution_time': execution_time
             }
     
-    def export_to_csv(self, data, filename=None):
-        """Export data to CSV format"""
-        if not data or not data.get('data'):
-            return None
+    def build_query(self, report):
+        """Build SQL query from report configuration"""
+        
+        if not report.data_source:
+            raise Exception("No data source specified")
+        
+        table_name = report.data_source
+        
+        # Build SELECT clause
+        if report.columns:
+            try:
+                columns = json.loads(report.columns)
+                if columns and columns != ['*']:
+                    select_clause = ', '.join(columns)
+                else:
+                    select_clause = '*'
+            except:
+                select_clause = '*'
+        else:
+            select_clause = '*'
+        
+        # Build WHERE clause
+        where_clauses = []
+        if report.filters:
+            try:
+                filters = json.loads(report.filters)
+                for filter_config in filters:
+                    if filter_config.get('field') and filter_config.get('operator'):
+                        where_clause = self.build_filter_clause(filter_config)
+                        if where_clause:
+                            where_clauses.append(where_clause)
+            except:
+                pass  # Skip invalid filters
+        
+        # Construct final query
+        query = f"SELECT {select_clause} FROM {table_name}"
+        
+        if where_clauses:
+            query += f" WHERE {' AND '.join(where_clauses)}"
+        
+        # Add basic limit for safety
+        query += " LIMIT 1000"
+        
+        return query
+    
+    def build_filter_clause(self, filter_config):
+        """Build a WHERE clause from filter configuration"""
+        
+        field = filter_config['field']
+        operator = filter_config['operator']
+        value = filter_config.get('value', '')
+        
+        if operator == 'equals':
+            return f"{field} = '{value}'"
+        elif operator == 'not_equals':
+            return f"{field} != '{value}'"
+        elif operator == 'contains':
+            return f"{field} LIKE '%{value}%'"
+        elif operator == 'starts_with':
+            return f"{field} LIKE '{value}%'"
+        elif operator == 'ends_with':
+            return f"{field} LIKE '%{value}'"
+        elif operator == 'greater_than':
+            return f"{field} > '{value}'"
+        elif operator == 'less_than':
+            return f"{field} < '{value}'"
+        elif operator == 'is_null':
+            return f"{field} IS NULL"
+        elif operator == 'is_not_null':
+            return f"{field} IS NOT NULL"
+        
+        return None
+    
+    def export_to_csv(self, report):
+        """Export report data to CSV format"""
+        
+        result = self.execute_report(report)
+        if not result['success']:
+            raise Exception(result['error'])
         
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=data['columns'])
+        writer = csv.DictWriter(output, fieldnames=result['columns'])
         writer.writeheader()
-        writer.writerows(data['data'])
+        writer.writerows(result['data'])
         
-        csv_content = output.getvalue()
-        output.close()
-        
-        return csv_content
+        return output.getvalue()
     
-    def export_to_excel(self, data, filename=None):
-        """Export data to Excel format"""
-        if not data or not data.get('data'):
-            return None
+    def export_to_excel(self, report):
+        """Export report data to Excel format"""
         
-        df = pd.DataFrame(data['data'])
+        result = self.execute_report(report)
+        if not result['success']:
+            raise Exception(result['error'])
         
         output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name='Report', index=False)
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet(report.name[:31])  # Excel sheet name limit
         
-        excel_content = output.getvalue()
-        output.close()
+        # Write headers
+        header_format = workbook.add_format({'bold': True, 'bg_color': '#D7E4BC'})
+        for col, header in enumerate(result['columns']):
+            worksheet.write(0, col, header, header_format)
         
-        return excel_content
+        # Write data
+        for row_idx, row_data in enumerate(result['data'], 1):
+            for col_idx, column in enumerate(result['columns']):
+                worksheet.write(row_idx, col_idx, row_data.get(column, ''))
+        
+        workbook.close()
+        output.seek(0)
+        
+        return output.getvalue()
     
-    def get_suggested_joins(self, primary_table, target_table):
-        """Suggest possible join conditions between tables"""
-        suggestions = []
+    def export_to_pdf(self, report):
+        """Export report data to PDF format"""
         
-        primary_fks = self.table_schemas.get(primary_table, {}).get('foreign_keys', [])
-        target_fks = self.table_schemas.get(target_table, {}).get('foreign_keys', [])
+        result = self.execute_report(report)
+        if not result['success']:
+            raise Exception(result['error'])
         
-        # Check if primary table has FK to target table
-        for fk in primary_fks:
-            if fk['referred_table'] == target_table:
-                suggestions.append({
-                    'condition': f"{primary_table}.{fk['constrained_columns'][0]} = {target_table}.{fk['referred_columns'][0]}",
-                    'type': 'INNER',
-                    'description': f"Join on {fk['constrained_columns'][0]}"
-                })
+        output = io.BytesIO()
+        p = canvas.Canvas(output, pagesize=letter)
+        width, height = letter
         
-        # Check if target table has FK to primary table
-        for fk in target_fks:
-            if fk['referred_table'] == primary_table:
-                suggestions.append({
-                    'condition': f"{target_table}.{fk['constrained_columns'][0]} = {primary_table}.{fk['referred_columns'][0]}",
-                    'type': 'INNER',
-                    'description': f"Join on {fk['constrained_columns'][0]}"
-                })
+        # Title
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(50, height - 50, report.name)
         
-        return suggestions
+        # Report info
+        p.setFont("Helvetica", 10)
+        y_position = height - 80
+        p.drawString(50, y_position, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        y_position -= 15
+        p.drawString(50, y_position, f"Records: {result['row_count']}")
+        
+        # Data (simplified for PDF)
+        y_position -= 40
+        p.setFont("Helvetica-Bold", 10)
+        
+        # Headers
+        x_positions = [50 + i * 100 for i in range(min(6, len(result['columns'])))]  # Limit columns for PDF
+        for i, header in enumerate(result['columns'][:6]):
+            p.drawString(x_positions[i], y_position, header[:15])  # Truncate long headers
+        
+        y_position -= 20
+        
+        # Data rows (limit for PDF)
+        p.setFont("Helvetica", 9)
+        for row_data in result['data'][:20]:  # Limit rows for PDF
+            for i, column in enumerate(result['columns'][:6]):
+                value = str(row_data.get(column, ''))[:15]  # Truncate long values
+                p.drawString(x_positions[i], y_position, value)
+            y_position -= 15
+            
+            if y_position < 50:  # New page if needed
+                p.showPage()
+                y_position = height - 50
+        
+        if result['row_count'] > 20:
+            y_position -= 20
+            p.drawString(50, y_position, f"... and {result['row_count'] - 20} more records")
+        
+        p.save()
+        output.seek(0)
+        
+        return output.getvalue()
+
 
 class ReportValidator:
-    """Validates report configurations and queries"""
+    """Validator for report configurations"""
     
     @staticmethod
-    def validate_config(config):
+    def validate_report_config(config):
         """Validate report configuration"""
+        
         errors = []
         
         # Check required fields
-        if not config.get('primary_table'):
-            errors.append("Primary table is required")
+        if not config.get('data_source'):
+            errors.append("Data source is required")
         
-        if not config.get('columns'):
-            errors.append("At least one column must be selected")
+        # Validate columns
+        if config.get('columns'):
+            try:
+                columns = json.loads(config['columns']) if isinstance(config['columns'], str) else config['columns']
+                if not isinstance(columns, list):
+                    errors.append("Columns must be a list")
+            except:
+                errors.append("Invalid columns format")
         
         # Validate filters
-        filters = config.get('filters', [])
-        for i, filter_config in enumerate(filters):
-            if not filter_config.get('column'):
-                errors.append(f"Filter {i+1}: Column is required")
-            if not filter_config.get('operator'):
-                errors.append(f"Filter {i+1}: Operator is required")
-            
-            # Check if value is required for operator
-            operator = filter_config.get('operator')
-            if operator not in ['is_null', 'is_not_null'] and not filter_config.get('value'):
-                errors.append(f"Filter {i+1}: Value is required for {operator} operator")
-            
-            if operator == 'between' and not filter_config.get('value2'):
-                errors.append(f"Filter {i+1}: Second value is required for between operator")
+        if config.get('filters'):
+            try:
+                filters = json.loads(config['filters']) if isinstance(config['filters'], str) else config['filters']
+                if not isinstance(filters, list):
+                    errors.append("Filters must be a list")
+                else:
+                    for i, filter_config in enumerate(filters):
+                        if not isinstance(filter_config, dict):
+                            errors.append(f"Filter {i+1} must be an object")
+                        elif not filter_config.get('field'):
+                            errors.append(f"Filter {i+1} missing field")
+                        elif not filter_config.get('operator'):
+                            errors.append(f"Filter {i+1} missing operator")
+            except:
+                errors.append("Invalid filters format")
         
         return errors
-    
-    @staticmethod
-    def validate_query_safety(query):
-        """Basic validation to prevent dangerous queries"""
-        import re
-        
-        # Define dangerous SQL patterns that should be blocked
-        dangerous_patterns = [
-            r'\bDROP\s+TABLE\b',
-            r'\bDROP\s+DATABASE\b', 
-            r'\bDELETE\s+FROM\b',
-            r'\bINSERT\s+INTO\b',
-            r'\bUPDATE\s+\w+\s+SET\b',
-            r'\bALTER\s+TABLE\b',
-            r'\bCREATE\s+TABLE\b',
-            r'\bCREATE\s+DATABASE\b',
-            r'\bTRUNCATE\s+TABLE\b',
-            r'\bEXEC\b',
-            r'\bEXECUTE\b',
-            r'\bDECLARE\b',
-            r';\s*DROP\b',
-            r';\s*DELETE\b',
-            r';\s*INSERT\b',
-            r';\s*UPDATE\b',
-            r';\s*ALTER\b',
-            r';\s*CREATE\b',
-            r';\s*TRUNCATE\b'
-        ]
-        
-        query_upper = query.upper()
-        
-        # Check for dangerous patterns
-        for pattern in dangerous_patterns:
-            if re.search(pattern, query_upper, re.IGNORECASE):
-                return False, f"Query contains potentially dangerous SQL pattern"
-        
-        # Allow SELECT queries only (our reporting engine should only generate SELECT)
-        if not query_upper.strip().startswith('SELECT'):
-            return False, "Only SELECT queries are allowed"
-        
-        return True, "Query appears safe"
