@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-flag-checkered text-success me-2"></i>
+                        Close Service Incident
+                    </h2>
+                    <p class="text-muted">{{ incident.incident_number }} - {{ incident.title }}</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Incident
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Progress -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-route me-2"></i>Service Workflow Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: 83.33%"
+                             aria-valuenow="83" aria-valuemin="0" aria-valuemax="100">
+                            Step 5/6 - 83%
+                        </div>
+                    </div>
+                    
+                    <!-- 6-Step Workflow Indicators -->
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="workflow-step active">
+                                <div class="step-circle bg-success text-white">1</div>
+                                <div class="step-label">Incident/Service Request</div>
+                                <small class="text-muted">Customer reports issue</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="workflow-step active">
+                                <div class="step-circle bg-success text-white">2</div>
+                                <div class="step-label">Diagnosis & Work Order</div>
+                                <small class="text-muted">Technician diagnosis</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="workflow-step active">
+                                <div class="step-circle bg-success text-white">3</div>
+                                <div class="step-label">Repair/Maintenance</div>
+                                <small class="text-muted">Parts & technician work</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="workflow-step active">
+                                <div class="step-circle bg-success text-white">4</div>
+                                <div class="step-label">Quality Check & Handover</div>
+                                <small class="text-muted">QA & compliance</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="workflow-step active">
+                                <div class="step-circle bg-success text-white">5</div>
+                                <div class="step-label">Preventive Maintenance</div>
+                                <small class="text-muted">Schedule future maintenance</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="workflow-step">
+                                <div class="step-circle bg-primary text-white">6</div>
+                                <div class="step-label text-primary">Closed</div>
+                                <small class="text-muted">Service completed</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Closing Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Close Service Incident
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Closing this incident will:</h6>
+                            <ul class="mb-0">
+                                <li>Mark the service incident as completed</li>
+                                <li>Update the related work order status to "COMPLETED"</li>
+                                <li>Record the closing timestamp</li>
+                                <li>Send notifications to relevant parties</li>
+                            </ul>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="closing_notes" class="form-label">
+                                <strong>Closing Notes</strong>
+                            </label>
+                            <textarea class="form-control" id="closing_notes" name="closing_notes" rows="4" 
+                                      placeholder="Enter any final notes about the service completion...">Service incident completed successfully. All work has been performed and quality checks passed.</textarea>
+                            <div class="form-text">These notes will be recorded in the incident history and may be visible to the customer.</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-flag-checkered me-1"></i>Close Incident
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incident Summary -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>Incident Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Number:</strong></div>
+                        <div class="col-8">{{ incident.incident_number }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Customer:</strong></div>
+                        <div class="col-8">{{ incident.customer_name }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>UAV:</strong></div>
+                        <div class="col-8">{{ incident.product_name or incident.uav_model or 'N/A' }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Serial:</strong></div>
+                        <div class="col-8">{{ incident.serial_number or incident.uav_serial_number or 'N/A' }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Priority:</strong></div>
+                        <div class="col-8">
+                            <span class="badge bg-{{ 'danger' if incident.priority == 'URGENT' else 'warning' if incident.priority == 'HIGH' else 'info' if incident.priority == 'MEDIUM' else 'secondary' }}">
+                                {{ incident.priority }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {% if incident.related_work_order_id %}
+                    <hr>
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Work Order:</strong></div>
+                        <div class="col-8">
+                            <a href="{{ url_for('workorders.view_workorder', id=incident.related_work_order_id) }}" target="_blank">
+                                #{{ incident.related_work_order_id }}
+                                <i class="fas fa-external-link-alt ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if incident.estimated_cost %}
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Est. Cost:</strong></div>
+                        <div class="col-8">${{ "%.2f"|format(incident.estimated_cost) }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if incident.actual_cost %}
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Actual Cost:</strong></div>
+                        <div class="col-8">${{ "%.2f"|format(incident.actual_cost) }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Workflow Step Styling */
+.workflow-step {
+    text-align: center;
+    padding: 10px;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px auto;
+    font-weight: bold;
+    border: 2px solid #dee2e6;
+}
+
+.workflow-step.active .step-circle {
+    box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.25);
+}
+
+.step-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.workflow-step small {
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}

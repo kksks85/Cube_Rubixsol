@@ -955,6 +955,25 @@ def preventive_maintenance_workflow(id):
     return render_template('uav_service/preventive_maintenance_workflow.html', incident=incident, form=form)
 
 
+@bp.route('/incidents/<int:id>/close', methods=['GET', 'POST'])
+@login_required
+def close_incident_workflow(id):
+    """Close the service incident and update related work order"""
+    incident = UAVServiceIncident.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        # Get the closing notes from the form
+        closing_notes = request.form.get('closing_notes', 'Service incident closed successfully.')
+        
+        # Advance workflow to CLOSED status
+        incident.advance_workflow(current_user, closing_notes)
+        
+        flash('Service incident has been closed successfully! Related work order has been marked as completed.', 'success')
+        return redirect(url_for('uav_service.view_incident', id=incident.id))
+    
+    return render_template('uav_service/close_incident_workflow.html', incident=incident)
+
+
 @bp.route('/maintenance/schedules')
 @login_required
 def maintenance_schedules():

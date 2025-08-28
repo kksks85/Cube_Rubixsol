@@ -112,7 +112,7 @@
                     {% if incident.related_work_order_id %}
                     <div class="alert alert-info mt-3">
                         <i class="fas fa-info-circle me-2"></i>
-                        Related Work Order: <a href="{{ url_for('workorders.view', id=incident.related_work_order_id) }}">#{{ incident.related_work_order_id }}</a>
+                        Related Work Order: <a href="{{ url_for('workorders.view_workorder', id=incident.related_work_order_id) }}">#{{ incident.related_work_order_id }}</a>
                     </div>
                     {% endif %}
                     

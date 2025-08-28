@@ -949,9 +949,9 @@ class UAVServiceIncident(db.Model):
     incident_category = db.Column(db.String(50), nullable=False)  # 'BATTERY', 'CAMERA', 'CRASH_REPAIR', 'ROUTINE_MAINTENANCE', 'OTHER'
     priority = db.Column(db.String(20), default='MEDIUM')  # 'LOW', 'MEDIUM', 'HIGH', 'URGENT'
     
-    # 5-Step Workflow Status
+    # 6-Step Workflow Status (updated)
     workflow_status = db.Column(db.String(50), default='INCIDENT_RAISED')
-    # Workflow stages: INCIDENT_RAISED, DIAGNOSIS_WO, REPAIR_MAINTENANCE, QUALITY_CHECK, PREVENTIVE_MAINTENANCE
+    # Workflow stages: INCIDENT_RAISED, DIAGNOSIS_WO, REPAIR_MAINTENANCE, QUALITY_CHECK, PREVENTIVE_MAINTENANCE, CLOSED
     
     # Customer Information
     customer_name = db.Column(db.String(200), nullable=False)
@@ -986,6 +986,7 @@ class UAVServiceIncident(db.Model):
     repair_completed_at = db.Column(db.DateTime)
     quality_check_at = db.Column(db.DateTime)
     handed_over_at = db.Column(db.DateTime)
+    closed_at = db.Column(db.DateTime)  # New timestamp for closed status
     
     # Diagnosis and Work Order
     diagnostic_checklist_completed = db.Column(db.Boolean, default=False)
@@ -1049,7 +1050,8 @@ class UAVServiceIncident(db.Model):
             'DIAGNOSIS_WO': {'step': 2, 'name': 'Diagnosis & Work Order', 'description': 'Technician assigned, diagnosis completed, work order created'},
             'REPAIR_MAINTENANCE': {'step': 3, 'name': 'Repair/Maintenance', 'description': 'Parts requested, technician performing work'},
             'QUALITY_CHECK': {'step': 4, 'name': 'Quality Check & Handover', 'description': 'QA verification, compliance check, customer handover'},
-            'PREVENTIVE_MAINTENANCE': {'step': 5, 'name': 'Preventive Maintenance', 'description': 'Scheduled maintenance triggered automatically'}
+            'PREVENTIVE_MAINTENANCE': {'step': 5, 'name': 'Preventive Maintenance', 'description': 'Scheduled maintenance triggered automatically'},
+            'CLOSED': {'step': 6, 'name': 'Closed', 'description': 'Service completed and incident closed'}
         }
         return workflow_steps.get(self.workflow_status, workflow_steps['INCIDENT_RAISED'])
     
@@ -1057,12 +1059,12 @@ class UAVServiceIncident(db.Model):
     def workflow_progress_percentage(self):
         """Calculate workflow progress percentage"""
         step = self.workflow_step_info['step']
-        return (step / 5) * 100
+        return (step / 6) * 100
     
     @property
     def is_sla_breached(self):
         """Check if SLA is breached"""
-        if self.workflow_status in ['QUALITY_CHECK', 'PREVENTIVE_MAINTENANCE']:
+        if self.workflow_status in ['QUALITY_CHECK', 'PREVENTIVE_MAINTENANCE', 'CLOSED']:
             return False  # Service completed
         
         hours_elapsed = (datetime.now(timezone.utc) - self.incident_raised_at.replace(tzinfo=timezone.utc)).total_seconds() / 3600
@@ -1102,6 +1104,27 @@ class UAVServiceIncident(db.Model):
         elif current_step == 4 and self.workflow_status == 'QUALITY_CHECK':
             self.workflow_status = 'PREVENTIVE_MAINTENANCE'
             self.handed_over_at = datetime.now(timezone.utc)
+        elif current_step == 5 and self.workflow_status == 'PREVENTIVE_MAINTENANCE':
+            self.workflow_status = 'CLOSED'
+            self.closed_at = datetime.now(timezone.utc)
+            
+            # Update related work order status to completed
+            if self.related_work_order_id:
+                from app.models import WorkOrder
+                work_order = WorkOrder.query.get(self.related_work_order_id)
+                if work_order:
+                    work_order.status = 'COMPLETED'
+                    work_order.completed_at = datetime.now(timezone.utc)
+                    
+                    # Add activity log for work order completion
+                    from app.models import WorkOrderActivity
+                    wo_activity = WorkOrderActivity(
+                        workorder_id=work_order.id,
+                        user_id=user.id,
+                        activity_type='status_update',
+                        description=f'Work order automatically completed due to service incident closure.'
+                    )
+                    db.session.add(wo_activity)
         
         # Log activity
         if notes:
@@ -1226,6 +1249,188 @@ class UAVMaintenanceSchedule(db.Model):
     
     def __repr__(self):
         return f'<UAVMaintenanceSchedule {self.uav_model}: {self.uav_serial_number}>'
+
+
+# Data Import Models
+
+class ImportBatch(db.Model):
+    """Import batch to track data import operations"""
+    __tablename__ = 'import_batches'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    batch_name = db.Column(db.String(255), nullable=False)
+    target_table = db.Column(db.String(100), nullable=False)
+    file_name = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    file_size = db.Column(db.Integer)
+    status = db.Column(db.String(50), nullable=False, default='pending')  # pending, validating, validated, importing, completed, failed
+    total_rows = db.Column(db.Integer, default=0)
+    valid_rows = db.Column(db.Integer, default=0)
+    invalid_rows = db.Column(db.Integer, default=0)
+    imported_rows = db.Column(db.Integer, default=0)
+    failed_rows = db.Column(db.Integer, default=0)
+    validation_summary = db.Column(db.Text)
+    import_summary = db.Column(db.Text)
+    error_log = db.Column(db.Text)
+    preview_data = db.Column(db.Text)  # JSON string of first few rows for preview
+    column_mapping = db.Column(db.Text)  # JSON string of column mappings
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    validation_started_at = db.Column(db.DateTime)
+    validation_completed_at = db.Column(db.DateTime)
+    import_started_at = db.Column(db.DateTime)
+    import_completed_at = db.Column(db.DateTime)
+    
+    # Foreign Keys
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    template_id = db.Column(db.Integer, db.ForeignKey('import_templates.id'))
+    
+    # Relationships
+    created_by = db.relationship('User', backref='import_batches')
+    template = db.relationship('ImportTemplate', backref='import_batches')
+    rows = db.relationship('ImportBatchRow', backref='import_batch', lazy='dynamic', cascade='all, delete-orphan')
+    
+    @property
+    def duration(self):
+        """Calculate total duration of the import process"""
+        if self.import_completed_at and self.created_at:
+            return self.import_completed_at - self.created_at
+        elif self.import_started_at and self.created_at:
+            return datetime.now(timezone.utc) - self.created_at
+        return None
+    
+    @property
+    def validation_duration(self):
+        """Calculate validation duration"""
+        if self.validation_completed_at and self.validation_started_at:
+            return self.validation_completed_at - self.validation_started_at
+        return None
+    
+    @property
+    def import_duration(self):
+        """Calculate import duration"""
+        if self.import_completed_at and self.import_started_at:
+            return self.import_completed_at - self.import_started_at
+        return None
+    
+    @property
+    def success_rate(self):
+        """Calculate success rate percentage"""
+        if self.total_rows > 0:
+            return round((self.imported_rows / self.total_rows) * 100, 2)
+        return 0
+    
+    def __repr__(self):
+        return f'<ImportBatch {self.batch_name}: {self.status}>'
+
+
+class ImportBatchRow(db.Model):
+    """Individual row data and validation results for import batches"""
+    __tablename__ = 'import_batch_rows'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    row_number = db.Column(db.Integer, nullable=False)
+    raw_data = db.Column(db.Text, nullable=False)  # JSON string of original row data
+    processed_data = db.Column(db.Text)  # JSON string of processed/transformed data
+    validation_status = db.Column(db.String(50), default='pending')  # pending, valid, invalid
+    validation_errors = db.Column(db.Text)  # JSON string of validation errors
+    import_status = db.Column(db.String(50), default='pending')  # pending, imported, failed, skipped
+    import_errors = db.Column(db.Text)  # JSON string of import errors
+    target_record_id = db.Column(db.Integer)  # ID of the created/updated record
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    validated_at = db.Column(db.DateTime)
+    imported_at = db.Column(db.DateTime)
+    
+    # Foreign Keys
+    batch_id = db.Column(db.Integer, db.ForeignKey('import_batches.id'), nullable=False)
+    
+    @property
+    def has_validation_errors(self):
+        """Check if row has validation errors"""
+        return self.validation_status == 'invalid'
+    
+    @property
+    def has_import_errors(self):
+        """Check if row has import errors"""
+        return self.import_status == 'failed'
+    
+    @property
+    def is_importable(self):
+        """Check if row can be imported"""
+        return self.validation_status == 'valid' and self.import_status == 'pending'
+    
+    def __repr__(self):
+        return f'<ImportBatchRow {self.batch_id}:{self.row_number} - {self.validation_status}>'
+
+
+class ImportTemplate(db.Model):
+    """Templates for data import with predefined mappings and validation rules"""
+    __tablename__ = 'import_templates'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    target_table = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    column_mapping = db.Column(db.Text, nullable=False)  # JSON string of Excel column to DB column mapping
+    validation_rules = db.Column(db.Text)  # JSON string of validation rules
+    sample_data = db.Column(db.Text)  # JSON string of sample data for template generation
+    is_active = db.Column(db.Boolean, default=True)
+    version = db.Column(db.String(20), default='1.0')
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Foreign Keys
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Relationships
+    created_by = db.relationship('User', backref='import_templates')
+    
+    @property
+    def usage_count(self):
+        """Count how many times this template has been used"""
+        return ImportBatch.query.filter_by(template_id=self.id).count()
+    
+    def __repr__(self):
+        return f'<ImportTemplate {self.name} -> {self.target_table}>'
+
+
+# Import Status Enum
+class ImportStatus:
+    """Status constants for import operations"""
+    PENDING = 'pending'
+    UPLOADING = 'uploading'
+    UPLOADED = 'uploaded'
+    VALIDATING = 'validating'
+    VALIDATED = 'validated'
+    APPROVED = 'approved'
+    IMPORTING = 'importing'
+    COMPLETED = 'completed'
+    FAILED = 'failed'
+    CANCELLED = 'cancelled'
+    
+    @classmethod
+    def get_all_statuses(cls):
+        """Get all available statuses"""
+        return [
+            cls.PENDING, cls.UPLOADING, cls.UPLOADED,
+            cls.VALIDATING, cls.VALIDATED, cls.APPROVED,
+            cls.IMPORTING, cls.COMPLETED, cls.FAILED, cls.CANCELLED
+        ]
+    
+    @classmethod
+    def get_active_statuses(cls):
+        """Get statuses that indicate active/in-progress operations"""
+        return [cls.UPLOADING, cls.VALIDATING, cls.IMPORTING]
+    
+    @classmethod
+    def get_completed_statuses(cls):
+        """Get statuses that indicate completed operations"""
+        return [cls.COMPLETED, cls.FAILED, cls.CANCELLED]
 
 
 # Knowledge Management Models (KEDB Integration)

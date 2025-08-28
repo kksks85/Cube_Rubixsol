@@ -27,13 +27,13 @@
                                      style="width: {{ incident.workflow_progress_percentage }}%"
                                      aria-valuenow="{{ incident.workflow_progress_percentage }}" 
                                      aria-valuemin="0" aria-valuemax="100">
-                                    Step {{ incident.workflow_step_info.step }}/5 - {{ incident.workflow_progress_percentage|round|int }}%
+                                    Step {{ incident.workflow_step_info.step }}/6 - {{ incident.workflow_progress_percentage|round|int }}%
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- 5-Step Workflow Indicators -->
+                    <!-- 6-Step Workflow Indicators -->
                     <div class="row text-center">
                         <div class="col">
                             <div class="workflow-step {{ 'active' if incident.workflow_step_info.step >= 1 else '' }}">
@@ -70,6 +70,13 @@
                                 <small class="text-muted">Schedule future maintenance</small>
                             </div>
                         </div>
+                        <div class="col">
+                            <div class="workflow-step {{ 'active' if incident.workflow_step_info.step >= 6 else '' }}">
+                                <div class="step-circle {{ 'bg-success text-white' if incident.workflow_step_info.step >= 6 else 'bg-light' }}">6</div>
+                                <div class="step-label">Closed</div>
+                                <small class="text-muted">Service completed</small>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Current Step Actions -->
@@ -90,6 +97,18 @@
                             <a href="{{ url_for('uav_service.preventive_maintenance_workflow', id=incident.id) }}" class="btn btn-primary">
                                 <i class="fas fa-calendar-alt"></i> Setup Preventive Maintenance
                             </a>
+                        {% elif incident.workflow_status == 'PREVENTIVE_MAINTENANCE' %}
+                            <a href="{{ url_for('uav_service.close_incident_workflow', id=incident.id) }}" class="btn btn-success">
+                                <i class="fas fa-flag-checkered"></i> Close Incident
+                            </a>
+                        {% elif incident.workflow_status == 'CLOSED' %}
+                            <div class="alert alert-success mb-0">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Service Completed!</strong> This incident has been closed.
+                                {% if incident.closed_at %}
+                                    <br><small class="text-muted">Closed on {{ incident.closed_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                                {% endif %}
+                            </div>
                         {% endif %}
                     </div>
                 </div>
