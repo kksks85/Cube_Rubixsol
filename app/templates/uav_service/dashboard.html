@@ -15,71 +15,79 @@
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Incidents</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-incidents">-</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+            <a href="{{ url_for('uav_service.incident_list') }}" class="hover-card">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Total Incidents</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-incidents">-</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Open Incidents</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="open-incidents">-</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+            <a href="{{ url_for('uav_service.incident_list', status='open') }}" class="hover-card">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Open Incidents</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="open-incidents">-</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-danger shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                SLA Breached</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="sla-breached">-</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+            <a href="{{ url_for('uav_service.incident_list', sla_breach=1) }}" class="hover-card">
+                <div class="card border-left-danger shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    SLA Breached</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="sla-breached">-</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-clock fa-2x text-gray-300"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Maintenance Due</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="maintenance-due">-</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+            <a href="{{ url_for('uav_service.incident_list', maintenance_due=1) }}" class="hover-card">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Maintenance Due</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="maintenance-due">-</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
@@ -215,33 +223,52 @@
     </div>
 </div>
 
+<style>
+/* Add missing Bootstrap utility classes */
+.ms-3 { margin-left: 1rem !important; }
+.btn-block { width: 100%; }
+.badge-sm { font-size: 0.75em; }
+</style>
+
 <script>
 // Load dashboard statistics
 function loadDashboardStats() {
-    fetch('{{ url_for("uav_service.api_dashboard_stats") }}')
-        .then(response => response.json())
+    console.log('Loading dashboard stats...');
+    const apiUrl = '{{ url_for("uav_service.api_dashboard_stats") }}';
+    console.log('API URL:', apiUrl);
+    
+    fetch(apiUrl)
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            document.getElementById('total-incidents').textContent = data.total_incidents;
-            document.getElementById('open-incidents').textContent = data.open_incidents;
-            document.getElementById('sla-breached').textContent = data.sla_breached;
-            document.getElementById('maintenance-due').textContent = data.maintenance_due;
+            console.log('Dashboard data received:', data);
+            document.getElementById('total-incidents').textContent = data.total_incidents || '0';
+            document.getElementById('open-incidents').textContent = data.open_incidents || '0';
+            document.getElementById('sla-breached').textContent = data.sla_breached || '0';
+            document.getElementById('maintenance-due').textContent = data.maintenance_due || '0';
         })
         .catch(error => {
             console.error('Error loading dashboard stats:', error);
+            // Show error state
+            document.getElementById('total-incidents').textContent = 'Error';
+            document.getElementById('open-incidents').textContent = 'Error';
+            document.getElementById('sla-breached').textContent = 'Error';
+            document.getElementById('maintenance-due').textContent = 'Error';
         });
 }
 
 // Load stats on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - starting dashboard stats load');
     loadDashboardStats();
     
     // Refresh stats every 60 seconds
     setInterval(loadDashboardStats, 60000);
 });
-
-// Add missing Bootstrap utility classes
-.ms-3 { margin-left: 1rem !important; }
-.btn-block { width: 100%; }
-.badge-sm { font-size: 0.75em; }
 </script>
 {% endblock %}

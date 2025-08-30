@@ -472,6 +472,9 @@ def diagnosis_workflow(id):
     incident = UAVServiceIncident.query.get_or_404(id)
     form = DiagnosisForm()
     
+    # Check if this is accessed via stage navigation to preserve data
+    preserve_data = request.args.get('preserve_data', 'false') == 'true'
+    
     # Populate assignment group choices
     assignment_groups = AssignmentGroup.query.filter_by(is_active=True).order_by(AssignmentGroup.name).all()
     form.assignment_group_id.choices = [('', '-- Select Assignment Group --')] + [
@@ -484,13 +487,42 @@ def diagnosis_workflow(id):
         (str(user.id), f"{user.full_name} ({user.username})") for user in users
     ]
     
-    # Apply assignment rules to pre-populate fields
+    # Pre-populate form with existing data when accessed via stage navigation or on GET
     if request.method == 'GET':
-        assignment_suggestion = apply_assignment_rules(incident)
-        if assignment_suggestion['assignment_group_id']:
-            form.assignment_group_id.data = str(assignment_suggestion['assignment_group_id'])
-        if assignment_suggestion['assigned_to_id']:
-            form.assigned_to_id.data = str(assignment_suggestion['assigned_to_id'])
+        # Always preserve existing incident data when loading the form
+        if incident.diagnostic_findings:
+            form.diagnostic_findings.data = incident.diagnostic_findings
+        if incident.work_order_type:
+            form.work_order_type.data = incident.work_order_type
+        if incident.estimated_cost:
+            form.estimated_cost.data = incident.estimated_cost
+        if incident.technician_notes:
+            form.technician_notes.data = incident.technician_notes
+        if incident.parts_requested is not None:
+            form.parts_requested.data = incident.parts_requested
+            
+        # Find existing work order for this incident to populate assignment fields
+        existing_workorder = WorkOrder.query.filter_by(
+            uav_service_incident_id=incident.id
+        ).first()
+        
+        if existing_workorder:
+            # Pre-populate assignment fields from existing work order
+            if existing_workorder.assignment_group_id:
+                form.assignment_group_id.data = str(existing_workorder.assignment_group_id)
+            if existing_workorder.assigned_to_id:
+                form.assigned_to_id.data = str(existing_workorder.assigned_to_id)
+        else:
+            # Apply assignment rules only if no existing work order
+            assignment_suggestion = apply_assignment_rules(incident)
+            if assignment_suggestion['assignment_group_id']:
+                form.assignment_group_id.data = str(assignment_suggestion['assignment_group_id'])
+            if assignment_suggestion['assigned_to_id']:
+                form.assigned_to_id.data = str(assignment_suggestion['assigned_to_id'])
+        
+        # Show preservation message if accessed via stage navigation
+        if preserve_data:
+            flash('Editing diagnosis stage. All existing data has been preserved and pre-populated in the form.', 'info')
     
     if form.validate_on_submit():
         print(f"DEBUG: Form validation passed for incident {incident.id}")
@@ -850,15 +882,50 @@ def repair_maintenance_workflow(id):
     incident = UAVServiceIncident.query.get_or_404(id)
     form = RepairMaintenanceForm()
     
+    # Check if this is accessed via stage navigation to preserve data
+    preserve_data = request.args.get('preserve_data', 'false') == 'true'
+    
+    # Get work order parts if there's a related work order
+    work_order_parts = []
+    
+    if incident.related_work_order_id:
+        from app.models import WorkOrderPart
+        work_order_parts = WorkOrderPart.query.filter_by(work_order_id=incident.related_work_order_id).all()
+    
+    # Pre-populate form with existing data on GET request
+    if request.method == 'GET':
+        # Always preserve existing incident data when loading the form
+        if incident.technician_notes:
+            form.technician_notes.data = incident.technician_notes
+        if incident.parts_received is not None:
+            form.parts_received.data = incident.parts_received
+        if incident.service_status:
+            form.service_status.data = incident.service_status
+        if incident.actual_cost:
+            form.actual_cost.data = incident.actual_cost
+        # Note: technician_hours is cumulative, don't pre-populate to avoid double-counting
+        
+        # Show preservation message if accessed via stage navigation
+        if preserve_data:
+            flash('Editing repair/maintenance stage. All existing data has been preserved and pre-populated in the form.', 'info')
+    
     if form.validate_on_submit():
-        incident.technician_hours += form.technician_hours.data
-        incident.technician_notes = form.technician_notes.data
-        incident.parts_received = form.parts_received.data
-        incident.service_status = form.service_status.data
-        incident.actual_cost = form.actual_cost.data
+        # Update cumulative hours (add new hours to existing)
+        if form.technician_hours.data:
+            incident.technician_hours = (incident.technician_hours or 0) + form.technician_hours.data
+        
+        # Update other fields only if they have values (preserve existing data)
+        if form.technician_notes.data:
+            incident.technician_notes = form.technician_notes.data
+        if form.parts_received.data is not None:
+            incident.parts_received = form.parts_received.data
+        if form.service_status.data:
+            incident.service_status = form.service_status.data
+        if form.actual_cost.data:
+            incident.actual_cost = form.actual_cost.data
         
         if form.service_status.data == 'COMPLETED':
-            incident.advance_workflow(current_user, f'Repair/maintenance completed. Hours: {form.technician_hours.data}')
+            incident.advance_workflow(current_user, f'Repair/maintenance completed. Hours: {form.technician_hours.data or 0}')
         
         db.session.commit()
         
@@ -870,7 +937,8 @@ def repair_maintenance_workflow(id):
     form.service_status.data = incident.service_status
     form.actual_cost.data = incident.actual_cost
     
-    return render_template('uav_service/repair_maintenance_workflow.html', incident=incident, form=form)
+    return render_template('uav_service/repair_maintenance_workflow.html', 
+                         incident=incident, form=form, work_order_parts=work_order_parts)
 
 
 @bp.route('/incidents/<int:id>/quality-check', methods=['GET', 'POST'])
@@ -880,17 +948,45 @@ def quality_check_workflow(id):
     incident = UAVServiceIncident.query.get_or_404(id)
     form = QualityCheckForm()
     
+    # Check if this is accessed via stage navigation to preserve data
+    preserve_data = request.args.get('preserve_data', 'false') == 'true'
+    
+    # Pre-populate form with existing data on GET request
+    if request.method == 'GET':
+        # Always preserve existing incident data when loading the form
+        if incident.qa_verified is not None:
+            form.qa_verified.data = incident.qa_verified
+        if incident.airworthiness_certified is not None:
+            form.airworthiness_certified.data = incident.airworthiness_certified
+        if incident.qa_notes:
+            form.qa_notes.data = incident.qa_notes
+        if incident.invoice_number:
+            form.invoice_number.data = incident.invoice_number
+        if incident.actual_cost:
+            form.final_cost.data = incident.actual_cost
+            
+        # Show preservation message if accessed via stage navigation
+        if preserve_data:
+            flash('Editing quality check stage. All existing data has been preserved and pre-populated in the form.', 'info')
+    
     if form.validate_on_submit():
-        incident.qa_verified = form.qa_verified.data
-        incident.airworthiness_certified = form.airworthiness_certified.data
-        incident.qa_notes = form.qa_notes.data
-        incident.qa_technician_id = current_user.id
+        # Update fields only if they have values (preserve existing data)
+        if form.qa_verified.data is not None:
+            incident.qa_verified = form.qa_verified.data
+        if form.airworthiness_certified.data is not None:
+            incident.airworthiness_certified = form.airworthiness_certified.data
+        if form.qa_notes.data:
+            incident.qa_notes = form.qa_notes.data
+        if current_user.id:
+            incident.qa_technician_id = current_user.id
         
         # Handle billing for non-warranty services
         if not incident.is_warranty_service:
-            incident.invoice_number = form.invoice_number.data
-            incident.actual_cost = form.final_cost.data
-            incident.invoice_generated = True
+            if form.invoice_number.data:
+                incident.invoice_number = form.invoice_number.data
+            if form.final_cost.data:
+                incident.actual_cost = form.final_cost.data
+                incident.invoice_generated = True
         
         if form.qa_verified.data and form.airworthiness_certified.data:
             incident.advance_workflow(current_user, 'QA verification and airworthiness certification completed')
@@ -899,11 +995,6 @@ def quality_check_workflow(id):
         
         flash('Quality check completed successfully!', 'success')
         return redirect(url_for('uav_service.view_incident', id=incident.id))
-    
-    # Pre-populate current values
-    form.qa_verified.data = incident.qa_verified
-    form.airworthiness_certified.data = incident.airworthiness_certified
-    form.final_cost.data = incident.actual_cost
     
     return render_template('uav_service/quality_check_workflow.html', incident=incident, form=form)
 
@@ -915,25 +1006,51 @@ def preventive_maintenance_workflow(id):
     incident = UAVServiceIncident.query.get_or_404(id)
     form = PreventiveMaintenanceForm()
     
+    # Check if this is accessed via stage navigation to preserve data
+    preserve_data = request.args.get('preserve_data', 'false') == 'true'
+    
+    # Check for existing maintenance schedule to preserve data
+    existing_schedule = UAVMaintenanceSchedule.query.filter_by(
+        uav_serial_number=incident.serial_number
+    ).first()
+    
+    # Pre-populate form with existing data on GET request
+    if request.method == 'GET':
+        if existing_schedule:
+            # Preserve existing maintenance schedule data
+            if existing_schedule.maintenance_type:
+                form.maintenance_type.data = existing_schedule.maintenance_type
+            if existing_schedule.flight_hours_interval:
+                form.flight_hours_interval.data = existing_schedule.flight_hours_interval
+            if existing_schedule.time_interval_days:
+                form.time_interval_days.data = existing_schedule.time_interval_days
+                
+        # Show preservation message if accessed via stage navigation
+        if preserve_data:
+            flash('Editing preventive maintenance stage. All existing data has been preserved and pre-populated in the form.', 'info')
+    
     if form.validate_on_submit():
         # Create or update maintenance schedule
-        schedule = UAVMaintenanceSchedule.query.filter_by(
-            uav_serial_number=incident.serial_number
-        ).first()
+        schedule = existing_schedule or UAVMaintenanceSchedule(
+            uav_model=incident.product_name,
+            uav_serial_number=incident.serial_number,
+            customer_id=incident.created_by_id,
+            product_id=incident.product_id
+        )
         
-        if not schedule:
-            schedule = UAVMaintenanceSchedule(
-                uav_model=incident.product_name,
-                uav_serial_number=incident.serial_number,
-                customer_id=incident.created_by_id,
-                product_id=incident.product_id
-            )
-        
-        schedule.maintenance_type = form.maintenance_type.data
-        schedule.flight_hours_interval = form.flight_hours_interval.data
-        schedule.time_interval_days = form.time_interval_days.data
-        schedule.current_flight_hours = 0  # Default since we removed flight_hours
-        schedule.last_maintenance_date = datetime.now(timezone.utc)
+        # Update fields only if they have values (preserve existing data)
+        if form.maintenance_type.data:
+            schedule.maintenance_type = form.maintenance_type.data
+        if form.flight_hours_interval.data:
+            schedule.flight_hours_interval = form.flight_hours_interval.data
+        if form.time_interval_days.data:
+            schedule.time_interval_days = form.time_interval_days.data
+            
+        # Set defaults for required fields if not already set
+        if not schedule.current_flight_hours:
+            schedule.current_flight_hours = 0
+        if not schedule.last_maintenance_date:
+            schedule.last_maintenance_date = datetime.now(timezone.utc)
         
         # Calculate next maintenance due
         schedule.calculate_next_maintenance()
@@ -961,14 +1078,35 @@ def close_incident_workflow(id):
     """Close the service incident and update related work order"""
     incident = UAVServiceIncident.query.get_or_404(id)
     
+    # Check if this is accessed via stage navigation to preserve data
+    preserve_data = request.args.get('preserve_data', 'false') == 'true'
+    
+    # Show preservation message if accessed via stage navigation
+    if request.method == 'GET' and preserve_data:
+        flash('Editing incident closure stage. All existing data has been preserved. You can review the incident details before final closure.', 'info')
+    
     if request.method == 'POST':
-        # Get the closing notes from the form
-        closing_notes = request.form.get('closing_notes', 'Service incident closed successfully.')
+        # Get the closing notes from the form (preserve existing if empty)
+        closing_notes = request.form.get('closing_notes', '')
+        if not closing_notes:
+            closing_notes = 'Service incident closed successfully.'
         
-        # Advance workflow to CLOSED status
-        incident.advance_workflow(current_user, closing_notes)
+        # Only advance workflow if not already closed (preserve status)
+        if incident.workflow_status != 'CLOSED':
+            incident.advance_workflow(current_user, closing_notes)
+            flash('Service incident has been closed successfully! Related work order has been marked as completed.', 'success')
+        else:
+            # Just update notes if already closed
+            activity = UAVServiceActivity(
+                uav_service_incident_id=incident.id,
+                user_id=current_user.id,
+                activity_type='closure_update',
+                description=f'Closure notes updated: {closing_notes}'
+            )
+            db.session.add(activity)
+            db.session.commit()
+            flash('Incident closure information has been updated.', 'success')
         
-        flash('Service incident has been closed successfully! Related work order has been marked as completed.', 'success')
         return redirect(url_for('uav_service.view_incident', id=incident.id))
     
     return render_template('uav_service/close_incident_workflow.html', incident=incident)
@@ -1024,16 +1162,42 @@ def create_maintenance_schedule():
 @login_required
 def api_dashboard_stats():
     """API endpoint for UAV service dashboard statistics"""
-    stats = {
-        'total_incidents': UAVServiceIncident.query.count(),
-        'open_incidents': UAVServiceIncident.query.filter(
-            UAVServiceIncident.workflow_status.in_(['INCIDENT_RAISED', 'DIAGNOSIS_WO', 'REPAIR_MAINTENANCE'])
-        ).count(),
-        'sla_breached': UAVServiceIncident.query.filter_by(sla_status='BREACHED').count(),
-        'pending_qa': UAVServiceIncident.query.filter_by(workflow_status='QUALITY_CHECK').count(),
-        'maintenance_due': UAVMaintenanceSchedule.query.filter(
-            UAVMaintenanceSchedule.next_maintenance_due <= datetime.now(timezone.utc)
+    from datetime import datetime, timezone, timedelta
+    
+    # Total incidents
+    total_incidents = UAVServiceIncident.query.count()
+    
+    # Open incidents (not closed)
+    open_incidents = UAVServiceIncident.query.filter(
+        UAVServiceIncident.workflow_status.in_(['INCIDENT_RAISED', 'DIAGNOSIS_WO', 'REPAIR_MAINTENANCE', 'QUALITY_CHECK', 'PREVENTIVE_MAINTENANCE'])
+    ).count()
+    
+    # SLA breached incidents - need to calculate based on property logic
+    all_incidents = UAVServiceIncident.query.filter(
+        UAVServiceIncident.workflow_status != 'CLOSED'
+    ).all()
+    
+    sla_breached = 0
+    for incident in all_incidents:
+        if incident.sla_status == 'BREACHED':
+            sla_breached += 1
+    
+    # Maintenance due - check if UAVMaintenanceSchedule exists and has data
+    try:
+        maintenance_due = UAVMaintenanceSchedule.query.filter(
+            UAVMaintenanceSchedule.next_maintenance_due <= datetime.now(timezone.utc) + timedelta(days=7)
         ).count()
+    except Exception:
+        # If UAVMaintenanceSchedule doesn't exist or has issues, count incidents needing preventive maintenance
+        maintenance_due = UAVServiceIncident.query.filter_by(
+            workflow_status='PREVENTIVE_MAINTENANCE'
+        ).count()
+    
+    stats = {
+        'total_incidents': total_incidents,
+        'open_incidents': open_incidents,
+        'sla_breached': sla_breached,
+        'maintenance_due': maintenance_due
     }
     
     return jsonify(stats)
@@ -1088,6 +1252,133 @@ def api_product_by_serial(serial_number):
             'success': False,
             'message': 'An error occurred while fetching product details'
         }), 500
+
+
+@bp.route('/incidents/<int:id>/edit-stages', methods=['GET', 'POST'])
+@login_required
+def edit_stages(id):
+    """Navigate to and edit any stage of the incident workflow"""
+    incident = UAVServiceIncident.query.get_or_404(id)
+    
+    # Check permission
+    if not incident.can_edit_stages(current_user):
+        flash('You do not have permission to edit incident stages.', 'error')
+        return redirect(url_for('uav_service.view_incident', id=id))
+    
+    if request.method == 'POST':
+        selected_stage = request.form.get('selected_stage')
+        
+        # Define stage mappings with data preservation flags
+        stage_mappings = {
+            'INCIDENT_RAISED': {
+                'workflow_status': 'INCIDENT_RAISED',
+                'route': 'uav_service.view_incident',
+                'preserve_data': True
+            },
+            'DIAGNOSIS_WO': {
+                'workflow_status': 'DIAGNOSIS_WO', 
+                'route': 'uav_service.diagnosis_workflow',
+                'preserve_data': True
+            },
+            'REPAIR_MAINTENANCE': {
+                'workflow_status': 'REPAIR_MAINTENANCE',
+                'route': 'uav_service.repair_maintenance_workflow',
+                'preserve_data': True
+            },
+            'QUALITY_CHECK': {
+                'workflow_status': 'QUALITY_CHECK',
+                'route': 'uav_service.quality_check_workflow',
+                'preserve_data': True
+            },
+            'PREVENTIVE_MAINTENANCE': {
+                'workflow_status': 'PREVENTIVE_MAINTENANCE',
+                'route': 'uav_service.preventive_maintenance_workflow',
+                'preserve_data': True
+            },
+            'CLOSED': {
+                'workflow_status': 'CLOSED',
+                'route': 'uav_service.close_incident_workflow',
+                'preserve_data': True
+            }
+        }
+        
+        if selected_stage in stage_mappings:
+            stage_info = stage_mappings[selected_stage]
+            
+            # Update incident workflow status if different (preserving all existing data)
+            if incident.workflow_status != stage_info['workflow_status']:
+                old_status = incident.workflow_status
+                incident.workflow_status = stage_info['workflow_status']
+                
+                # Log the manual stage change with data preservation note
+                activity = UAVServiceActivity(
+                    uav_service_incident_id=incident.id,
+                    user_id=current_user.id,
+                    activity_type='stage_navigation',
+                    description=f'Manual stage navigation: {old_status} → {stage_info["workflow_status"]} (Data preserved)'
+                )
+                db.session.add(activity)
+                db.session.commit()
+                
+                flash(f'Successfully navigated to {selected_stage.replace("_", " ").title()} stage. All existing data has been preserved.', 'success')
+            else:
+                flash(f'Opening {selected_stage.replace("_", " ").title()} stage for editing. All existing data will be preserved.', 'info')
+            
+            # Add URL parameter to indicate data preservation
+            redirect_url = url_for(stage_info['route'], id=incident.id, preserve_data='true')
+            return redirect(redirect_url)
+        else:
+            flash('Invalid stage selected.', 'error')
+    
+    # Define workflow stages with their descriptions
+    workflow_stages = [
+        {
+            'key': 'INCIDENT_RAISED',
+            'name': 'Incident/Service Request',
+            'description': 'Customer reports issue',
+            'step': 1,
+            'icon': 'fas fa-inbox'
+        },
+        {
+            'key': 'DIAGNOSIS_WO',
+            'name': 'Diagnosis & Work Order',
+            'description': 'Technician diagnosis',
+            'step': 2,
+            'icon': 'fas fa-stethoscope'
+        },
+        {
+            'key': 'REPAIR_MAINTENANCE',
+            'name': 'Repair/Maintenance',
+            'description': 'Parts & technician work',
+            'step': 3,
+            'icon': 'fas fa-tools'
+        },
+        {
+            'key': 'QUALITY_CHECK',
+            'name': 'Quality Check & Handover',
+            'description': 'QA & compliance',
+            'step': 4,
+            'icon': 'fas fa-check-circle'
+        },
+        {
+            'key': 'PREVENTIVE_MAINTENANCE',
+            'name': 'Preventive Maintenance',
+            'description': 'Schedule future maintenance',
+            'step': 5,
+            'icon': 'fas fa-calendar-alt'
+        },
+        {
+            'key': 'CLOSED',
+            'name': 'Closed',
+            'description': 'Service completed',
+            'step': 6,
+            'icon': 'fas fa-flag-checkered'
+        }
+    ]
+    
+    return render_template('uav_service/edit_stages.html', 
+                         incident=incident, 
+                         workflow_stages=workflow_stages)
 
 
 @bp.route('/dashboard')

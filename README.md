@@ -1,10 +1,40 @@
-# CUBE - PRO Documentation Package
+# CUBE - PRO Enterprise Work Order Management System
 
-## 📚 Complete Administrator Documentation
+## 🚀 Advanced UAV Service Incident Management with Stage Navigation
 
-Generated on: August 25, 2025
+Generated on: January 27, 2025
 
-This package contains comprehensive documentation for configuring and managing your CUBE - PRO Enterprise Work Order Management System.
+This system provides comprehensive work order management with advanced UAV service incident tracking, including flexible stage navigation and data preservation capabilities for Admin, Manager, and Technician users.
+
+## ✨ NEW FEATURE: Stage Navigation with Data Preservation
+
+**� CRITICAL ENHANCEMENT**: Users can now navigate to any stage of an incident workflow and edit fields with complete data preservation guarantee. No data loss occurs when switching between stages.
+
+### Key Features:
+- **Multi-Stage Workflow**: 6-stage UAV service incident workflow
+- **Flexible Navigation**: Navigate to any workflow stage from any other stage
+- **Data Preservation**: All existing form data is preserved when switching stages
+- **Role-Based Access**: Admin, Manager, and Technician permissions for stage editing
+- **Activity Logging**: Complete audit trail of stage navigation actions
+- **Form Pre-Population**: All forms automatically load with current database values
+
+### Workflow Stages:
+1. **Incident Raised** - Initial incident creation and customer details
+2. **Diagnosis** - Technical assessment and work order generation
+3. **Repair/Maintenance** - Technician work and parts management
+4. **Quality Check** - QA verification and airworthiness certification
+5. **Preventive Maintenance** - Future maintenance planning
+6. **Closed** - Final documentation and closure
+
+### How to Use Stage Navigation:
+1. Navigate to any UAV Service Incident
+2. Click the floating "Navigate Stages" button (🧭 icon)
+3. Select the stage you want to edit
+4. All existing data will be preserved and pre-populated
+5. Make your changes and save
+6. Continue with normal workflow or navigate to another stage
+
+This system ensures complete workflow flexibility while maintaining data integrity.
 
 ## 📄 Documentation Files
 

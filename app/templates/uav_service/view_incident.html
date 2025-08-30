@@ -403,6 +403,20 @@
     </div>
 </div>
 
+<!-- Floating Stage Navigation Button -->
+{% if incident.can_edit_stages(current_user) %}
+<div class="floating-nav-button">
+    <a href="{{ url_for('uav_service.edit_stages', id=incident.id) }}" 
+       class="btn btn-warning btn-lg shadow-lg" 
+       title="Navigate to any workflow stage"
+       data-bs-toggle="tooltip" 
+       data-bs-placement="left">
+        <i class="fas fa-edit"></i>
+        <span class="d-none d-md-inline ms-2">Edit Stages</span>
+    </a>
+</div>
+{% endif %}
+
 <style>
 .workflow-step {
     text-align: center;
@@ -434,5 +448,76 @@
 .ms-3 {
     margin-left: 1rem;
 }
+
+/* Floating Navigation Button */
+.floating-nav-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+    animation: pulse 2s infinite;
+}
+
+.floating-nav-button .btn {
+    border-radius: 50px;
+    padding: 15px 20px;
+    font-weight: 600;
+    border: none;
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+    color: #fff;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+}
+
+.floating-nav-button .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.6);
+    background: linear-gradient(45deg, #e0a800, #fd7e14);
+    color: #fff;
+}
+
+.floating-nav-button .btn:active {
+    transform: translateY(-1px);
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .floating-nav-button {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .floating-nav-button .btn {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Stop animation on hover */
+.floating-nav-button:hover {
+    animation: none;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tooltips for the floating button
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
 {% endblock %}

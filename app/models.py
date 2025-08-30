@@ -729,13 +729,34 @@ class EmailConfig(db.Model):
     __tablename__ = 'email_config'
     
     id = db.Column(db.Integer, primary_key=True)
+    
+    # SMTP Configuration (for sending emails)
     smtp_server = db.Column(db.String(255), default='smtp.gmail.com')
     smtp_port = db.Column(db.Integer, default=587)
     use_tls = db.Column(db.Boolean, default=True)
+    use_ssl = db.Column(db.Boolean, default=False)
     sender_email = db.Column(db.String(255))
     sender_name = db.Column(db.String(255), default='CUBE - PRO System')
     smtp_username = db.Column(db.String(255))
     smtp_password = db.Column(db.String(255))  # Should be encrypted in production
+    
+    # IMAP Configuration (for receiving emails)
+    imap_server = db.Column(db.String(255))
+    imap_port = db.Column(db.Integer, default=993)
+    imap_username = db.Column(db.String(255))
+    imap_password = db.Column(db.String(255))  # Should be encrypted in production
+    imap_use_ssl = db.Column(db.Boolean, default=True)
+    
+    # POP3 Configuration (alternative to IMAP)
+    pop3_server = db.Column(db.String(255))
+    pop3_port = db.Column(db.Integer, default=995)
+    pop3_username = db.Column(db.String(255))
+    pop3_password = db.Column(db.String(255))  # Should be encrypted in production
+    pop3_use_ssl = db.Column(db.Boolean, default=True)
+    
+    # Protocol preference
+    preferred_protocol = db.Column(db.String(10), default='IMAP')  # IMAP or POP3
+    
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), 
@@ -743,6 +764,77 @@ class EmailConfig(db.Model):
     
     def __repr__(self):
         return f'<EmailConfig {self.sender_email}>'
+
+
+class EmailPollingConfig(db.Model):
+    """Email polling configuration and settings"""
+    __tablename__ = 'email_polling_config'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Polling frequency settings
+    polling_enabled = db.Column(db.Boolean, default=True)
+    polling_interval_minutes = db.Column(db.Integer, default=5)  # Check every 5 minutes
+    max_emails_per_poll = db.Column(db.Integer, default=50)
+    
+    # Advanced settings
+    delete_processed_emails = db.Column(db.Boolean, default=False)
+    mark_as_read = db.Column(db.Boolean, default=True)
+    process_attachments = db.Column(db.Boolean, default=True)
+    max_attachment_size_mb = db.Column(db.Integer, default=10)
+    
+    # Error handling
+    max_retry_attempts = db.Column(db.Integer, default=3)
+    retry_delay_minutes = db.Column(db.Integer, default=10)
+    
+    # Logging and monitoring
+    log_processed_emails = db.Column(db.Boolean, default=True)
+    send_error_notifications = db.Column(db.Boolean, default=True)
+    error_notification_email = db.Column(db.String(255))
+    
+    # Performance settings
+    connection_timeout_seconds = db.Column(db.Integer, default=30)
+    read_timeout_seconds = db.Column(db.Integer, default=60)
+    
+    # Status tracking
+    last_poll_time = db.Column(db.DateTime)
+    last_successful_poll = db.Column(db.DateTime)
+    total_emails_processed = db.Column(db.Integer, default=0)
+    total_incidents_created = db.Column(db.Integer, default=0)
+    service_status = db.Column(db.String(20), default='stopped')  # running, stopped, error
+    
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), 
+                          onupdate=lambda: datetime.now(timezone.utc))
+    
+    @classmethod
+    def get_config(cls):
+        """Get the current polling configuration (singleton pattern)"""
+        config = cls.query.first()
+        if not config:
+            # Create default configuration
+            config = cls()
+            db.session.add(config)
+            db.session.commit()
+        return config
+    
+    def update_status(self, status: str, last_poll: bool = True):
+        """Update service status and timestamps"""
+        self.service_status = status
+        if last_poll:
+            self.last_poll_time = datetime.now(timezone.utc)
+            if status == 'running':
+                self.last_successful_poll = datetime.now(timezone.utc)
+        db.session.commit()
+    
+    def increment_counters(self, emails_processed: int = 0, incidents_created: int = 0):
+        """Increment processing counters"""
+        self.total_emails_processed = (self.total_emails_processed or 0) + emails_processed
+        self.total_incidents_created = (self.total_incidents_created or 0) + incidents_created
+        db.session.commit()
+    
+    def __repr__(self):
+        return f'<EmailPollingConfig interval={self.polling_interval_minutes}min enabled={self.polling_enabled}>'
 
 
 class EmailLog(db.Model):
@@ -788,6 +880,168 @@ class EmailTemplate(db.Model):
     
     def __repr__(self):
         return f'<EmailTemplate {self.name}>'
+
+
+class InboundEmailRule(db.Model):
+    """Rules for processing inbound emails to create service incidents"""
+    __tablename__ = 'inbound_email_rules'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text)
+    
+    # Email matching criteria
+    from_email_pattern = db.Column(db.String(500))
+    to_email_pattern = db.Column(db.String(500))
+    subject_pattern = db.Column(db.String(500))
+    body_keywords = db.Column(db.Text)
+    
+    # Rule configuration (required fields from existing schema)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    priority_order = db.Column(db.Integer, nullable=False, default=1)
+    attachment_required = db.Column(db.Boolean, nullable=False, default=False)
+    auto_create_workorder = db.Column(db.Boolean, nullable=False, default=True)
+    
+    # Templates (required fields)
+    workorder_title_template = db.Column(db.String(500), nullable=False, default='{{subject}}')
+    workorder_description_template = db.Column(db.Text, nullable=False, default='{{body}}')
+    
+    # Service incident creation settings
+    default_priority_id = db.Column(db.Integer)
+    default_category_id = db.Column(db.Integer)
+    default_status_id = db.Column(db.Integer)
+    default_assigned_to_id = db.Column(db.Integer)
+    
+    # Customer extraction (required fields)
+    extract_customer_from_email = db.Column(db.Boolean, nullable=False, default=True)
+    customer_name_pattern = db.Column(db.String(500))
+    customer_phone_pattern = db.Column(db.String(500))
+    
+    # Reply settings (required fields)
+    reply_with_template = db.Column(db.Boolean, nullable=False, default=True)
+    reply_template_id = db.Column(db.Integer)
+    forward_to_email = db.Column(db.String(255))
+    move_to_folder = db.Column(db.String(100))
+    
+    # Statistics (required fields)
+    emails_processed = db.Column(db.Integer, nullable=False, default=0)
+    workorders_created = db.Column(db.Integer, nullable=False, default=0)
+    last_processed_at = db.Column(db.DateTime)
+    
+    # Timestamps (required fields)
+    created_at = db.Column(db.DateTime, nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=False)
+    created_by_id = db.Column(db.Integer, nullable=False)
+    
+    # Our compatibility fields for the new columns we added
+    default_priority = db.Column(db.String(20), default='MEDIUM')
+    default_status = db.Column(db.String(50), default='INCIDENT_RAISED')
+    auto_assign_to_id = db.Column(db.Integer)
+    extract_attachments = db.Column(db.Boolean, default=True)
+    send_auto_reply = db.Column(db.Boolean, default=False)
+    auto_reply_template_id = db.Column(db.Integer)
+    
+    def __repr__(self):
+        return f'<InboundEmailRule {self.name}>'
+    
+    @property
+    def default_category(self):
+        """Get the default category object"""
+        if self.default_category_id:
+            return Category.query.get(self.default_category_id)
+        return None
+    
+    @property
+    def priority(self):
+        """Get the priority (use priority_order for compatibility)"""
+        return self.priority_order
+
+
+class ProcessedEmail(db.Model):
+    """Log of processed inbound emails"""
+    __tablename__ = 'processed_emails'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Email details (using existing column names)
+    email_uid = db.Column(db.String(100), nullable=False)  # Maps to existing column
+    email_message_id = db.Column(db.String(500))  # Maps to existing column
+    from_email = db.Column(db.String(255), nullable=False)
+    to_email = db.Column(db.String(255), nullable=False)
+    subject = db.Column(db.String(500), nullable=False)
+    body_preview = db.Column(db.Text)  # Maps to existing column
+    
+    # Attachment info (using existing columns)
+    has_attachments = db.Column(db.Boolean, default=False)
+    attachment_count = db.Column(db.Integer, default=0)
+    
+    # Processing details (using existing columns)
+    rule_id = db.Column(db.Integer)  # Maps to existing column
+    processing_status = db.Column(db.String(50), default='pending')
+    workorder_created_id = db.Column(db.Integer)  # Maps to existing column
+    error_message = db.Column(db.Text)
+    
+    # Additional processing info (using existing columns)
+    auto_reply_sent = db.Column(db.Boolean, default=False)
+    forwarded_to = db.Column(db.String(255))
+    moved_to_folder = db.Column(db.String(100))
+    
+    # Timestamps (using existing columns)
+    email_received_at = db.Column(db.DateTime)
+    processed_at = db.Column(db.DateTime)
+    
+    def __repr__(self):
+        return f'<ProcessedEmail {self.email_message_id}>'
+    
+    @property
+    def matched_rule(self):
+        """Get the matched rule if rule_id is set"""
+        if self.rule_id:
+            return InboundEmailRule.query.get(self.rule_id)
+        return None
+    
+    @property
+    def created_incident(self):
+        """Get the created incident if workorder_created_id is set"""
+        if self.workorder_created_id:
+            # Try to find UAVServiceIncident with this ID
+            try:
+                return UAVServiceIncident.query.get(self.workorder_created_id)
+            except:
+                return None
+        return None
+
+
+class InboundEmailTemplate(db.Model):
+    """Templates for inbound email processing and auto-replies"""
+    __tablename__ = 'inbound_email_templates'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    template_type = db.Column(db.String(50), nullable=False)  # auto_reply, incident_title, incident_description
+    
+    # Template content
+    subject_template = db.Column(db.String(500))  # For auto-reply emails
+    body_template = db.Column(db.Text, nullable=False)
+    
+    # Template variables help
+    available_variables = db.Column(db.Text)  # JSON list of available variables
+    
+    # Configuration
+    is_active = db.Column(db.Boolean, default=True)
+    is_html = db.Column(db.Boolean, default=False)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), 
+                          onupdate=lambda: datetime.now(timezone.utc))
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    
+    # Relationships
+    created_by = db.relationship('User', backref='created_inbound_templates')
+    
+    def __repr__(self):
+        return f'<InboundEmailTemplate {self.name}>'
 
 # Inventory Management Models
 
@@ -844,18 +1098,31 @@ class InventoryItem(db.Model):
     work_order_parts = db.relationship('WorkOrderPart', backref='inventory_item', lazy='dynamic')
     
     @property
+    def available_stock(self):
+        """Get available stock excluding damaged items"""
+        if self.condition == 'damaged':
+            return 0
+        return self.quantity_in_stock
+    
+    @property
+    def damaged_stock(self):
+        """Get total damaged stock from transactions"""
+        damaged_transactions = self.transactions.filter_by(transaction_type='DAMAGED').all()
+        return sum(t.quantity for t in damaged_transactions)
+    
+    @property
     def is_low_stock(self):
-        """Check if item is below minimum stock level"""
-        return self.quantity_in_stock <= self.minimum_stock_level
+        """Check if available stock is below minimum stock level"""
+        return self.available_stock <= self.minimum_stock_level
     
     @property
     def stock_status(self):
-        """Get stock status as string"""
-        if self.quantity_in_stock == 0:
+        """Get stock status as string based on available stock"""
+        if self.available_stock == 0:
             return "Out of Stock"
         elif self.is_low_stock:
             return "Low Stock"
-        elif self.quantity_in_stock >= self.maximum_stock_level:
+        elif self.available_stock >= self.maximum_stock_level:
             return "Overstock"
         else:
             return "In Stock"
@@ -936,6 +1203,62 @@ class WorkOrderPart(db.Model):
 
 
 # UAV Service Management Models
+class ServiceCategory(db.Model):
+    """Categories for service incidents and requests"""
+    __tablename__ = 'service_categories'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    
+    # Using existing column names from database schema
+    category_type = db.Column(db.String(50), nullable=False)  # Maps to existing column
+    severity_level = db.Column(db.String(20))  # Maps to existing column
+    estimated_service_time = db.Column(db.Integer)  # Maps to existing column
+    requires_parts = db.Column(db.Boolean, default=False)  # Maps to existing column
+    requires_software_update = db.Column(db.Boolean, default=False)  # Maps to existing column
+    requires_firmware_update = db.Column(db.Boolean, default=False)  # Maps to existing column
+    
+    # Timestamps (using existing column)
+    created_at = db.Column(db.DateTime)
+    
+    def __repr__(self):
+        return f'<ServiceCategory {self.name}>'
+    
+    @property
+    def is_active(self):
+        """All categories are considered active for now"""
+        return True
+    
+    @property
+    def color(self):
+        """Assign default colors based on category type"""
+        color_map = {
+            'HARDWARE': '#dc3545',    # Red
+            'SOFTWARE': '#ffc107',    # Yellow  
+            'MAINTENANCE': '#198754', # Green
+            'TRAINING': '#0d6efd',    # Blue
+            'GENERAL': '#6f42c1',     # Purple
+        }
+        return color_map.get(self.category_type, '#6c757d')  # Default gray
+    
+    @property 
+    def auto_escalate(self):
+        """Auto escalate based on severity level"""
+        return self.severity_level in ['HIGH', 'CRITICAL']
+    
+    @property
+    def escalation_hours(self):
+        """Get escalation hours based on severity"""
+        escalation_map = {
+            'LOW': 72,
+            'MEDIUM': 48, 
+            'HIGH': 24,
+            'CRITICAL': 4
+        }
+        return escalation_map.get(self.severity_level, 48)
+
+
 class UAVServiceIncident(db.Model):
     """UAV Service Incident Management System"""
     __tablename__ = 'uav_service_incidents'
@@ -1085,6 +1408,16 @@ class UAVServiceIncident(db.Model):
             return 'WARNING'
         else:
             return 'ON_TRACK'
+    
+    def can_edit_stages(self, user):
+        """Check if user can edit incident stages"""
+        if user.has_role('admin'):
+            return True
+        if user.has_role('manager'):
+            return True
+        if user.has_role('technician'):
+            return True
+        return False
     
     def advance_workflow(self, user, notes=None):
         """Advance to next workflow step"""
