@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plug"></i> Integration Management Dashboard
+                    </h5>
+                    <div>
+                        <a href="{{ url_for('integrations.list_integrations') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-list"></i> View All Integrations
+                        </a>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-plus"></i> New Integration
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('integrations.create_ad_integration') }}">
+                                    <i class="fab fa-microsoft"></i> Active Directory
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('integrations.create_jira_integration') }}">
+                                    <i class="fab fa-jira"></i> JIRA
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('integrations.create_integration') }}">
+                                    <i class="fas fa-cog"></i> Custom Integration
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Integration Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="stats-card bg-primary">
+                                <div class="stats-content">
+                                    <div class="stats-number">{{ total_integrations }}</div>
+                                    <div class="stats-label">Total Integrations</div>
+                                </div>
+                                <div class="stats-icon">
+                                    <i class="fas fa-plug"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card bg-success">
+                                <div class="stats-content">
+                                    <div class="stats-number">{{ active_integrations }}</div>
+                                    <div class="stats-label">Active Integrations</div>
+                                </div>
+                                <div class="stats-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card bg-warning">
+                                <div class="stats-content">
+                                    <div class="stats-number">{{ integrations_by_status.get('ERROR', 0) }}</div>
+                                    <div class="stats-label">Error Status</div>
+                                </div>
+                                <div class="stats-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card bg-info">
+                                <div class="stats-content">
+                                    <div class="stats-number">{{ integrations_by_status.get('PENDING', 0) }}</div>
+                                    <div class="stats-label">Pending Setup</div>
+                                </div>
+                                <div class="stats-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Integration Status Chart -->
+                        <div class="col-md-6">
+                            <h6>Integration Status Overview</h6>
+                            <canvas id="statusChart" height="200"></canvas>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="col-md-6">
+                            <h6>Quick Actions</h6>
+                            <div class="list-group">
+                                <a href="{{ url_for('integrations.providers') }}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-building"></i> Manage Integration Providers
+                                </a>
+                                <a href="{{ url_for('integrations.view_logs') }}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-file-alt"></i> View Sync Logs
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" onclick="syncAllIntegrations()">
+                                    <i class="fas fa-sync"></i> Sync All Active Integrations
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" onclick="testAllConnections()">
+                                    <i class="fas fa-network-wired"></i> Test All Connections
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Sync Logs -->
+                    <div class="mt-4">
+                        <h6>Recent Sync Activities</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Integration</th>
+                                        <th>Operation</th>
+                                        <th>Status</th>
+                                        <th>Records</th>
+                                        <th>Duration</th>
+                                        <th>Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in recent_logs %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('integrations.view_integration', id=log.integration.id) }}">
+                                                {{ log.integration.name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary">{{ log.operation }}</span>
+                                        </td>
+                                        <td>
+                                            {% if log.status == 'SUCCESS' %}
+                                                <span class="badge badge-success">{{ log.status }}</span>
+                                            {% elif log.status == 'ERROR' %}
+                                                <span class="badge badge-danger">{{ log.status }}</span>
+                                            {% else %}
+                                                <span class="badge badge-warning">{{ log.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small>
+                                                {{ log.records_success }}/{{ log.records_processed }}
+                                                {% if log.records_error > 0 %}
+                                                    <span class="text-danger">({{ log.records_error }} errors)</span>
+                                                {% endif %}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            {% if log.duration_ms %}
+                                                <small>{{ "%.2f"|format(log.duration_ms / 1000) }}s</small>
+                                            {% else %}
+                                                <small>-</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small>{{ log.timestamp.strftime('%m/%d %H:%M') }}</small>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">No recent sync activities</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if recent_logs %}
+                        <div class="text-center">
+                            <a href="{{ url_for('integrations.view_logs') }}" class="btn btn-outline-secondary btn-sm">
+                                View All Logs
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-card.bg-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.stats-card.bg-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stats-card.bg-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stats-content {
+    position: relative;
+    z-index: 2;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stats-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.stats-icon {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 3rem;
+    opacity: 0.3;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Integration Status Chart
+const ctx = document.getElementById('statusChart').getContext('2d');
+const statusChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for status, count in integrations_by_status.items() %}
+                '{{ status }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for status, count in integrations_by_status.items() %}
+                    {{ count }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#28a745', // ACTIVE
+                '#dc3545', // ERROR
+                '#ffc107', // PENDING
+                '#6c757d'  // DISABLED
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+function syncAllIntegrations() {
+    if (confirm('This will trigger sync for all active integrations. Continue?')) {
+        // Implementation for bulk sync
+        alert('Bulk sync functionality would be implemented here');
+    }
+}
+
+function testAllConnections() {
+    if (confirm('This will test connections for all active integrations. Continue?')) {
+        // Implementation for bulk connection test
+        alert('Bulk connection test functionality would be implemented here');
+    }
+}
+</script>
+{% endblock %}

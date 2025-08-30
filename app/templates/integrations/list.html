@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plug"></i> Third-Party Integrations
+                    </h5>
+                    <div>
+                        <a href="{{ url_for('integrations.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-plus"></i> Add Integration
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('integrations.create_ad_integration') }}">
+                                    <i class="fab fa-microsoft"></i> Active Directory
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('integrations.create_jira_integration') }}">
+                                    <i class="fab fa-jira"></i> JIRA
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('integrations.create_integration') }}">
+                                    <i class="fas fa-cog"></i> Custom Integration
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if integrations %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Provider</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Last Sync</th>
+                                    <th>Sync Frequency</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for integration in integrations %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if integration.provider.name == 'active_directory' %}
+                                                <i class="fab fa-microsoft text-primary me-2"></i>
+                                            {% elif integration.provider.name == 'jira' %}
+                                                <i class="fab fa-jira text-info me-2"></i>
+                                            {% elif integration.provider.provider_type == 'REST' %}
+                                                <i class="fas fa-cloud text-success me-2"></i>
+                                            {% elif integration.provider.provider_type == 'SOAP' %}
+                                                <i class="fas fa-server text-warning me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-plug text-secondary me-2"></i>
+                                            {% endif %}
+                                            <div>
+                                                <a href="{{ url_for('integrations.view_integration', id=integration.id) }}" class="fw-bold">
+                                                    {{ integration.name }}
+                                                </a>
+                                                {% if integration.description %}
+                                                <br><small class="text-muted">{{ integration.description[:50] }}{% if integration.description|length > 50 %}...{% endif %}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-outline-secondary">{{ integration.provider.display_name }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-outline-info">{{ integration.provider.provider_type }}</span>
+                                    </td>
+                                    <td>
+                                        {% if integration.status == 'ACTIVE' %}
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check-circle"></i> Active
+                                            </span>
+                                        {% elif integration.status == 'ERROR' %}
+                                            <span class="badge badge-danger" title="{{ integration.last_error }}">
+                                                <i class="fas fa-exclamation-triangle"></i> Error
+                                            </span>
+                                        {% elif integration.status == 'DISABLED' %}
+                                            <span class="badge badge-secondary">
+                                                <i class="fas fa-pause-circle"></i> Disabled
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-warning">
+                                                <i class="fas fa-clock"></i> Pending
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if integration.last_sync_at %}
+                                            <small>{{ integration.last_sync_at.strftime('%m/%d/%Y %H:%M') }}</small>
+                                        {% else %}
+                                            <small class="text-muted">Never</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ integration.sync_frequency }} min</small>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            {{ integration.created_at.strftime('%m/%d/%Y') }}
+                                            <br>by {{ integration.created_by.full_name }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                    onclick="testConnection({{ integration.id }})" 
+                                                    title="Test Connection">
+                                                <i class="fas fa-network-wired"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-success btn-sm" 
+                                                    onclick="syncIntegration({{ integration.id }})" 
+                                                    title="Sync Now">
+                                                <i class="fas fa-sync"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-{% if integration.is_enabled %}warning{% else %}success{% endif %} btn-sm" 
+                                                    onclick="toggleIntegration({{ integration.id }})" 
+                                                    title="{% if integration.is_enabled %}Disable{% else %}Enable{% endif %}">
+                                                <i class="fas fa-{% if integration.is_enabled %}pause{% else %}play{% endif %}"></i>
+                                            </button>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+                                                        data-bs-toggle="dropdown" title="More Actions">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" href="{{ url_for('integrations.view_integration', id=integration.id) }}">
+                                                        <i class="fas fa-eye"></i> View Details
+                                                    </a></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteIntegration({{ integration.id }}, '{{ integration.name }}')">
+                                                        <i class="fas fa-trash"></i> Delete
+                                                    </a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-plug fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Integrations Configured</h5>
+                        <p class="text-muted">Get started by creating your first third-party integration.</p>
+                        <div class="mt-3">
+                            <a href="{{ url_for('integrations.create_ad_integration') }}" class="btn btn-primary me-2">
+                                <i class="fab fa-microsoft"></i> Setup Active Directory
+                            </a>
+                            <a href="{{ url_for('integrations.create_jira_integration') }}" class="btn btn-info me-2">
+                                <i class="fab fa-jira"></i> Setup JIRA
+                            </a>
+                            <a href="{{ url_for('integrations.create_integration') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-cog"></i> Custom Integration
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-3" id="loadingMessage">Processing...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testConnection(integrationId) {
+    showLoading('Testing connection...');
+    
+    fetch(`/integrations/${integrationId}/test`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({test_type: 'connection'})
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showAlert('success', 'Connection Test Successful', data.message);
+        } else {
+            showAlert('danger', 'Connection Test Failed', data.message);
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showAlert('danger', 'Error', 'Failed to test connection: ' + error.message);
+    });
+}
+
+function syncIntegration(integrationId) {
+    if (confirm('This will trigger a manual sync. Continue?')) {
+        showLoading('Synchronizing data...');
+        
+        fetch(`/integrations/${integrationId}/sync`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({force_update: false})
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                showAlert('success', 'Sync Completed', 
+                    `Successfully processed ${data.records_success}/${data.records_processed} records.`);
+            } else {
+                showAlert('danger', 'Sync Failed', data.message);
+            }
+            // Reload the page to update sync timestamps
+            setTimeout(() => window.location.reload(), 2000);
+        })
+        .catch(error => {
+            hideLoading();
+            showAlert('danger', 'Error', 'Failed to sync: ' + error.message);
+        });
+    }
+}
+
+function toggleIntegration(integrationId) {
+    showLoading('Updating integration...');
+    
+    fetch(`/integrations/${integrationId}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showAlert('success', 'Success', data.message);
+            // Reload the page to update status
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showAlert('danger', 'Error', data.message);
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showAlert('danger', 'Error', 'Failed to toggle integration: ' + error.message);
+    });
+}
+
+function deleteIntegration(integrationId, integrationName) {
+    if (confirm(`Are you sure you want to delete the integration "${integrationName}"? This action cannot be undone.`)) {
+        showLoading('Deleting integration...');
+        
+        // Create a form and submit it (since we need a proper POST request)
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/integrations/${integrationId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function showLoading(message) {
+    document.getElementById('loadingMessage').textContent = message;
+    new bootstrap.Modal(document.getElementById('loadingModal')).show();
+}
+
+function hideLoading() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+    if (modal) {
+        modal.hide();
+    }
+}
+
+function showAlert(type, title, message) {
+    // Create and show a Bootstrap alert
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <strong>${title}:</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insert at the top of the card body
+    const cardBody = document.querySelector('.card-body');
+    cardBody.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const alert = cardBody.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

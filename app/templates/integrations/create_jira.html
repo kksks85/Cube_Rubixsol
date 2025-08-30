@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fab fa-jira text-info"></i> Setup JIRA Integration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>JIRA Integration</strong><br>
+                        This will synchronize work orders with JIRA issues. You'll need a JIRA API token - 
+                        <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">create one here</a>.
+                    </div>
+                    
+                    <form method="POST" id="jiraForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Basic Information -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Basic Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.name.label(class="form-label") }}
+                                            {{ form.name(class="form-control", placeholder="e.g., Corporate JIRA") }}
+                                            {% if form.name.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.name.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.sync_frequency.label(class="form-label") }}
+                                            <div class="input-group">
+                                                {{ form.sync_frequency(class="form-control") }}
+                                                <span class="input-group-text">minutes</span>
+                                            </div>
+                                            {% if form.sync_frequency.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.sync_frequency.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.description.label(class="form-label") }}
+                                    {{ form.description(class="form-control", rows="2", placeholder="Optional description for this integration") }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.description.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- JIRA Server Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">JIRA Server Configuration</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    {{ form.base_url.label(class="form-label") }}
+                                    {{ form.base_url(class="form-control", placeholder="https://company.atlassian.net") }}
+                                    <small class="text-muted">Your JIRA base URL (for Cloud: https://yourcompany.atlassian.net)</small>
+                                    {% if form.base_url.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.base_url.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.username.label(class="form-label") }}
+                                            {{ form.username(class="form-control", placeholder="your-email@company.com") }}
+                                            <small class="text-muted">Your JIRA email address</small>
+                                            {% if form.username.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.username.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.api_token.label(class="form-label") }}
+                                            {{ form.api_token(class="form-control", placeholder="Your API token") }}
+                                            <small class="text-muted">
+                                                <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">
+                                                    Generate API token <i class="fas fa-external-link-alt"></i>
+                                                </a>
+                                            </small>
+                                            {% if form.api_token.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.api_token.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Project Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Project Configuration</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.project_key.label(class="form-label") }}
+                                            {{ form.project_key(class="form-control", placeholder="SUPPORT", style="text-transform: uppercase") }}
+                                            <small class="text-muted">JIRA project key (e.g., SUPPORT, IT, HELP)</small>
+                                            {% if form.project_key.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.project_key.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.issue_type.label(class="form-label") }}
+                                            {{ form.issue_type(class="form-control") }}
+                                            <small class="text-muted">Default issue type for work orders</small>
+                                            {% if form.issue_type.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.issue_type.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.default_assignee.label(class="form-label") }}
+                                            {{ form.default_assignee(class="form-control", placeholder="username or email") }}
+                                            <small class="text-muted">Optional: Default assignee for new issues</small>
+                                            {% if form.default_assignee.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.default_assignee.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.priority_mapping.label(class="form-label") }}
+                                            {{ form.priority_mapping(class="form-control", readonly=true, value="Auto-configured") }}
+                                            <small class="text-muted">Priority mapping will be auto-configured</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sync Options -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Synchronization Options</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <h6 class="text-muted">Work Order → JIRA</h6>
+                                            <div class="form-check">
+                                                {{ form.create_jira_issues(class="form-check-input") }}
+                                                {{ form.create_jira_issues.label(class="form-check-label") }}
+                                            </div>
+                                            <div class="form-check">
+                                                {{ form.update_jira_issues(class="form-check-input") }}
+                                                {{ form.update_jira_issues.label(class="form-check-label") }}
+                                            </div>
+                                            <div class="form-check">
+                                                {{ form.sync_wo_comments(class="form-check-input") }}
+                                                {{ form.sync_wo_comments.label(class="form-check-label") }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <h6 class="text-muted">JIRA → Work Order</h6>
+                                            <div class="form-check">
+                                                {{ form.sync_jira_updates(class="form-check-input") }}
+                                                {{ form.sync_jira_updates.label(class="form-check-label") }}
+                                            </div>
+                                            <div class="form-check">
+                                                {{ form.sync_jira_comments(class="form-check-input") }}
+                                                {{ form.sync_jira_comments.label(class="form-check-label") }}
+                                            </div>
+                                            <div class="form-check">
+                                                {{ form.sync_status_changes(class="form-check-input") }}
+                                                {{ form.sync_status_changes.label(class="form-check-label") }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            {{ form.sync_attachments(class="form-check-input") }}
+                                            {{ form.sync_attachments.label(class="form-check-label") }}
+                                            <small class="form-text text-muted d-block">Sync file attachments (experimental)</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            {{ form.auto_sync(class="form-check-input") }}
+                                            {{ form.auto_sync.label(class="form-check-label") }}
+                                            <small class="form-text text-muted d-block">Enable automatic sync</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            {{ form.is_enabled(class="form-check-input") }}
+                                            {{ form.is_enabled.label(class="form-check-label") }}
+                                            <small class="form-text text-muted d-block">Enable this integration</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Advanced Options -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <button class="btn btn-link p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#advancedOptions">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-chevron-down"></i> Advanced Options
+                                    </h6>
+                                </button>
+                            </div>
+                            <div class="collapse" id="advancedOptions">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                {{ form.webhook_secret.label(class="form-label") }}
+                                                {{ form.webhook_secret(class="form-control", placeholder="Optional webhook secret") }}
+                                                <small class="text-muted">Secret for webhook authentication</small>
+                                                {% if form.webhook_secret.errors %}
+                                                    <div class="text-danger">
+                                                        {% for error in form.webhook_secret.errors %}
+                                                            <small>{{ error }}</small>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Custom Fields</label>
+                                                <textarea class="form-control" rows="3" placeholder='{"customfield_10001": "work_order_id", "customfield_10002": "priority"}' id="custom_fields"></textarea>
+                                                <small class="text-muted">JSON mapping of JIRA custom fields (optional)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <strong>Webhook URL:</strong> After creating this integration, configure this webhook URL in your JIRA project:
+                                        <br><code id="webhookUrl">{{ request.url_root }}integrations/webhooks/jira/[INTEGRATION_ID]</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('integrations.list_integrations') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Integrations
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="testConnection()">
+                                    <i class="fas fa-network-wired"></i> Test Connection
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fab fa-jira"></i> Create JIRA Integration
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Connection Modal -->
+<div class="modal fade" id="testModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">JIRA Connection Test</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="testResults">
+                <!-- Test results will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testConnection() {
+    const form = document.getElementById('jiraForm');
+    const formData = new FormData(form);
+    
+    // Convert FormData to JSON
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+        if (form.elements[key] && form.elements[key].type === 'checkbox') {
+            data[key] = form.elements[key].checked;
+        } else {
+            data[key] = value;
+        }
+    }
+    
+    // Add custom fields if provided
+    const customFieldsText = document.getElementById('custom_fields').value.trim();
+    if (customFieldsText) {
+        try {
+            data.custom_fields = JSON.parse(customFieldsText);
+        } catch (e) {
+            alert('Invalid JSON in custom fields. Please check the format.');
+            return;
+        }
+    }
+    
+    // Show loading in modal
+    document.getElementById('testResults').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Testing connection...</span>
+            </div>
+            <div class="mt-3">Connecting to JIRA server...</div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('testModal'));
+    modal.show();
+    
+    // Send test request
+    fetch('/integrations/test_jira', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        let html = '';
+        if (result.success) {
+            html = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> JIRA Connection Successful
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Connection Details:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Server:</strong> ${result.server_info.baseUrl}</li>
+                            <li><strong>Version:</strong> ${result.server_info.version || 'Cloud'}</li>
+                            <li><strong>Response Time:</strong> ${result.response_time}ms</li>
+                            <li><strong>User:</strong> ${result.user_info.displayName}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Project Information:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Project:</strong> ${result.project_info.name}</li>
+                            <li><strong>Key:</strong> ${result.project_info.key}</li>
+                            <li><strong>Type:</strong> ${result.project_info.projectTypeKey}</li>
+                            <li><strong>Issues:</strong> ${result.project_info.issues_count || 'N/A'}</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            if (result.available_issue_types && result.available_issue_types.length > 0) {
+                html += `
+                    <div class="mt-3">
+                        <h6>Available Issue Types:</h6>
+                        <div class="row">
+                `;
+                result.available_issue_types.forEach(issueType => {
+                    html += `
+                        <div class="col-md-3 mb-2">
+                            <span class="badge badge-outline-secondary">${issueType.name}</span>
+                        </div>
+                    `;
+                });
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (result.available_priorities && result.available_priorities.length > 0) {
+                html += `
+                    <div class="mt-3">
+                        <h6>Available Priorities:</h6>
+                        <div class="row">
+                `;
+                result.available_priorities.forEach(priority => {
+                    html += `
+                        <div class="col-md-3 mb-2">
+                            <span class="badge badge-outline-info">${priority.name}</span>
+                        </div>
+                    `;
+                });
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            html = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Connection Failed
+                </div>
+                <div class="mt-3">
+                    <h6>Error Details:</h6>
+                    <div class="bg-light p-3 rounded">
+                        <strong>Error:</strong> ${result.message}<br>
+                        ${result.error_code ? '<strong>Status Code:</strong> ' + result.error_code + '<br>' : ''}
+                        ${result.suggestions ? '<strong>Suggestions:</strong><ul>' + 
+                            result.suggestions.map(s => '<li>' + s + '</li>').join('') + '</ul>' : ''}
+                    </div>
+                </div>
+            `;
+        }
+        document.getElementById('testResults').innerHTML = html;
+    })
+    .catch(error => {
+        document.getElementById('testResults').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> Test Failed
+            </div>
+            <div class="mt-3">
+                <strong>Error:</strong> ${error.message}
+            </div>
+        `;
+    });
+}
+
+// Form validation
+document.getElementById('jiraForm').addEventListener('submit', function(e) {
+    const required_fields = ['name', 'base_url', 'username', 'api_token', 'project_key'];
+    let missing_fields = [];
+    
+    required_fields.forEach(field => {
+        const element = document.getElementById(field);
+        if (!element.value.trim()) {
+            missing_fields.push(element.labels[0].textContent.replace('*', '').trim());
+        }
+    });
+    
+    if (missing_fields.length > 0) {
+        e.preventDefault();
+        alert('Please fill in the following required fields:\n' + missing_fields.join('\n'));
+        return false;
+    }
+    
+    // Validate custom fields JSON if provided
+    const customFieldsText = document.getElementById('custom_fields').value.trim();
+    if (customFieldsText) {
+        try {
+            JSON.parse(customFieldsText);
+        } catch (e) {
+            e.preventDefault();
+            alert('Invalid JSON in custom fields. Please check the format.');
+            return false;
+        }
+    }
+    
+    return true;
+});
+
+// Auto-uppercase project key
+document.getElementById('project_key').addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+});
+
+// Validate URL format
+document.getElementById('base_url').addEventListener('blur', function() {
+    const url = this.value.trim();
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        this.value = 'https://' + url;
+    }
+    
+    // Remove trailing slash
+    if (this.value.endsWith('/')) {
+        this.value = this.value.slice(0, -1);
+    }
+});
+</script>
+{% endblock %}

@@ -89,6 +89,12 @@ def create_app():
     from app.reporting import bp as reporting_bp
     app.register_blueprint(reporting_bp, url_prefix='/reporting')
     
+    from app.data_import import bp as data_import_bp
+    app.register_blueprint(data_import_bp, url_prefix='/data-import')
+    
+    from app.integrations import bp as integrations_bp
+    app.register_blueprint(integrations_bp, url_prefix='/integrations')
+    
     # Create database tables
     with app.app_context():
         db.create_all()

@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fab fa-microsoft text-primary"></i> Setup Active Directory Integration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Active Directory Integration</strong><br>
+                        This will allow you to synchronize users and groups from your Active Directory/LDAP server. 
+                        Ensure you have the necessary permissions to bind to the LDAP server.
+                    </div>
+                    
+                    <form method="POST" id="adForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Basic Information -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Basic Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.name.label(class="form-label") }}
+                                            {{ form.name(class="form-control", placeholder="e.g., Corporate AD") }}
+                                            {% if form.name.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.name.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.sync_frequency.label(class="form-label") }}
+                                            <div class="input-group">
+                                                {{ form.sync_frequency(class="form-control") }}
+                                                <span class="input-group-text">minutes</span>
+                                            </div>
+                                            {% if form.sync_frequency.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.sync_frequency.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.description.label(class="form-label") }}
+                                    {{ form.description(class="form-control", rows="2", placeholder="Optional description for this integration") }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.description.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- LDAP Server Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">LDAP Server Configuration</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            {{ form.server.label(class="form-label") }}
+                                            {{ form.server(class="form-control", placeholder="ldap.company.com or 192.168.1.100") }}
+                                            {% if form.server.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.server.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            {{ form.port.label(class="form-label") }}
+                                            {{ form.port(class="form-control") }}
+                                            <small class="text-muted">389 (LDAP) or 636 (LDAPS)</small>
+                                            {% if form.port.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.port.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            {{ form.use_ssl(class="form-check-input") }}
+                                            {{ form.use_ssl.label(class="form-check-label") }}
+                                            <small class="form-text text-muted d-block">Use SSL/TLS for secure connection</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            {{ form.start_tls(class="form-check-input") }}
+                                            {{ form.start_tls.label(class="form-check-label") }}
+                                            <small class="form-text text-muted d-block">Upgrade to TLS after connection</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Authentication -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Authentication</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.bind_dn.label(class="form-label") }}
+                                            {{ form.bind_dn(class="form-control", placeholder="CN=admin,DC=company,DC=com") }}
+                                            <small class="text-muted">Distinguished Name for binding to LDAP</small>
+                                            {% if form.bind_dn.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.bind_dn.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.bind_password.label(class="form-label") }}
+                                            {{ form.bind_password(class="form-control") }}
+                                            {% if form.bind_password.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.bind_password.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Search Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Search Configuration</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    {{ form.base_dn.label(class="form-label") }}
+                                    {{ form.base_dn(class="form-control", placeholder="DC=company,DC=com") }}
+                                    <small class="text-muted">Base Distinguished Name for all searches</small>
+                                    {% if form.base_dn.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.base_dn.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.user_search_base.label(class="form-label") }}
+                                            {{ form.user_search_base(class="form-control", placeholder="OU=Users,DC=company,DC=com") }}
+                                            <small class="text-muted">Optional: Specific OU for users</small>
+                                            {% if form.user_search_base.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.user_search_base.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.group_search_base.label(class="form-label") }}
+                                            {{ form.group_search_base(class="form-control", placeholder="OU=Groups,DC=company,DC=com") }}
+                                            <small class="text-muted">Optional: Specific OU for groups</small>
+                                            {% if form.group_search_base.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.group_search_base.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.user_filter.label(class="form-label") }}
+                                            {{ form.user_filter(class="form-control") }}
+                                            <small class="text-muted">LDAP filter for finding users</small>
+                                            {% if form.user_filter.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.user_filter.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.group_filter.label(class="form-label") }}
+                                            {{ form.group_filter(class="form-control") }}
+                                            <small class="text-muted">LDAP filter for finding groups</small>
+                                            {% if form.group_filter.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.group_filter.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sync Options -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Synchronization Options</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-check mb-3">
+                                            {{ form.sync_users(class="form-check-input") }}
+                                            {{ form.sync_users.label(class="form-check-label") }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check mb-3">
+                                            {{ form.sync_groups(class="form-check-input") }}
+                                            {{ form.sync_groups.label(class="form-check-label") }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check mb-3">
+                                            {{ form.auto_sync(class="form-check-input") }}
+                                            {{ form.auto_sync.label(class="form-check-label") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            {{ form.create_missing_users(class="form-check-input") }}
+                                            {{ form.create_missing_users.label(class="form-check-label") }}
+                                            <small class="form-text text-muted d-block">Create new users found in AD</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            {{ form.update_existing_users(class="form-check-input") }}
+                                            {{ form.update_existing_users.label(class="form-check-label") }}
+                                            <small class="form-text text-muted d-block">Update existing user information</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check">
+                                    {{ form.is_enabled(class="form-check-input") }}
+                                    {{ form.is_enabled.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('integrations.list_integrations') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Integrations
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="testConnection()">
+                                    <i class="fas fa-network-wired"></i> Test Connection
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fab fa-microsoft"></i> Create AD Integration
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Connection Modal -->
+<div class="modal fade" id="testModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Active Directory Connection Test</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="testResults">
+                <!-- Test results will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testConnection() {
+    const form = document.getElementById('adForm');
+    const formData = new FormData(form);
+    
+    // Convert FormData to JSON
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+        if (form.elements[key].type === 'checkbox') {
+            data[key] = form.elements[key].checked;
+        } else {
+            data[key] = value;
+        }
+    }
+    
+    // Show loading in modal
+    document.getElementById('testResults').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Testing connection...</span>
+            </div>
+            <div class="mt-3">Connecting to Active Directory server...</div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('testModal'));
+    modal.show();
+    
+    // Send test request
+    fetch('/integrations/test_ad', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        let html = '';
+        if (result.success) {
+            html = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> Active Directory Connection Successful
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Connection Details:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Server:</strong> ${result.server_info.server}</li>
+                            <li><strong>Port:</strong> ${result.server_info.port}</li>
+                            <li><strong>SSL:</strong> ${result.server_info.ssl ? 'Yes' : 'No'}</li>
+                            <li><strong>Response Time:</strong> ${result.response_time}ms</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Search Results:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Users Found:</strong> ${result.search_results.users_count}</li>
+                            <li><strong>Groups Found:</strong> ${result.search_results.groups_count}</li>
+                            <li><strong>Base DN Valid:</strong> ${result.search_results.base_dn_valid ? 'Yes' : 'No'}</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            if (result.sample_users && result.sample_users.length > 0) {
+                html += `
+                    <div class="mt-3">
+                        <h6>Sample Users (first 5):</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Display Name</th>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                result.sample_users.forEach(user => {
+                    html += `
+                        <tr>
+                            <td>${user.displayName || '-'}</td>
+                            <td>${user.sAMAccountName || user.uid || '-'}</td>
+                            <td>${user.mail || '-'}</td>
+                        </tr>
+                    `;
+                });
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            html = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Connection Failed
+                </div>
+                <div class="mt-3">
+                    <h6>Error Details:</h6>
+                    <div class="bg-light p-3 rounded">
+                        <strong>Error:</strong> ${result.message}<br>
+                        ${result.error_code ? '<strong>Error Code:</strong> ' + result.error_code + '<br>' : ''}
+                        ${result.suggestions ? '<strong>Suggestions:</strong><ul>' + 
+                            result.suggestions.map(s => '<li>' + s + '</li>').join('') + '</ul>' : ''}
+                    </div>
+                </div>
+            `;
+        }
+        document.getElementById('testResults').innerHTML = html;
+    })
+    .catch(error => {
+        document.getElementById('testResults').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> Test Failed
+            </div>
+            <div class="mt-3">
+                <strong>Error:</strong> ${error.message}
+            </div>
+        `;
+    });
+}
+
+// Form validation
+document.getElementById('adForm').addEventListener('submit', function(e) {
+    const required_fields = ['name', 'server', 'port', 'bind_dn', 'bind_password', 'base_dn'];
+    let missing_fields = [];
+    
+    required_fields.forEach(field => {
+        const element = document.getElementById(field);
+        if (!element.value.trim()) {
+            missing_fields.push(element.labels[0].textContent.replace('*', '').trim());
+        }
+    });
+    
+    if (missing_fields.length > 0) {
+        e.preventDefault();
+        alert('Please fill in the following required fields:\n' + missing_fields.join('\n'));
+        return false;
+    }
+    
+    return true;
+});
+
+// Update port based on SSL selection
+document.getElementById('use_ssl').addEventListener('change', function() {
+    const portField = document.getElementById('port');
+    if (this.checked && portField.value === '389') {
+        portField.value = '636';
+    } else if (!this.checked && portField.value === '636') {
+        portField.value = '389';
+    }
+});
+</script>
+{% endblock %}

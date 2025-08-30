@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plus"></i> Create Integration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="integrationForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.name.label(class="form-label") }}
+                                    {{ form.name(class="form-control") }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.provider_id.label(class="form-label") }}
+                                    {{ form.provider_id(class="form-select", onchange="updateFormFields()") }}
+                                    {% if form.provider_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.provider_id.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows="3") }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Configuration Section -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Configuration</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="configFields">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                {{ form.endpoint_url.label(class="form-label") }}
+                                                {{ form.endpoint_url(class="form-control") }}
+                                                {% if form.endpoint_url.errors %}
+                                                    <div class="text-danger">
+                                                        {% for error in form.endpoint_url.errors %}
+                                                            <small>{{ error }}</small>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                {{ form.auth_method.label(class="form-label") }}
+                                                {{ form.auth_method(class="form-select", onchange="updateAuthFields()") }}
+                                                {% if form.auth_method.errors %}
+                                                    <div class="text-danger">
+                                                        {% for error in form.auth_method.errors %}
+                                                            <small>{{ error }}</small>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="authFields">
+                                        <div class="row" id="basicAuthFields" style="display: none;">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    {{ form.username.label(class="form-label") }}
+                                                    {{ form.username(class="form-control") }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    {{ form.password.label(class="form-label") }}
+                                                    {{ form.password(class="form-control") }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row" id="tokenAuthFields" style="display: none;">
+                                            <div class="col-md-12">
+                                                <div class="mb-3">
+                                                    {{ form.api_token.label(class="form-label") }}
+                                                    {{ form.api_token(class="form-control") }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row" id="oauthFields" style="display: none;">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    {{ form.client_id.label(class="form-label") }}
+                                                    {{ form.client_id(class="form-control") }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    {{ form.client_secret.label(class="form-label") }}
+                                                    {{ form.client_secret(class="form-control") }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sync Settings -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Sync Settings</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            {{ form.sync_frequency.label(class="form-label") }}
+                                            <div class="input-group">
+                                                {{ form.sync_frequency(class="form-control") }}
+                                                <span class="input-group-text">minutes</span>
+                                            </div>
+                                            {% if form.sync_frequency.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.sync_frequency.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">&nbsp;</label>
+                                            <div class="form-check">
+                                                {{ form.auto_sync(class="form-check-input") }}
+                                                {{ form.auto_sync.label(class="form-check-label") }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">&nbsp;</label>
+                                            <div class="form-check">
+                                                {{ form.is_enabled(class="form-check-input") }}
+                                                {{ form.is_enabled.label(class="form-check-label") }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('integrations.list_integrations') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="testConnection()">
+                                    <i class="fas fa-network-wired"></i> Test Connection
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Create Integration
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Connection Modal -->
+<div class="modal fade" id="testModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Connection Test Results</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="testResults">
+                <!-- Test results will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateFormFields() {
+    const providerSelect = document.getElementById('provider_id');
+    const selectedOption = providerSelect.options[providerSelect.selectedIndex];
+    const providerType = selectedOption.dataset.type;
+    
+    // Update form fields based on provider type
+    updateAuthFields();
+    
+    // You can add specific field updates based on provider type here
+    if (providerType === 'REST') {
+        // Show REST-specific fields
+    } else if (providerType === 'SOAP') {
+        // Show SOAP-specific fields
+    }
+}
+
+function updateAuthFields() {
+    const authMethod = document.getElementById('auth_method').value;
+    
+    // Hide all auth fields first
+    document.getElementById('basicAuthFields').style.display = 'none';
+    document.getElementById('tokenAuthFields').style.display = 'none';
+    document.getElementById('oauthFields').style.display = 'none';
+    
+    // Show relevant auth fields
+    if (authMethod === 'basic') {
+        document.getElementById('basicAuthFields').style.display = 'block';
+    } else if (authMethod === 'token' || authMethod === 'bearer') {
+        document.getElementById('tokenAuthFields').style.display = 'block';
+    } else if (authMethod === 'oauth2') {
+        document.getElementById('oauthFields').style.display = 'block';
+    }
+}
+
+function testConnection() {
+    const form = document.getElementById('integrationForm');
+    const formData = new FormData(form);
+    
+    // Convert FormData to JSON
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+        data[key] = value;
+    }
+    
+    // Show loading in modal
+    document.getElementById('testResults').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Testing...</span>
+            </div>
+            <div class="mt-3">Testing connection...</div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('testModal'));
+    modal.show();
+    
+    // Send test request
+    fetch('/integrations/test_config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        let html = '';
+        if (result.success) {
+            html = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> Connection Successful
+                </div>
+                <div class="mt-3">
+                    <strong>Response Time:</strong> ${result.response_time}ms<br>
+                    <strong>Status:</strong> ${result.status_code || 'Connected'}<br>
+                    ${result.message ? '<strong>Message:</strong> ' + result.message : ''}
+                </div>
+            `;
+            if (result.details) {
+                html += `
+                    <div class="mt-3">
+                        <h6>Connection Details:</h6>
+                        <pre class="bg-light p-2 rounded">${JSON.stringify(result.details, null, 2)}</pre>
+                    </div>
+                `;
+            }
+        } else {
+            html = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Connection Failed
+                </div>
+                <div class="mt-3">
+                    <strong>Error:</strong> ${result.message}<br>
+                    ${result.error_code ? '<strong>Error Code:</strong> ' + result.error_code + '<br>' : ''}
+                </div>
+            `;
+            if (result.details) {
+                html += `
+                    <div class="mt-3">
+                        <h6>Error Details:</h6>
+                        <pre class="bg-light p-2 rounded text-danger">${JSON.stringify(result.details, null, 2)}</pre>
+                    </div>
+                `;
+            }
+        }
+        document.getElementById('testResults').innerHTML = html;
+    })
+    .catch(error => {
+        document.getElementById('testResults').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> Test Failed
+            </div>
+            <div class="mt-3">
+                <strong>Error:</strong> ${error.message}
+            </div>
+        `;
+    });
+}
+
+// Initialize form on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateAuthFields();
+    updateFormFields();
+});
+
+// Form validation
+document.getElementById('integrationForm').addEventListener('submit', function(e) {
+    const name = document.getElementById('name').value.trim();
+    const providerId = document.getElementById('provider_id').value;
+    const endpointUrl = document.getElementById('endpoint_url').value.trim();
+    
+    if (!name || !providerId || !endpointUrl) {
+        e.preventDefault();
+        alert('Please fill in all required fields.');
+        return false;
+    }
+    
+    // Additional validation based on auth method
+    const authMethod = document.getElementById('auth_method').value;
+    if (authMethod === 'basic') {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        if (!username || !password) {
+            e.preventDefault();
+            alert('Username and password are required for basic authentication.');
+            return false;
+        }
+    } else if (authMethod === 'token' || authMethod === 'bearer') {
+        const token = document.getElementById('api_token').value.trim();
+        if (!token) {
+            e.preventDefault();
+            alert('API token is required for token authentication.');
+            return false;
+        }
+    } else if (authMethod === 'oauth2') {
+        const clientId = document.getElementById('client_id').value.trim();
+        const clientSecret = document.getElementById('client_secret').value.trim();
+        if (!clientId || !clientSecret) {
+            e.preventDefault();
+            alert('Client ID and secret are required for OAuth2 authentication.');
+            return false;
+        }
+    }
+    
+    return true;
+});
+</script>
+{% endblock %}

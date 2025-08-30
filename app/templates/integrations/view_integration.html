@@ -1,0 +1,526 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Integration Header -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        {% if integration.provider.name == 'active_directory' %}
+                            <i class="fab fa-microsoft fa-2x text-primary me-3"></i>
+                        {% elif integration.provider.name == 'jira' %}
+                            <i class="fab fa-jira fa-2x text-info me-3"></i>
+                        {% elif integration.provider.provider_type == 'REST' %}
+                            <i class="fas fa-cloud fa-2x text-success me-3"></i>
+                        {% elif integration.provider.provider_type == 'SOAP' %}
+                            <i class="fas fa-server fa-2x text-warning me-3"></i>
+                        {% else %}
+                            <i class="fas fa-plug fa-2x text-secondary me-3"></i>
+                        {% endif %}
+                        <div>
+                            <h4 class="mb-0">{{ integration.name }}</h4>
+                            <small class="text-muted">{{ integration.provider.display_name }} Integration</small>
+                        </div>
+                    </div>
+                    <div>
+                        {% if integration.status == 'ACTIVE' %}
+                            <span class="badge badge-success fs-6">
+                                <i class="fas fa-check-circle"></i> Active
+                            </span>
+                        {% elif integration.status == 'ERROR' %}
+                            <span class="badge badge-danger fs-6" title="{{ integration.last_error }}">
+                                <i class="fas fa-exclamation-triangle"></i> Error
+                            </span>
+                        {% elif integration.status == 'DISABLED' %}
+                            <span class="badge badge-secondary fs-6">
+                                <i class="fas fa-pause-circle"></i> Disabled
+                            </span>
+                        {% else %}
+                            <span class="badge badge-warning fs-6">
+                                <i class="fas fa-clock"></i> Pending
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            {% if integration.description %}
+                            <p class="text-muted mb-2">{{ integration.description }}</p>
+                            {% endif %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Created:</small><br>
+                                    <strong>{{ integration.created_at.strftime('%B %d, %Y at %I:%M %p') }}</strong><br>
+                                    <small>by {{ integration.created_by.full_name }}</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">Last Sync:</small><br>
+                                    {% if integration.last_sync_at %}
+                                        <strong>{{ integration.last_sync_at.strftime('%B %d, %Y at %I:%M %p') }}</strong>
+                                    {% else %}
+                                        <strong class="text-muted">Never</strong>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary" onclick="testConnection()">
+                                    <i class="fas fa-network-wired"></i> Test
+                                </button>
+                                <button type="button" class="btn btn-outline-success" onclick="syncNow()">
+                                    <i class="fas fa-sync"></i> Sync
+                                </button>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                                            data-bs-toggle="dropdown">
+                                        <i class="fas fa-cog"></i> Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="{{ url_for('integrations.edit_integration', id=integration.id) }}">
+                                            <i class="fas fa-edit"></i> Edit Settings
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="toggleIntegration()">
+                                            <i class="fas fa-{% if integration.is_enabled %}pause{% else %}play{% endif %}"></i> 
+                                            {% if integration.is_enabled %}Disable{% else %}Enable{% endif %}
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteIntegration()">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Configuration Details -->
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-cog"></i> Configuration</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="col-4"><strong>Provider:</strong></div>
+                                <div class="col-8">{{ integration.provider.display_name }}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4"><strong>Type:</strong></div>
+                                <div class="col-8">
+                                    <span class="badge badge-outline-info">{{ integration.provider.provider_type }}</span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4"><strong>Endpoint:</strong></div>
+                                <div class="col-8">
+                                    <code>{{ integration.config.get('endpoint_url', 'Not configured') }}</code>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4"><strong>Auth Method:</strong></div>
+                                <div class="col-8">
+                                    <span class="badge badge-outline-secondary">
+                                        {{ integration.config.get('auth_method', 'None').title() }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4"><strong>Auto Sync:</strong></div>
+                                <div class="col-8">
+                                    {% if integration.auto_sync %}
+                                        <span class="text-success"><i class="fas fa-check"></i> Enabled</span>
+                                    {% else %}
+                                        <span class="text-muted"><i class="fas fa-times"></i> Disabled</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4"><strong>Frequency:</strong></div>
+                                <div class="col-8">Every {{ integration.sync_frequency }} minutes</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Field Mappings -->
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fas fa-exchange-alt"></i> Field Mappings</h6>
+                            <button class="btn btn-sm btn-outline-primary" onclick="addMapping()">
+                                <i class="fas fa-plus"></i> Add Mapping
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if integration.mappings %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Local Field</th>
+                                                <th>Remote Field</th>
+                                                <th>Transform</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for mapping in integration.mappings %}
+                                            <tr>
+                                                <td><code>{{ mapping.local_field }}</code></td>
+                                                <td><code>{{ mapping.remote_field }}</code></td>
+                                                <td>
+                                                    {% if mapping.transform_function %}
+                                                        <span class="badge badge-outline-warning">{{ mapping.transform_function }}</span>
+                                                    {% else %}
+                                                        <span class="text-muted">None</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-danger" 
+                                                            onclick="deleteMapping({{ mapping.id }})">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-exchange-alt fa-2x mb-2"></i>
+                                    <p>No field mappings configured</p>
+                                    <button class="btn btn-sm btn-primary" onclick="addMapping()">
+                                        Add First Mapping
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistics and Logs -->
+                <div class="col-md-6">
+                    <!-- Sync Statistics -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Sync Statistics</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h4 class="text-primary mb-0">{{ sync_stats.total_syncs }}</h4>
+                                        <small class="text-muted">Total Syncs</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h4 class="text-success mb-0">{{ sync_stats.successful_syncs }}</h4>
+                                        <small class="text-muted">Successful</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <h4 class="text-danger mb-0">{{ sync_stats.failed_syncs }}</h4>
+                                    <small class="text-muted">Failed</small>
+                                </div>
+                            </div>
+                            {% if sync_stats.total_syncs > 0 %}
+                            <div class="mt-3">
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {{ (sync_stats.successful_syncs / sync_stats.total_syncs * 100)|round(1) }}%">
+                                        {{ (sync_stats.successful_syncs / sync_stats.total_syncs * 100)|round(1) }}%
+                                    </div>
+                                </div>
+                                <small class="text-muted">Success Rate</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Sync Logs -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fas fa-history"></i> Recent Sync Logs</h6>
+                            <a href="{{ url_for('integrations.sync_logs', integration_id=integration.id) }}" 
+                               class="btn btn-sm btn-outline-secondary">View All</a>
+                        </div>
+                        <div class="card-body p-0">
+                            {% if recent_logs %}
+                                <div class="list-group list-group-flush">
+                                    {% for log in recent_logs %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="d-flex align-items-center mb-1">
+                                                    {% if log.status == 'SUCCESS' %}
+                                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                                    {% elif log.status == 'ERROR' %}
+                                                        <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-clock text-warning me-2"></i>
+                                                    {% endif %}
+                                                    <small class="fw-bold">{{ log.operation }}</small>
+                                                </div>
+                                                {% if log.error_message %}
+                                                    <small class="text-danger">{{ log.error_message[:100] }}{% if log.error_message|length > 100 %}...{% endif %}</small>
+                                                {% else %}
+                                                    <small class="text-muted">
+                                                        Processed {{ log.records_processed }} records
+                                                        {% if log.records_success != log.records_processed %}
+                                                            ({{ log.records_success }} successful)
+                                                        {% endif %}
+                                                    </small>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">{{ log.started_at.strftime('%m/%d %H:%M') }}</small>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center p-4 text-muted">
+                                    <i class="fas fa-history fa-2x mb-2"></i>
+                                    <p>No sync logs yet</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="mt-3">
+                <a href="{{ url_for('integrations.list_integrations') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Integrations
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Results Modal -->
+<div class="modal fade" id="testModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Connection Test Results</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="testResults">
+                <!-- Results will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Mapping Modal -->
+<div class="modal fade" id="mappingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Field Mapping</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="mappingForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Local Field</label>
+                        <select class="form-select" id="localField" required>
+                            <option value="">Select field...</option>
+                            <option value="user.username">User Username</option>
+                            <option value="user.email">User Email</option>
+                            <option value="user.full_name">User Full Name</option>
+                            <option value="workorder.title">Work Order Title</option>
+                            <option value="workorder.description">Work Order Description</option>
+                            <option value="workorder.priority">Work Order Priority</option>
+                            <option value="workorder.status">Work Order Status</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Remote Field</label>
+                        <input type="text" class="form-control" id="remoteField" 
+                               placeholder="e.g., displayName, summary, priority" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Transform Function (Optional)</label>
+                        <select class="form-select" id="transformFunction">
+                            <option value="">None</option>
+                            <option value="uppercase">Uppercase</option>
+                            <option value="lowercase">Lowercase</option>
+                            <option value="title_case">Title Case</option>
+                            <option value="date_format">Date Format</option>
+                            <option value="custom">Custom Function</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Mapping</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function testConnection() {
+    document.getElementById('testResults').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Testing...</span>
+            </div>
+            <div class="mt-3">Testing connection...</div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('testModal'));
+    modal.show();
+    
+    fetch(`/integrations/{{ integration.id }}/test`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({test_type: 'connection'})
+    })
+    .then(response => response.json())
+    .then(data => {
+        let html = '';
+        if (data.success) {
+            html = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> Connection Successful
+                </div>
+                <div class="mt-3">
+                    <strong>Response Time:</strong> ${data.response_time}ms<br>
+                    <strong>Status:</strong> ${data.status_code || 'Connected'}
+                </div>
+            `;
+        } else {
+            html = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Connection Failed
+                </div>
+                <div class="mt-3">
+                    <strong>Error:</strong> ${data.message}
+                </div>
+            `;
+        }
+        document.getElementById('testResults').innerHTML = html;
+    })
+    .catch(error => {
+        document.getElementById('testResults').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> Test Failed
+            </div>
+            <div class="mt-3">
+                <strong>Error:</strong> ${error.message}
+            </div>
+        `;
+    });
+}
+
+function syncNow() {
+    if (confirm('This will trigger a manual sync. Continue?')) {
+        window.location.href = `/integrations/{{ integration.id }}/sync`;
+    }
+}
+
+function toggleIntegration() {
+    fetch(`/integrations/{{ integration.id }}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function deleteIntegration() {
+    if (confirm('Are you sure you want to delete this integration? This action cannot be undone.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/integrations/{{ integration.id }}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function addMapping() {
+    const modal = new bootstrap.Modal(document.getElementById('mappingModal'));
+    modal.show();
+}
+
+function deleteMapping(mappingId) {
+    if (confirm('Are you sure you want to delete this mapping?')) {
+        fetch(`/integrations/{{ integration.id }}/mappings/${mappingId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+}
+
+// Handle mapping form submission
+document.getElementById('mappingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        local_field: document.getElementById('localField').value,
+        remote_field: document.getElementById('remoteField').value,
+        transform_function: document.getElementById('transformFunction').value || null
+    };
+    
+    fetch(`/integrations/{{ integration.id }}/mappings`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+});
+</script>
+{% endblock %}

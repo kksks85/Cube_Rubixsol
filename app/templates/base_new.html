@@ -22,8 +22,8 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid px-3">
             <a class="navbar-brand fw-semibold d-flex align-items-center" href="{{ url_for('main.dashboard') }}">
-                <img src="{{ url_for('static', filename='img/cube.svg') }}" alt="Cube Logo" style="height:32px;width:32px;object-fit:contain;" class="me-2">
-                CUBE - PRO
+                <img src="{{ url_for('static', filename='img/tata_logo.png') }}" alt="TATA Advanced Systems" style="height:32px;width:auto;object-fit:contain;" class="me-2">
+                UAV - SM TOOL
             </a>
             
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -194,6 +194,9 @@
                             <li><h6 class="dropdown-header">
                                 <i class="fas fa-cog me-2"></i>Administration
                             </h6></li>
+                            <li><a class="dropdown-item py-2" href="{{ url_for('integrations.dashboard') }}">
+                                <i class="fas fa-plug me-2 text-warning"></i> Third-Party Integrations
+                            </a></li>
                             <li><a class="dropdown-item py-2" href="{{ url_for('auth.register') }}">
                                 <i class="fas fa-user-plus me-2 text-success"></i> Add User
                             </a></li>
