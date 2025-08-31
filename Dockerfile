@@ -38,8 +38,12 @@ RUN chmod +x docker-entrypoint.sh
 RUN mkdir -p instance app/static/uploads
 
 # Create user to run the application
-RUN adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser:appuser /app
+RUN adduser --disabled-password --gecos '' appuser
+
+# Set ownership of all files to appuser
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
 USER appuser
 
 # Expose port

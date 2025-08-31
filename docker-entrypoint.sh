@@ -1,13 +1,17 @@
 #!/bin/bash
 
-# Database initialization and migration script for Docker
+# Simple entrypoint script for Docker
 
-echo "🚀 Starting UAV Service Management with Integration Module..."
+echo "🚀 Starting CUBE PRO Work Order Management System..."
 
-# Run integration database migration
-echo "📊 Running integration database migration..."
-python migrate_integrations.py
+# Create instance directory if it doesn't exist
+mkdir -p /app/instance
+
+# Set proper permissions
+chmod 755 /app/instance
+
+echo "🌐 Starting Flask application..."
+echo "📊 Database will be initialized on first access..."
 
 # Start the Flask application
-echo "🌐 Starting Flask application..."
 exec python run.py

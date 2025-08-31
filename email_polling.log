@@ -4455,3 +4455,259 @@ ed to imap.gmail.com
 2025-08-31 09:41:38,048 - app.email_client - INFO - Email connection closed
 2025-08-31 09:41:38,852 - app.email_client - INFO - POP3 connection established to pop.gmail.com
 2025-08-31 09:41:39,333 - app.email_client - INFO - Email connection closed
+2025-08-31 09:42:00,535 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:42:01,532 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:42:02,160 - app.email_client - INFO - Email connection closed
+2025-08-31 09:42:03,590 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:42:04,017 - app.email_client - INFO - Email connection closed
+2025-08-31 09:42:09,158 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:42:09,334 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:42:10,148 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:42:10,298 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:42:10,767 - app.email_client - INFO - Email connection closed
+2025-08-31 09:42:10,911 - app.email_client - INFO - Email connection closed
+2025-08-31 09:42:12,162 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:42:12,308 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:42:12,575 - app.email_client - INFO - Email connection closed
+2025-08-31 09:42:12,722 - app.email_client - INFO - Email connection closed
+2025-08-31 09:42:36,764 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:42:36] "GET /uav-service/api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:42:36,765 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:42:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:42:36,776 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:42:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:42:39,366 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:42:40,395 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:42:41,017 - app.email_client - INFO - Email connection closed
+2025-08-31 09:42:42,419 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:42:42,830 - app.email_client - INFO - Email connection closed
+2025-08-31 09:43:04,057 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:43:04,190 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:04] "GET /email-management/logs HTTP/1.1" 200 -
+2025-08-31 09:43:04,352 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:04] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-08-31 09:43:04,353 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:04] "[36mGET /static/img/tata_logo.png HTTP/1.1[0m" 304 -
+2025-08-31 09:43:04,577 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:04] "[36mGET /static/js/modern.js HTTP/1.1[0m" 304 -
+2025-08-31 09:43:04,577 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:04] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+2025-08-31 09:43:05,168 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:43:05,986 - app.email_client - INFO - Email connection closed
+2025-08-31 09:43:06,764 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:43:07,189 - app.email_client - INFO - Email connection closed
+2025-08-31 09:43:12,342 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:12] "GET /dashboard HTTP/1.1" 200 -
+2025-08-31 09:43:12,509 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:12] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-08-31 09:43:12,535 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:12] "[36mGET /static/img/tata_logo.png HTTP/1.1[0m" 304 -
+2025-08-31 09:43:12,605 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:43:12,683 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:12] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+2025-08-31 09:43:12,683 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:12] "[36mGET /static/js/modern.js HTTP/1.1[0m" 304 -
+2025-08-31 09:43:12,757 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:43:13,610 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:43:13,774 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:43:14,256 - app.email_client - INFO - Email connection closed
+2025-08-31 09:43:14,413 - app.email_client - INFO - Email connection closed
+2025-08-31 09:43:15,218 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:43:15,654 - app.email_client - INFO - Email connection closed
+2025-08-31 09:43:15,750 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:43:16,182 - app.email_client - INFO - Email connection closed
+2025-08-31 09:43:36,751 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:43:36,754 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:43:36,765 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:36] "GET /uav-service/api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:43:42,760 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:43:42] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:43:42,865 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:43:43,839 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:43:44,464 - app.email_client - INFO - Email connection closed
+2025-08-31 09:43:45,239 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:43:45,681 - app.email_client - INFO - Email connection closed
+2025-08-31 09:44:07,216 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:44:08,205 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:44:08,902 - app.email_client - INFO - Email connection closed
+2025-08-31 09:44:09,695 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:44:10,122 - app.email_client - INFO - Email connection closed
+2025-08-31 09:44:13,058 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:44:13] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:44:15,683 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:44:16,217 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:44:16,720 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:44:17,207 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:44:17,338 - app.email_client - INFO - Email connection closed
+2025-08-31 09:44:17,854 - app.email_client - INFO - Email connection closed
+2025-08-31 09:44:18,138 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:44:18,557 - app.email_client - INFO - Email connection closed
+2025-08-31 09:44:18,612 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:44:19,021 - app.email_client - INFO - Email connection closed
+2025-08-31 09:44:36,749 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:44:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:44:36,753 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:44:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:44:36,755 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:44:36] "GET /uav-service/api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:44:42,750 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:44:42] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:44:45,713 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:44:46,727 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:44:47,374 - app.email_client - INFO - Email connection closed
+2025-08-31 09:44:48,292 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:44:48,717 - app.email_client - INFO - Email connection closed
+2025-08-31 09:45:10,153 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:45:11,135 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:45:11,754 - app.email_client - INFO - Email connection closed
+2025-08-31 09:45:13,051 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:45:13] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:45:13,183 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:45:13,603 - app.email_client - INFO - Email connection closed
+2025-08-31 09:45:18,584 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:45:19,047 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:45:19,622 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:45:20,089 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:45:20,245 - app.email_client - INFO - Email connection closed
+2025-08-31 09:45:20,697 - app.email_client - INFO - Email connection closed
+2025-08-31 09:45:21,013 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:45:21,430 - app.email_client - INFO - Email connection closed
+2025-08-31 09:45:21,470 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:45:21,880 - app.email_client - INFO - Email connection closed
+2025-08-31 09:45:36,765 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:45:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:45:36,768 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:45:36] "GET /uav-service/api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:45:36,769 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:45:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:45:42,742 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:45:42] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:45:48,746 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:45:49,823 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:45:50,454 - app.email_client - INFO - Email connection closed
+2025-08-31 09:45:51,235 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:45:51,647 - app.email_client - INFO - Email connection closed
+2025-08-31 09:46:13,051 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:46:13] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:46:13,633 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:46:14,590 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:46:15,271 - app.email_client - INFO - Email connection closed
+2025-08-31 09:46:16,690 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:46:17,109 - app.email_client - INFO - Email connection closed
+2025-08-31 09:46:21,459 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:46:21,909 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:46:22,481 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:46:22,878 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:46:23,085 - app.email_client - INFO - Email connection closed
+2025-08-31 09:46:23,500 - app.email_client - INFO - Email connection closed
+2025-08-31 09:46:24,263 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:46:24,497 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:46:24,676 - app.email_client - INFO - Email connection closed
+2025-08-31 09:46:24,913 - app.email_client - INFO - Email connection closed
+2025-08-31 09:46:36,765 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:46:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:46:36,767 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:46:36] "GET /uav-service/api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:46:36,767 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:46:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:46:42,753 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:46:42] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:46:51,674 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:46:52,622 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:46:53,236 - app.email_client - INFO - Email connection closed
+2025-08-31 09:46:54,661 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:46:55,083 - app.email_client - INFO - Email connection closed
+2025-08-31 09:47:17,137 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:47:18,107 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:47:18,722 - app.email_client - INFO - Email connection closed
+2025-08-31 09:47:19,486 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:47:19,912 - app.email_client - INFO - Email connection closed
+2025-08-31 09:47:24,705 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:47:24,944 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:47:25,702 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:47:25,923 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:47:26,328 - app.email_client - INFO - Email connection closed
+2025-08-31 09:47:26,543 - app.email_client - INFO - Email connection closed
+2025-08-31 09:47:27,133 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:47:27,559 - app.email_client - INFO - Email connection closed
+2025-08-31 09:47:27,937 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:47:28,345 - app.email_client - INFO - Email connection closed
+2025-08-31 09:47:36,744 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:47:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:47:36,761 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:47:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:47:36,761 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:47:36] "GET /uav-service/api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:47:37,050 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:47:37] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:47:55,110 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:47:56,115 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:47:56,728 - app.email_client - INFO - Email connection closed
+2025-08-31 09:47:57,597 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:47:58,017 - app.email_client - INFO - Email connection closed
+2025-08-31 09:48:19,943 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:48:20,944 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:48:21,572 - app.email_client - INFO - Email connection closed
+2025-08-31 09:48:22,357 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:48:22,787 - app.email_client - INFO - Email connection closed
+2025-08-31 09:48:27,585 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:48:28,378 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:48:28,563 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:48:29,191 - app.email_client - INFO - Email connection closed
+2025-08-31 09:48:29,407 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:48:30,042 - app.email_client - INFO - Email connection closed
+2025-08-31 09:48:30,637 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:48:30,825 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:48:31,057 - app.email_client - INFO - Email connection closed
+2025-08-31 09:48:31,242 - app.email_client - INFO - Email connection closed
+2025-08-31 09:48:36,774 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:48:36] "GET /uav-service/api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:48:36,781 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:48:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:48:36,790 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:48:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:48:37,075 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:48:37] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:48:58,046 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:48:59,034 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:48:59,662 - app.email_client - INFO - Email connection closed
+2025-08-31 09:49:00,421 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:49:00,837 - app.email_client - INFO - Email connection closed
+2025-08-31 09:49:22,814 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:49:23,798 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:49:24,426 - app.email_client - INFO - Email connection closed
+2025-08-31 09:49:25,198 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:49:25,615 - app.email_client - INFO - Email connection closed
+2025-08-31 09:49:31,087 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:49:31,269 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:49:32,070 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:49:32,248 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:49:32,704 - app.email_client - INFO - Email connection closed
+2025-08-31 09:49:32,856 - app.email_client - INFO - Email connection closed
+2025-08-31 09:49:33,491 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:49:33,623 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:49:33,906 - app.email_client - INFO - Email connection closed
+2025-08-31 09:49:34,037 - app.email_client - INFO - Email connection closed
+2025-08-31 09:49:36,767 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:49:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:49:36,770 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:49:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:49:36,773 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:49:36] "GET /uav-service/api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:49:37,065 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:49:37] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:50:00,868 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:50:01,901 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:50:02,554 - app.email_client - INFO - Email connection closed
+2025-08-31 09:50:03,351 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:50:03,777 - app.email_client - INFO - Email connection closed
+2025-08-31 09:50:25,645 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:50:27,053 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:50:27,804 - app.email_client - INFO - Email connection closed
+2025-08-31 09:50:28,586 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:50:29,552 - app.email_client - INFO - Email connection closed
+2025-08-31 09:50:33,933 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:50:34,065 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:50:35,060 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:50:35,061 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:50:35,853 - app.email_client - INFO - Email connection closed
+2025-08-31 09:50:36,753 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:50:36] "GET /uav-service/api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:50:36,754 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:50:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:50:36,770 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:50:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:50:36,915 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:50:37,058 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:50:37] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:50:37,549 - app.email_client - INFO - Email connection closed
+2025-08-31 09:50:37,754 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:50:38,162 - app.email_client - INFO - Email connection closed
+2025-08-31 09:51:03,803 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:51:05,123 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:51:05,751 - app.email_client - INFO - Email connection closed
+2025-08-31 09:51:06,534 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:51:06,963 - app.email_client - INFO - Email connection closed
+2025-08-31 09:51:29,589 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:51:31,521 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:51:32,512 - app.email_client - INFO - Email connection closed
+2025-08-31 09:51:33,513 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:51:34,083 - app.email_client - INFO - Email connection closed
+2025-08-31 09:51:36,754 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:51:36] "GET /uav-service/api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:51:36,755 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:51:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:51:37,051 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:51:37] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:51:37,577 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:51:38,191 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:51:38,676 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:51:39,214 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:51:39,299 - app.email_client - INFO - Email connection closed
+2025-08-31 09:51:39,836 - app.email_client - INFO - Email connection closed
+2025-08-31 09:51:40,068 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:51:40,480 - app.email_client - INFO - Email connection closed
+2025-08-31 09:51:40,646 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:51:41,080 - app.email_client - INFO - Email connection closed
+2025-08-31 09:52:06,990 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:52:08,074 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:52:08,725 - app.email_client - INFO - Email connection closed
+2025-08-31 09:52:10,116 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:52:10,523 - app.email_client - INFO - Email connection closed
+2025-08-31 09:52:34,109 - app.email_polling_service - INFO - Using database polling interval: 1 minutes
+2025-08-31 09:52:35,113 - app.email_client - INFO - IMAP connection established to imap.gmail.com
+2025-08-31 09:52:35,727 - app.email_client - INFO - Email connection closed
+2025-08-31 09:52:36,511 - app.email_client - INFO - POP3 connection established to pop.gmail.com
+2025-08-31 09:52:36,757 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:52:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
+2025-08-31 09:52:36,761 - werkzeug - INFO - 127.0.0.1 - - [31/Aug/2025 09:52:36] "GET /api/dashboard-stats HTTP/1.1" 200 -
