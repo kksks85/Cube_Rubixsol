@@ -227,15 +227,6 @@
                             <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}">
                                 <i class="fas fa-key me-2"></i> Change Password
                             </a></li>
-                            {% if current_user.has_role('admin') %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">
-                                <i class="fas fa-cog me-2"></i>Administration
-                            </h6></li>
-                            <li><a class="dropdown-item" href="{{ url_for('auth.register') }}">
-                                <i class="fas fa-user-plus me-2"></i> Add User
-                            </a></li>
-                            {% endif %}
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
                                 <i class="fas fa-sign-out-alt me-2"></i> Sign Out

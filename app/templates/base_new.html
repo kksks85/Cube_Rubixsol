@@ -34,32 +34,21 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link px-2" href="{{ url_for('main.dashboard') }}">
-                            <i class="fas fa-home me-1"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-2" href="{{ url_for('workorders.list_workorders') }}">
-                            <i class="fas fa-clipboard-list me-1"></i> Work Orders
+                            <i class="fas fa-home me-1"></i> Home
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle px-2" href="#" id="productsDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-cubes me-1"></i> Products
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="workOrdersDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-clipboard-list me-1"></i> Work Orders
                         </a>
                         <ul class="dropdown-menu shadow-sm">
-                            <li><a class="dropdown-item py-1" href="{{ url_for('products.list_products') }}">
-                                <i class="fas fa-list me-2 text-primary"></i> All Products
-                            </a></li>
-                            <li><a class="dropdown-item py-1" href="{{ url_for('products.list_companies') }}">
-                                <i class="fas fa-building me-2 text-info"></i> Companies
+                            <li><a class="dropdown-item py-1" href="{{ url_for('workorders.list_workorders') }}">
+                                <i class="fas fa-list me-2 text-primary"></i> All Work Orders
                             </a></li>
                             {% if current_user.role and (current_user.role.name == 'admin' or current_user.role.name == 'manager') %}
                             <li><hr class="dropdown-divider my-1"></li>
-                            <li><a class="dropdown-item py-1" href="{{ url_for('products.create_product') }}">
-                                <i class="fas fa-plus me-2 text-success"></i> Add Product
-                            </a></li>
-                            <li><a class="dropdown-item py-1" href="{{ url_for('products.create_company') }}">
-                                <i class="fas fa-plus-circle me-2 text-success"></i> Add Company
+                            <li><a class="dropdown-item py-1" href="{{ url_for('workorders.create_workorder') }}">
+                                <i class="fas fa-plus me-2 text-success"></i> Create Work Order
                             </a></li>
                             {% endif %}
                         </ul>
@@ -101,8 +90,57 @@
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle px-2" href="#" id="knowledgeDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-book-open me-1"></i> Knowledge
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="uavServiceDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-plane me-1"></i> UAV Service
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('products.list_products') }}">
+                                <i class="fas fa-list me-2 text-primary"></i> All Products
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('products.list_companies') }}">
+                                <i class="fas fa-building me-2 text-info"></i> Companies
+                            </a></li>
+                            {% if current_user.role and (current_user.role.name == 'admin' or current_user.role.name == 'manager') %}
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('products.create_product') }}">
+                                <i class="fas fa-plus me-2 text-success"></i> Add Product
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('products.create_company') }}">
+                                <i class="fas fa-plus-circle me-2 text-success"></i> Add Company
+                            </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% if current_user.role and (current_user.role.name == 'admin' or current_user.role.name == 'manager') %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="administrationDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cogs me-1"></i> Administration
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('users.list_users') }}">
+                                <i class="fas fa-users me-2 text-primary"></i> User Management
+                            </a></li>
+                            {% if current_user.role and current_user.role.name == 'admin' %}
+                            <li><a class="dropdown-item py-1" href="{{ url_for('data_import.dashboard') }}">
+                                <i class="fas fa-file-import me-2 text-primary"></i> Data Import
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('email_management.dashboard') }}">
+                                <i class="fas fa-envelope me-2 text-success"></i> Email Management
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('integrations.dashboard') }}">
+                                <i class="fas fa-plug me-2 text-warning"></i> Third-Party Integrations
+                            </a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('auth.register') }}">
+                                <i class="fas fa-user-plus me-2 text-info"></i> Add User
+                            </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="knowledgeBaseDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-book-open me-1"></i> Knowledge Base
                         </a>
                         <ul class="dropdown-menu shadow-sm">
                             <li><a class="dropdown-item py-1" href="{{ url_for('knowledge.index') }}">
@@ -137,19 +175,19 @@
                             {% endif %}
                         </ul>
                     </li>
-                    {% if current_user.role and (current_user.role.name == 'admin' or current_user.role.name == 'manager') %}
-                    <!-- Create Order menu item hidden per user request -->
-                    <!-- <li class="nav-item">
-                        <a class="nav-link px-2" href="{{ url_for('workorders.create_workorder') }}">
-                            <i class="fas fa-plus-circle me-1"></i> Create Order
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-2" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-chart-bar me-1"></i> Reports
                         </a>
-                    </li> -->
-                    <li class="nav-item">
-                        <a class="nav-link px-2" href="{{ url_for('users.list_users') }}">
-                            <i class="fas fa-users me-1"></i> Team
-                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('reports.dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item py-1" href="#">
+                                <i class="fas fa-file-pdf me-2 text-danger"></i> Export Reports
+                            </a></li>
+                        </ul>
                     </li>
-                    {% endif %}
                 </ul>
                 
                 <!-- Theme Toggle -->
@@ -189,18 +227,6 @@
                             <li><a class="dropdown-item py-2" href="{{ url_for('auth.change_password') }}">
                                 <i class="fas fa-key me-2 text-warning"></i> Change Password
                             </a></li>
-                            {% if current_user.role and current_user.role.name == 'admin' %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">
-                                <i class="fas fa-cog me-2"></i>Administration
-                            </h6></li>
-                            <li><a class="dropdown-item py-2" href="{{ url_for('integrations.dashboard') }}">
-                                <i class="fas fa-plug me-2 text-warning"></i> Third-Party Integrations
-                            </a></li>
-                            <li><a class="dropdown-item py-2" href="{{ url_for('auth.register') }}">
-                                <i class="fas fa-user-plus me-2 text-success"></i> Add User
-                            </a></li>
-                            {% endif %}
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('auth.logout') }}">
                                 <i class="fas fa-sign-out-alt me-2"></i> Sign Out
