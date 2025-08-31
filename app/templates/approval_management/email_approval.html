@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% set active_page = "approval_management" %}
+
+{% block title %}
+{% if action == 'approve' %}Approve Work Order{% else %}Reject Work Order{% endif %} - {{ approval.incident.incident_number_formatted }}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('approval_management.dashboard') }}">Approval Management</a></li>
+                <li class="breadcrumb-item active">{{ action.title() }} Work Order</li>
+            </ol>
+        </nav>
+        <h2>
+            {% if action == 'approve' %}
+                <i class="fas fa-check-circle text-success me-2"></i>Approve Work Order
+            {% else %}
+                <i class="fas fa-times-circle text-danger me-2"></i>Reject Work Order
+            {% endif %}
+        </h2>
+        <p class="text-muted">Process work order authorization for incident {{ approval.incident.incident_number_formatted }}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Incident Details -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-info-circle me-2"></i>Incident Details
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Incident Number:</strong><br>{{ approval.incident.incident_number_formatted }}</p>
+                        <p><strong>Title:</strong><br>{{ approval.incident.title }}</p>
+                        <p><strong>Priority:</strong><br>
+                            {% if approval.incident.priority == 'URGENT' %}
+                                <span class="badge badge-danger">{{ approval.incident.priority }}</span>
+                            {% elif approval.incident.priority == 'HIGH' %}
+                                <span class="badge badge-warning">{{ approval.incident.priority }}</span>
+                            {% elif approval.incident.priority == 'MEDIUM' %}
+                                <span class="badge badge-primary">{{ approval.incident.priority }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ approval.incident.priority }}</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Customer:</strong><br>{{ approval.incident.customer_name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Category:</strong><br>{{ approval.incident.incident_category.replace('_', ' ').title() }}</p>
+                        <p><strong>Serial Number:</strong><br>{{ approval.incident.serial_number or 'Not specified' }}</p>
+                        <p><strong>Product:</strong><br>{{ approval.incident.product_name or 'Not specified' }}</p>
+                        <p><strong>Created:</strong><br>{{ approval.incident.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <p><strong>Description:</strong></p>
+                    <div class="p-3 bg-light rounded">
+                        {{ approval.incident.description }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approval Action Form -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold {% if action == 'approve' %}text-success{% else %}text-danger{% endif %}">
+                    {% if action == 'approve' %}
+                        <i class="fas fa-check me-2"></i>Approve Work Order
+                    {% else %}
+                        <i class="fas fa-times me-2"></i>Reject Work Order
+                    {% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('approval_management.process_email_approval', token=approval.approval_token) }}">
+                    <input type="hidden" name="action" value="{{ action }}">
+                    
+                    <div class="mb-3">
+                        <label for="comments" class="form-label">
+                            Comments 
+                            {% if action == 'reject' %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        <textarea class="form-control" id="comments" name="comments" rows="4" 
+                                  placeholder="{% if action == 'approve' %}Enter approval comments (optional){% else %}Enter rejection reason (required){% endif %}"
+                                  {% if action == 'reject' %}required{% endif %}></textarea>
+                        {% if action == 'reject' %}
+                        <small class="form-text text-muted">Please provide a clear reason for rejection to help the requester understand the decision.</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('approval_management.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn {% if action == 'approve' %}btn-success{% else %}btn-danger{% endif %}">
+                            {% if action == 'approve' %}
+                                <i class="fas fa-check me-2"></i>Confirm Approval
+                            {% else %}
+                                <i class="fas fa-times me-2"></i>Confirm Rejection
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Approval Request Details -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-clipboard-list me-2"></i>Request Details
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Requested By:</strong><br>{{ approval.requester.full_name }}</p>
+                <p><strong>Request Date:</strong><br>{{ approval.requested_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                
+                {% if approval.estimated_cost %}
+                <p><strong>Estimated Cost:</strong><br>${{ approval.estimated_cost }}</p>
+                {% endif %}
+                
+                {% if approval.estimated_hours %}
+                <p><strong>Estimated Hours:</strong><br>{{ approval.estimated_hours }} hours</p>
+                {% endif %}
+                
+                {% if approval.request_details %}
+                <p><strong>Additional Details:</strong></p>
+                <div class="p-2 bg-light rounded small">
+                    {{ approval.request_details }}
+                </div>
+                {% endif %}
+                
+                <p><strong>Status:</strong><br>
+                    <span class="badge badge-warning">Pending Approval</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Process Information -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-secondary">
+                    <i class="fas fa-info me-2"></i>Process Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="small">
+                    <p><strong>What happens next?</strong></p>
+                    {% if action == 'approve' %}
+                    <ul>
+                        <li>Work order will be approved</li>
+                        <li>Incident status will advance to "Repair/Maintenance"</li>
+                        <li>Technician can proceed with the work</li>
+                        <li>Requester will receive approval notification</li>
+                    </ul>
+                    {% else %}
+                    <ul>
+                        <li>Work order will be rejected</li>
+                        <li>Incident status will return to "Diagnosis & Work Order"</li>
+                        <li>Requester will need to resubmit</li>
+                        <li>Rejection notification will be sent</li>
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

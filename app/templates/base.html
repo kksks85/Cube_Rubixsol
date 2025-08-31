@@ -131,6 +131,9 @@
                             <li><a class="dropdown-item py-1" href="{{ url_for('email_management.dashboard') }}">
                                 <i class="fas fa-envelope me-2 text-success"></i> Email Management
                             </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('approval_management.dashboard') }}">
+                                <i class="fas fa-check-circle me-2 text-info"></i> Approval Management
+                            </a></li>
                             <li><a class="dropdown-item py-1" href="{{ url_for('integrations.dashboard') }}">
                                 <i class="fas fa-plug me-2 text-warning"></i> Third-Party Integrations
                             </a></li>
@@ -296,6 +299,8 @@
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom JS -->

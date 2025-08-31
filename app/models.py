@@ -1363,7 +1363,7 @@ class UAVServiceIncident(db.Model):
     @property
     def incident_number_formatted(self):
         """Return formatted incident number"""
-        return f"UAV-{self.id:06d}"
+        return self.incident_number if self.incident_number else f"UAV-{self.id:06d}"
     
     @property
     def workflow_step_info(self):
@@ -1371,10 +1371,12 @@ class UAVServiceIncident(db.Model):
         workflow_steps = {
             'INCIDENT_RAISED': {'step': 1, 'name': 'Incident/Service Request', 'description': 'Customer reported issue, categorized and logged'},
             'DIAGNOSIS_WO': {'step': 2, 'name': 'Diagnosis & Work Order', 'description': 'Technician assigned, diagnosis completed, work order created'},
-            'REPAIR_MAINTENANCE': {'step': 3, 'name': 'Repair/Maintenance', 'description': 'Parts requested, technician performing work'},
-            'QUALITY_CHECK': {'step': 4, 'name': 'Quality Check & Handover', 'description': 'QA verification, compliance check, customer handover'},
-            'PREVENTIVE_MAINTENANCE': {'step': 5, 'name': 'Preventive Maintenance', 'description': 'Scheduled maintenance triggered automatically'},
-            'CLOSED': {'step': 6, 'name': 'Closed', 'description': 'Service completed and incident closed'}
+            'WO_AUTHORIZATION': {'step': 3, 'name': 'WO Authorization', 'description': 'Work order pending approval from authorized personnel'},
+            'WO_APPROVED': {'step': 3, 'name': 'WO Authorization', 'description': 'Work order approved, ready to initiate repair'},
+            'REPAIR_MAINTENANCE': {'step': 4, 'name': 'Repair/Maintenance', 'description': 'Parts requested, technician performing work'},
+            'QUALITY_CHECK': {'step': 5, 'name': 'Quality Check & Handover', 'description': 'QA verification, compliance check, customer handover'},
+            'PREVENTIVE_MAINTENANCE': {'step': 6, 'name': 'Preventive Maintenance', 'description': 'Scheduled maintenance triggered automatically'},
+            'CLOSED': {'step': 7, 'name': 'Closed', 'description': 'Service completed and incident closed'}
         }
         return workflow_steps.get(self.workflow_status, workflow_steps['INCIDENT_RAISED'])
     
@@ -1382,7 +1384,7 @@ class UAVServiceIncident(db.Model):
     def workflow_progress_percentage(self):
         """Calculate workflow progress percentage"""
         step = self.workflow_step_info['step']
-        return (step / 6) * 100
+        return (step / 7) * 100
     
     @property
     def is_sla_breached(self):
@@ -1427,17 +1429,19 @@ class UAVServiceIncident(db.Model):
             self.workflow_status = 'DIAGNOSIS_WO'
             self.technician_assigned_at = datetime.now(timezone.utc)
         elif current_step == 2 and self.workflow_status == 'DIAGNOSIS_WO':
-            self.workflow_status = 'REPAIR_MAINTENANCE'
+            self.workflow_status = 'WO_AUTHORIZATION'
             self.work_order_created_at = datetime.now(timezone.utc)
+        elif current_step == 3 and self.workflow_status == 'WO_AUTHORIZATION':
+            self.workflow_status = 'REPAIR_MAINTENANCE'
             self.repair_started_at = datetime.now(timezone.utc)
-        elif current_step == 3 and self.workflow_status == 'REPAIR_MAINTENANCE':
+        elif current_step == 4 and self.workflow_status == 'REPAIR_MAINTENANCE':
             self.workflow_status = 'QUALITY_CHECK'
             self.repair_completed_at = datetime.now(timezone.utc)
             self.quality_check_at = datetime.now(timezone.utc)
-        elif current_step == 4 and self.workflow_status == 'QUALITY_CHECK':
+        elif current_step == 5 and self.workflow_status == 'QUALITY_CHECK':
             self.workflow_status = 'PREVENTIVE_MAINTENANCE'
             self.handed_over_at = datetime.now(timezone.utc)
-        elif current_step == 5 and self.workflow_status == 'PREVENTIVE_MAINTENANCE':
+        elif current_step == 6 and self.workflow_status == 'PREVENTIVE_MAINTENANCE':
             self.workflow_status = 'CLOSED'
             self.closed_at = datetime.now(timezone.utc)
             
@@ -1764,6 +1768,82 @@ class ImportStatus:
     def get_completed_statuses(cls):
         """Get statuses that indicate completed operations"""
         return [cls.COMPLETED, cls.FAILED, cls.CANCELLED]
+
+
+# Approval Management Models
+class WorkOrderApproval(db.Model):
+    """Work Order Approval Management System"""
+    __tablename__ = 'work_order_approvals'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    incident_id = db.Column(db.Integer, db.ForeignKey('uav_service_incidents.id'), nullable=False)
+    approval_type = db.Column(db.String(20), nullable=False, default='WORK_ORDER')  # WORK_ORDER, BUDGET, etc.
+    
+    # Request Details
+    requested_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    requested_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    request_details = db.Column(db.Text)
+    estimated_cost = db.Column(db.Numeric(10, 2))
+    estimated_hours = db.Column(db.Integer)
+    
+    # Approval Details
+    approver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='PENDING')  # PENDING, APPROVED, REJECTED
+    approved_at = db.Column(db.DateTime(timezone=True))
+    approval_comments = db.Column(db.Text)
+    
+    # Email Tracking
+    approval_token = db.Column(db.String(128), unique=True)
+    email_sent_at = db.Column(db.DateTime(timezone=True))
+    email_opened_at = db.Column(db.DateTime(timezone=True))
+    email_clicked_at = db.Column(db.DateTime(timezone=True))
+    
+    # Relationships
+    incident = db.relationship('UAVServiceIncident', backref='approvals')
+    requester = db.relationship('User', foreign_keys=[requested_by_id], backref='approval_requests')
+    approver = db.relationship('User', foreign_keys=[approver_id], backref='approval_tasks')
+    
+    def generate_approval_token(self):
+        """Generate unique approval token for email links"""
+        import secrets
+        self.approval_token = secrets.token_urlsafe(32)
+        return self.approval_token
+    
+    @property
+    def is_pending(self):
+        return self.status == 'PENDING'
+    
+    @property
+    def is_approved(self):
+        return self.status == 'APPROVED'
+    
+    @property
+    def is_rejected(self):
+        return self.status == 'REJECTED'
+    
+    @property
+    def days_pending(self):
+        """Calculate days since approval request"""
+        if self.approved_at:
+            return 0
+        return (datetime.now(timezone.utc) - self.requested_at.replace(tzinfo=timezone.utc)).days
+    
+    def approve(self, approver, comments=None):
+        """Approve the request"""
+        self.status = 'APPROVED'
+        self.approver_id = approver.id
+        self.approved_at = datetime.now(timezone.utc)
+        self.approval_comments = comments
+        
+    def reject(self, approver, comments=None):
+        """Reject the request"""
+        self.status = 'REJECTED'
+        self.approver_id = approver.id
+        self.approved_at = datetime.now(timezone.utc)
+        self.approval_comments = comments
+    
+    def __repr__(self):
+        return f'<WorkOrderApproval {self.id}: {self.approval_type} - {self.status}>'
 
 
 # Knowledge Management Models (KEDB Integration)

@@ -27,6 +27,18 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///workorder.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
+    # Email configuration
+    app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
+    app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT') or 587)
+    app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME') or 'noreply@cubeproapp.com'
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') or 'your_app_password'
+    
+    # URL generation configuration
+    app.config['SERVER_NAME'] = os.environ.get('SERVER_NAME') or 'localhost:5000'
+    app.config['PREFERRED_URL_SCHEME'] = os.environ.get('PREFERRED_URL_SCHEME') or 'http'
+    app.config['APPLICATION_ROOT'] = os.environ.get('APPLICATION_ROOT') or '/'
+    
     # Initialize extensions with app
     db.init_app(app)
     login_manager.init_app(app)
@@ -94,6 +106,9 @@ def create_app():
     
     from app.integrations import bp as integrations_bp
     app.register_blueprint(integrations_bp, url_prefix='/integrations')
+    
+    from app.approval_management import bp as approval_management_bp
+    app.register_blueprint(approval_management_bp, url_prefix='/approval-management')
     
     # Create database tables
     with app.app_context():

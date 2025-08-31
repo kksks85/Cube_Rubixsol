@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% set active_page = "uav_service" %}
+
+{% block title %}WO Authorization - {{ incident.incident_number_formatted }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('uav_service.dashboard') }}">UAV Service</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('uav_service.incident_list') }}">Incidents</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('uav_service.view_incident', id=incident.id) }}">{{ incident.incident_number_formatted }}</a></li>
+                <li class="breadcrumb-item active">WO Authorization</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-clipboard-check me-2"></i>Work Order Authorization</h2>
+        <p class="text-muted">
+            Step 3: Work Order Authorization - {{ incident.incident_number_formatted }}
+        </p>
+    </div>
+</div>
+
+<!-- Workflow Progress -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-route me-2"></i>Service Workflow Progress
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3" style="height: 20px;">
+                    <div class="progress-bar bg-info" role="progressbar" 
+                         style="width: {{ incident.workflow_progress_percentage }}%" 
+                         aria-valuenow="{{ incident.workflow_progress_percentage }}" 
+                         aria-valuemin="0" aria-valuemax="100">
+                        Step {{ incident.workflow_step_info.step }} of 7 - {{ incident.workflow_progress_percentage|round|int }}%
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="workflow-step {% if incident.workflow_step_info.step >= 1 %}completed{% endif %}">
+                            <div class="step-circle {% if incident.workflow_step_info.step >= 1 %}bg-success text-white{% else %}bg-light{% endif %}">1</div>
+                            <small class="d-block">Incident Request</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="workflow-step {% if incident.workflow_step_info.step >= 2 %}completed{% endif %}">
+                            <div class="step-circle {% if incident.workflow_step_info.step >= 2 %}bg-success text-white{% else %}bg-light{% endif %}">2</div>
+                            <small class="d-block">Diagnosis & WO</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="workflow-step {% if incident.workflow_step_info.step >= 3 %}active{% elif incident.workflow_step_info.step > 3 %}completed{% endif %}">
+                            <div class="step-circle {% if incident.workflow_step_info.step == 3 %}bg-info text-white{% elif incident.workflow_step_info.step > 3 %}bg-success text-white{% else %}bg-light{% endif %}">3</div>
+                            <small class="d-block">WO Authorization</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="workflow-step {% if incident.workflow_step_info.step >= 4 %}active{% elif incident.workflow_step_info.step > 4 %}completed{% endif %}">
+                            <div class="step-circle {% if incident.workflow_step_info.step == 4 %}bg-info text-white{% elif incident.workflow_step_info.step > 4 %}bg-success text-white{% else %}bg-light{% endif %}">4</div>
+                            <small class="d-block">Repair</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="workflow-step {% if incident.workflow_step_info.step >= 5 %}active{% elif incident.workflow_step_info.step > 5 %}completed{% endif %}">
+                            <div class="step-circle {% if incident.workflow_step_info.step == 5 %}bg-info text-white{% elif incident.workflow_step_info.step > 5 %}bg-success text-white{% else %}bg-light{% endif %}">5</div>
+                            <small class="d-block">Quality Check</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="workflow-step {% if incident.workflow_step_info.step >= 6 %}active{% elif incident.workflow_step_info.step > 6 %}completed{% endif %}">
+                            <div class="step-circle {% if incident.workflow_step_info.step == 6 %}bg-info text-white{% elif incident.workflow_step_info.step > 6 %}bg-success text-white{% else %}bg-light{% endif %}">6</div>
+                            <small class="d-block">Maintenance</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="workflow-step {% if incident.workflow_step_info.step >= 7 %}active{% endif %}">
+                            <div class="step-circle {% if incident.workflow_step_info.step == 7 %}bg-success text-white{% else %}bg-light{% endif %}">7</div>
+                            <small class="d-block">Closed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Authorization Status -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-clipboard-check me-2"></i>Authorization Status
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if approval %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong><br>
+                                {% if approval.is_pending %}
+                                    <span class="badge badge-warning badge-lg">
+                                        <i class="fas fa-clock me-1"></i>Pending Approval
+                                    </span>
+                                {% elif approval.is_approved %}
+                                    <span class="badge badge-success badge-lg">
+                                        <i class="fas fa-check me-1"></i>Approved
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-danger badge-lg">
+                                        <i class="fas fa-times me-1"></i>Rejected
+                                    </span>
+                                {% endif %}
+                            </p>
+                            
+                            <p><strong>Approver:</strong><br>{{ approval.approver.full_name }}</p>
+                            <p><strong>Requested By:</strong><br>{{ approval.requester.full_name }}</p>
+                            <p><strong>Request Date:</strong><br>{{ approval.requested_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {% if approval.estimated_cost %}
+                            <p><strong>Estimated Cost:</strong><br>${{ approval.estimated_cost }}</p>
+                            {% endif %}
+                            
+                            {% if approval.estimated_hours %}
+                            <p><strong>Estimated Hours:</strong><br>{{ approval.estimated_hours }} hours</p>
+                            {% endif %}
+                            
+                            {% if approval.is_pending %}
+                            <p><strong>Days Pending:</strong><br>
+                                <span class="{% if approval.days_pending > 5 %}text-danger{% elif approval.days_pending > 2 %}text-warning{% endif %}">
+                                    {{ approval.days_pending }} day{% if approval.days_pending != 1 %}s{% endif %}
+                                </span>
+                            </p>
+                            {% endif %}
+                            
+                            {% if approval.approved_at %}
+                            <p><strong>{{ 'Approved' if approval.is_approved else 'Rejected' }} Date:</strong><br>
+                                {{ approval.approved_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if approval.request_details %}
+                    <div class="mt-3">
+                        <p><strong>Request Details:</strong></p>
+                        <div class="p-3 bg-light rounded">
+                            {{ approval.request_details }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if approval.approval_comments %}
+                    <div class="mt-3">
+                        <p><strong>{{ 'Approval' if approval.is_approved else 'Rejection' }} Comments:</strong></p>
+                        <div class="p-3 {% if approval.is_approved %}bg-success{% else %}bg-danger{% endif %} bg-opacity-10 rounded">
+                            {{ approval.approval_comments }}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h5>No Authorization Request Found</h5>
+                        <p class="text-muted">There is no active authorization request for this work order.</p>
+                        <a href="{{ url_for('uav_service.view_incident', id=incident.id) }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Incident
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Process Information -->
+        {% if approval and approval.is_pending %}
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-info-circle me-2"></i>What Happens Next?
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-clock me-2"></i>Waiting for Authorization</h6>
+                    <p class="mb-0">
+                        The work order is currently pending approval from {{ approval.approver.full_name }}. 
+                        Once approved, the incident will automatically advance to the Repair/Maintenance stage where work can begin.
+                    </p>
+                </div>
+                
+                <h6 class="mt-3">Authorization Process:</h6>
+                <ul class="small">
+                    <li><strong>Email Notification:</strong> An approval request has been sent to the approver</li>
+                    <li><strong>Admin Panel:</strong> The approver can review and process the request in the Approval Management panel</li>
+                    <li><strong>Email Links:</strong> Direct approve/reject links are provided in the email for quick action</li>
+                    <li><strong>Auto-Advance:</strong> Upon approval, the workflow will automatically proceed to Repair/Maintenance</li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Incident Summary -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-secondary">
+                    <i class="fas fa-info me-2"></i>Incident Summary
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Incident:</strong><br>{{ incident.incident_number_formatted }}</p>
+                <p><strong>Title:</strong><br>{{ incident.title }}</p>
+                <p><strong>Priority:</strong><br>
+                    {% if incident.priority == 'URGENT' %}
+                        <span class="badge badge-danger">{{ incident.priority }}</span>
+                    {% elif incident.priority == 'HIGH' %}
+                        <span class="badge badge-warning">{{ incident.priority }}</span>
+                    {% elif incident.priority == 'MEDIUM' %}
+                        <span class="badge badge-primary">{{ incident.priority }}</span>
+                    {% else %}
+                        <span class="badge badge-secondary">{{ incident.priority }}</span>
+                    {% endif %}
+                </p>
+                <p><strong>Customer:</strong><br>{{ incident.customer_name }}</p>
+                <p><strong>Serial Number:</strong><br>{{ incident.serial_number or 'Not specified' }}</p>
+                <p><strong>Product:</strong><br>{{ incident.product_name or 'Not specified' }}</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        {% if approval and current_user.has_role('admin') %}
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-cogs me-2"></i>Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('approval_management.view_approval', approval_id=approval.id) }}" 
+                       class="btn btn-info">
+                        <i class="fas fa-eye me-2"></i>View Full Details
+                    </a>
+                    <a href="{{ url_for('approval_management.dashboard') }}" 
+                       class="btn btn-secondary">
+                        <i class="fas fa-clipboard-list me-2"></i>Approval Management
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Email Status -->
+        {% if approval and approval.email_sent_at %}
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-secondary">
+                    <i class="fas fa-envelope me-2"></i>Email Status
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Email Sent:</strong><br>
+                    <i class="fas fa-check text-success"></i> {{ approval.email_sent_at.strftime('%Y-%m-%d %H:%M') }}
+                </p>
+                
+                {% if approval.email_clicked_at %}
+                <p><strong>Email Clicked:</strong><br>
+                    <i class="fas fa-check text-success"></i> {{ approval.email_clicked_at.strftime('%Y-%m-%d %H:%M') }}
+                </p>
+                {% else %}
+                <p><strong>Email Clicked:</strong><br>
+                    <i class="fas fa-times text-muted"></i> Not clicked yet
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.workflow-step {
+    padding: 10px;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-weight: bold;
+}
+
+.workflow-step.completed .step-circle {
+    background-color: #28a745 !important;
+    color: white !important;
+}
+
+.workflow-step.active .step-circle {
+    background-color: #17a2b8 !important;
+    color: white !important;
+}
+
+@media (max-width: 768px) {
+    .step-circle {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %}

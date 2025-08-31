@@ -127,6 +127,9 @@
                             <li><a class="dropdown-item py-1" href="{{ url_for('email_management.dashboard') }}">
                                 <i class="fas fa-envelope me-2 text-success"></i> Email Management
                             </a></li>
+                            <li><a class="dropdown-item py-1" href="{{ url_for('approval_management.dashboard') }}">
+                                <i class="fas fa-check-circle me-2 text-info"></i> Approval Management
+                            </a></li>
                             <li><a class="dropdown-item py-1" href="{{ url_for('integrations.dashboard') }}">
                                 <i class="fas fa-plug me-2 text-warning"></i> Third-Party Integrations
                             </a></li>
@@ -180,7 +183,7 @@
                             <i class="fas fa-chart-bar me-1"></i> Reports
                         </a>
                         <ul class="dropdown-menu shadow-sm">
-                            <li><a class="dropdown-item py-1" href="{{ url_for('reports.dashboard') }}">
+                            <li><a class="dropdown-item py-1" href="{{ url_for('reporting.dashboard') }}">
                                 <i class="fas fa-tachometer-alt me-2 text-primary"></i> Dashboard
                             </a></li>
                             <li><a class="dropdown-item py-1" href="#">

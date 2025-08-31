@@ -9,7 +9,8 @@ from app.uav_service.forms import (UAVServiceIncidentForm, DiagnosisForm, Repair
                                   QualityCheckForm, PreventiveMaintenanceForm, MaintenanceScheduleForm)
 from app.models import (UAVServiceIncident, UAVServiceActivity, UAVMaintenanceSchedule, 
                        User, Product, WorkOrder, InventoryItem, InventoryTransaction, 
-                       WorkOrderPart, AssignmentGroup, AssignmentRule, AssignmentGroupMember, db)
+                       WorkOrderPart, AssignmentGroup, AssignmentRule, AssignmentGroupMember, 
+                       WorkOrderApproval, db)
 
 
 def apply_assignment_rules(incident):
@@ -802,8 +803,51 @@ def diagnosis_workflow(id):
                 else:
                     flash(f'Insufficient stock for {part.name}. Available: {part.quantity_in_stock}, Needed: {quantity_needed}', 'warning')
 
-        # Advance workflow
+        # Advance workflow to WO_AUTHORIZATION and create approval request
         incident.advance_workflow(current_user, f'Diagnosis completed: {form.diagnostic_findings.data}')
+        
+        # Find Kapil Kushwaha as the approver
+        kapil_user = User.query.filter(
+            db.or_(
+                User.username == 'kapil',
+                User.username == 'kapil.kushwaha',
+                User.email.like('%kapil%')
+            )
+        ).first()
+        
+        if not kapil_user:
+            # Fallback to first admin user if Kapil not found
+            kapil_user = User.query.filter_by(role='admin').first()
+        
+        if kapil_user:
+            # Create approval request
+            approval = WorkOrderApproval(
+                incident_id=incident.id,
+                approval_type='WORK_ORDER',
+                requested_by_id=current_user.id,
+                approver_id=kapil_user.id,
+                request_details=f'Work Order Type: {form.work_order_type.data}\nDiagnostic Findings: {form.diagnostic_findings.data}',
+                estimated_cost=form.estimated_cost.data,
+                estimated_hours=8  # Default estimate
+            )
+            
+            # Generate approval token for email links
+            approval.generate_approval_token()
+            
+            db.session.add(approval)
+            db.session.flush()  # Get the approval ID
+            
+            # Send approval email
+            from app.email_service import send_approval_email
+            try:
+                if send_approval_email(approval):
+                    flash(f'Diagnosis completed! Approval request sent to {kapil_user.full_name} for authorization.', 'success')
+                else:
+                    flash('Diagnosis completed! Approval request created (email sending failed - please check manually).', 'warning')
+            except Exception as e:
+                flash('Diagnosis completed! Approval request created (email sending failed - please check manually).', 'warning')
+        else:
+            flash('Diagnosis completed! No approver found - please contact administrator.', 'warning')
         
         # Create work order if needed
         if form.work_order_type.data in ['REPAIR', 'REPLACE', 'MAINTENANCE']:
@@ -873,6 +917,56 @@ def diagnosis_workflow(id):
             flash('Please check the form for errors and try again.', 'error')
     
     return render_template('uav_service/diagnosis_workflow_enhanced.html', incident=incident, form=form)
+
+
+@bp.route('/incidents/<int:id>/authorization')
+@login_required
+def wo_authorization_workflow(id):
+    """Handle work order authorization workflow"""
+    incident = UAVServiceIncident.query.get_or_404(id)
+    
+    # Get pending approval for this incident
+    approval = WorkOrderApproval.query.filter_by(
+        incident_id=incident.id,
+        status='PENDING'
+    ).first()
+    
+    return render_template('uav_service/wo_authorization_workflow.html', 
+                         incident=incident, approval=approval)
+
+
+@bp.route('/incidents/<int:id>/initiate-repair', methods=['POST'])
+@login_required
+def initiate_repair(id):
+    """Initiate repair stage after work order approval"""
+    incident = UAVServiceIncident.query.get_or_404(id)
+    
+    # Verify that the incident is in the correct state
+    if incident.workflow_status != 'WO_APPROVED':
+        flash('Cannot initiate repair. Work order must be approved first.', 'error')
+        return redirect(url_for('uav_service.view_incident', id=id))
+    
+    try:
+        # Move to repair stage
+        incident.workflow_status = 'REPAIR_MAINTENANCE'
+        
+        # Create activity log
+        activity = UAVServiceActivity(
+            uav_service_incident_id=incident.id,
+            user_id=current_user.id,
+            activity_type='repair_initiated',
+            description=f'Repair stage initiated by {current_user.full_name}'
+        )
+        db.session.add(activity)
+        db.session.commit()
+        
+        flash(f'Repair stage has been initiated for incident {incident.incident_number_formatted}', 'success')
+        return redirect(url_for('uav_service.repair_maintenance_workflow', id=id))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error initiating repair stage. Please try again.', 'error')
+        return redirect(url_for('uav_service.view_incident', id=id))
 
 
 @bp.route('/incidents/<int:id>/repair', methods=['GET', 'POST'])
@@ -1278,6 +1372,11 @@ def edit_stages(id):
             'DIAGNOSIS_WO': {
                 'workflow_status': 'DIAGNOSIS_WO', 
                 'route': 'uav_service.diagnosis_workflow',
+                'preserve_data': True
+            },
+            'WO_AUTHORIZATION': {
+                'workflow_status': 'WO_AUTHORIZATION',
+                'route': 'uav_service.wo_authorization_workflow',
                 'preserve_data': True
             },
             'REPAIR_MAINTENANCE': {

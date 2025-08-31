@@ -27,13 +27,13 @@
                                      style="width: {{ incident.workflow_progress_percentage }}%"
                                      aria-valuenow="{{ incident.workflow_progress_percentage }}" 
                                      aria-valuemin="0" aria-valuemax="100">
-                                    Step {{ incident.workflow_step_info.step }}/6 - {{ incident.workflow_progress_percentage|round|int }}%
+                                    Step {{ incident.workflow_step_info.step }}/7 - {{ incident.workflow_progress_percentage|round|int }}%
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- 6-Step Workflow Indicators -->
+                    <!-- 7-Step Workflow Indicators -->
                     <div class="row text-center">
                         <div class="col">
                             <div class="workflow-step {{ 'active' if incident.workflow_step_info.step >= 1 else '' }}">
@@ -51,28 +51,35 @@
                         </div>
                         <div class="col">
                             <div class="workflow-step {{ 'active' if incident.workflow_step_info.step >= 3 else '' }}">
-                                <div class="step-circle {{ 'bg-success text-white' if incident.workflow_step_info.step >= 3 else 'bg-light' }}">3</div>
-                                <div class="step-label">Repair/Maintenance</div>
-                                <small class="text-muted">Parts & technician work</small>
+                                <div class="step-circle {{ 'bg-info text-white' if incident.workflow_step_info.step == 3 else ('bg-success text-white' if incident.workflow_step_info.step > 3 else 'bg-light') }}">3</div>
+                                <div class="step-label">WO Authorization</div>
+                                <small class="text-muted">Approval required</small>
                             </div>
                         </div>
                         <div class="col">
                             <div class="workflow-step {{ 'active' if incident.workflow_step_info.step >= 4 else '' }}">
                                 <div class="step-circle {{ 'bg-success text-white' if incident.workflow_step_info.step >= 4 else 'bg-light' }}">4</div>
-                                <div class="step-label">Quality Check & Handover</div>
-                                <small class="text-muted">QA & compliance</small>
+                                <div class="step-label">Repair/Maintenance</div>
+                                <small class="text-muted">Parts & technician work</small>
                             </div>
                         </div>
                         <div class="col">
                             <div class="workflow-step {{ 'active' if incident.workflow_step_info.step >= 5 else '' }}">
                                 <div class="step-circle {{ 'bg-success text-white' if incident.workflow_step_info.step >= 5 else 'bg-light' }}">5</div>
-                                <div class="step-label">Preventive Maintenance</div>
-                                <small class="text-muted">Schedule future maintenance</small>
+                                <div class="step-label">Quality Check & Handover</div>
+                                <small class="text-muted">QA & compliance</small>
                             </div>
                         </div>
                         <div class="col">
                             <div class="workflow-step {{ 'active' if incident.workflow_step_info.step >= 6 else '' }}">
                                 <div class="step-circle {{ 'bg-success text-white' if incident.workflow_step_info.step >= 6 else 'bg-light' }}">6</div>
+                                <div class="step-label">Preventive Maintenance</div>
+                                <small class="text-muted">Schedule future maintenance</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="workflow-step {{ 'active' if incident.workflow_step_info.step >= 7 else '' }}">
+                                <div class="step-circle {{ 'bg-success text-white' if incident.workflow_step_info.step >= 7 else 'bg-light' }}">7</div>
                                 <div class="step-label">Closed</div>
                                 <small class="text-muted">Service completed</small>
                             </div>
@@ -86,9 +93,22 @@
                                 <i class="fas fa-stethoscope"></i> Start Diagnosis
                             </a>
                         {% elif incident.workflow_status == 'DIAGNOSIS_WO' %}
-                            <a href="{{ url_for('uav_service.repair_maintenance_workflow', id=incident.id) }}" class="btn btn-primary">
-                                <i class="fas fa-tools"></i> Start Repair/Maintenance
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Diagnosis completed. Awaiting approval to proceed with work order.
+                            </div>
+                        {% elif incident.workflow_status == 'WO_AUTHORIZATION' %}
+                            <a href="{{ url_for('uav_service.wo_authorization_workflow', id=incident.id) }}" class="btn btn-warning">
+                                <i class="fas fa-clipboard-check"></i> View Authorization Status
                             </a>
+                        {% elif incident.workflow_status == 'WO_APPROVED' %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> Work order has been approved. Ready to initiate repair stage.
+                            </div>
+                            <form method="POST" action="{{ url_for('uav_service.initiate_repair', id=incident.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to initiate the repair stage?')">
+                                    <i class="fas fa-tools"></i> Initiate Repair Stage
+                                </button>
+                            </form>
                         {% elif incident.workflow_status == 'REPAIR_MAINTENANCE' %}
                             <a href="{{ url_for('uav_service.quality_check_workflow', id=incident.id) }}" class="btn btn-primary">
                                 <i class="fas fa-check-circle"></i> Quality Check

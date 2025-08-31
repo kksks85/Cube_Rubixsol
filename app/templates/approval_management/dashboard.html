@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% set active_page = "approval_management" %}
+
+{% block title %}Approval Management Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="#">Administration</a></li>
+                <li class="breadcrumb-item active">Approval Management</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-check-circle me-2"></i>Approval Management Dashboard</h2>
+        <p class="text-muted">Manage work order approvals and authorization requests</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Pending</h5>
+                        <h3 class="mb-0">{{ (all_pending if all_pending else pending_approvals)|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Approved</h5>
+                        <h3 class="mb-0">{{ completed_approvals|selectattr('is_approved')|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Rejected</h5>
+                        <h3 class="mb-0">{{ completed_approvals|selectattr('is_rejected')|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-times fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total</h5>
+                        <h3 class="mb-0">{{ ((all_pending if all_pending else pending_approvals)|length) + (completed_approvals|length) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-list fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Approvals -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-clock me-2"></i>Pending Approvals ({{ (all_pending if all_pending else pending_approvals)|length }})
+                </h6>
+            </div>
+            <div class="card-body">
+                {% set approvals_to_show = all_pending if all_pending else pending_approvals %}
+                {% if approvals_to_show %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Incident</th>
+                                    <th>Title</th>
+                                    <th>Requested By</th>
+                                    <th>Request Date</th>
+                                    <th>Priority</th>
+                                    <th>Days Pending</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for approval in approvals_to_show %}
+                                <tr class="{% if approval.days_pending > 2 %}table-warning{% elif approval.days_pending > 5 %}table-danger{% endif %}">
+                                    <td>
+                                        <a href="{{ url_for('uav_service.view_incident', id=approval.incident.id) }}" class="text-decoration-none">
+                                            {{ approval.incident.incident_number_formatted }}
+                                        </a>
+                                    </td>
+                                    <td>{{ approval.incident.title[:50] }}{% if approval.incident.title|length > 50 %}...{% endif %}</td>
+                                    <td>{{ approval.requester.full_name }}</td>
+                                    <td>{{ approval.requested_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if approval.incident.priority == 'URGENT' %}
+                                            <span class="badge badge-danger">{{ approval.incident.priority }}</span>
+                                        {% elif approval.incident.priority == 'HIGH' %}
+                                            <span class="badge badge-warning">{{ approval.incident.priority }}</span>
+                                        {% elif approval.incident.priority == 'MEDIUM' %}
+                                            <span class="badge badge-primary">{{ approval.incident.priority }}</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ approval.incident.priority }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="{% if approval.days_pending > 5 %}text-danger{% elif approval.days_pending > 2 %}text-warning{% endif %}">
+                                            {{ approval.days_pending }} day{% if approval.days_pending != 1 %}s{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-success btn-sm" 
+                                                    onclick="approveRequest({{ approval.id }})">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-sm" 
+                                                    onclick="rejectRequest({{ approval.id }})">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                            <a href="{{ url_for('approval_management.view_approval', approval_id=approval.id) }}" 
+                                               class="btn btn-info btn-sm">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5>No Pending Approvals</h5>
+                        <p class="text-muted">All work orders are up to date!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Completed Approvals -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-secondary">
+                    <i class="fas fa-history me-2"></i>Recent Completed Approvals
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if completed_approvals %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Incident</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Completed Date</th>
+                                    <th>Comments</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for approval in completed_approvals %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('uav_service.view_incident', id=approval.incident.id) }}" class="text-decoration-none">
+                                            {{ approval.incident.incident_number_formatted }}
+                                        </a>
+                                    </td>
+                                    <td>{{ approval.incident.title[:40] }}{% if approval.incident.title|length > 40 %}...{% endif %}</td>
+                                    <td>
+                                        {% if approval.is_approved %}
+                                            <span class="badge badge-success">Approved</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ approval.approved_at.strftime('%Y-%m-%d %H:%M') if approval.approved_at }}</td>
+                                    <td>{{ approval.approval_comments[:30] if approval.approval_comments else '-' }}{% if approval.approval_comments and approval.approval_comments|length > 30 %}...{% endif %}</td>
+                                    <td>
+                                        <a href="{{ url_for('approval_management.view_approval', approval_id=approval.id) }}" 
+                                           class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <p class="text-muted">No completed approvals yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Approve Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="approvalForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="comments" class="form-label">Comments <span id="required-indicator" style="display:none;" class="text-danger">*</span></label>
+                        <textarea class="form-control" id="comments" name="comments" rows="3" 
+                                  placeholder="Enter your comments (optional for approval, required for rejection)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn" id="submitBtn">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function approveRequest(approvalId) {
+    $('#modalTitle').text('Approve Work Order');
+    $('#approvalForm').attr('action', `/approval-management/approve/${approvalId}`);
+    $('#submitBtn').removeClass('btn-danger').addClass('btn-success').text('Approve');
+    $('#required-indicator').hide();
+    $('#comments').attr('placeholder', 'Enter approval comments (optional)');
+    $('#approvalModal').modal('show');
+}
+
+function rejectRequest(approvalId) {
+    $('#modalTitle').text('Reject Work Order');
+    $('#approvalForm').attr('action', `/approval-management/reject/${approvalId}`);
+    $('#submitBtn').removeClass('btn-success').addClass('btn-danger').text('Reject');
+    $('#required-indicator').show();
+    $('#comments').attr('placeholder', 'Enter rejection reason (required)');
+    $('#approvalModal').modal('show');
+}
+
+// Form validation for rejection
+$('#approvalForm').on('submit', function(e) {
+    if ($('#submitBtn').hasClass('btn-danger')) {
+        // Rejection requires comments
+        if (!$('#comments').val().trim()) {
+            e.preventDefault();
+            alert('Please provide comments for rejection.');
+            $('#comments').focus();
+        }
+    }
+});
+</script>
+{% endblock %}
