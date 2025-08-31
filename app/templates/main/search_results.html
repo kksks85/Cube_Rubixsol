@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Search Results Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-search me-2 text-primary"></i>Search Results
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Results for: <strong>"{{ query }}"</strong>
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-3">
+                    <h5 class="text-primary mb-1">{{ workorders|length }}</h5>
+                    <small class="text-muted">Work Orders Found</small>
+                </div>
+            </div>
+        </div>
+        {% if current_user.has_role('admin') or current_user.has_role('manager') %}
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-3">
+                    <h5 class="text-success mb-1">{{ users|length }}</h5>
+                    <small class="text-muted">Users Found</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if workorders or users %}
+        <!-- Work Orders Results -->
+        {% if workorders %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clipboard-list me-2 text-primary"></i>
+                            Work Orders ({{ workorders|length }})
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        <th>Description</th>
+                                        <th>Address</th>
+                                        <th>Status</th>
+                                        <th>Priority</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for workorder in workorders %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-light text-dark">#{{ workorder.id }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">{{ workorder.title }}</div>
+                                        </td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 200px;">
+                                                {{ workorder.description }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ workorder.address or 'No address' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            {% if workorder.status_detail %}
+                                                <span class="badge" style="background-color: {{ workorder.status_detail.color }}; color: white;">
+                                                    {{ workorder.status_detail.name }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Unknown</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if workorder.priority %}
+                                                <span class="badge badge-priority-{{ workorder.priority.name|lower }}">
+                                                    {{ workorder.priority.name }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No Priority</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ moment(workorder.created_at).format('MMM DD, YYYY') if moment else workorder.created_at.strftime('%b %d, %Y') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('workorders.view_workorder', id=workorder.id) }}" 
+                                                   class="btn btn-outline-primary btn-sm" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if current_user.has_role('admin') or current_user.has_role('manager') or workorder.assigned_to_id == current_user.id %}
+                                                <a href="{{ url_for('workorders.edit_workorder', id=workorder.id) }}" 
+                                                   class="btn btn-outline-secondary btn-sm" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Users Results (Admin/Manager only) -->
+        {% if users and (current_user.has_role('admin') or current_user.has_role('manager')) %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users me-2 text-success"></i>
+                            Users ({{ users|length }})
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Avatar</th>
+                                        <th>Name</th>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr>
+                                        <td>
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                                {{ user.first_name[0] if user.first_name else user.username[0] }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">{{ user.full_name }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">{{ user.username }}</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ user.email }}</small>
+                                        </td>
+                                        <td>
+                                            {% if user.role %}
+                                                <span class="badge bg-info">{{ user.role.name|title }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No Role</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('users.view_user', id=user.id) }}" 
+                                               class="btn btn-outline-primary btn-sm" title="View Profile">
+                                                <i class="fas fa-user"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <!-- No Results Found -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-search fa-3x text-muted"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">No Results Found</h4>
+                        <p class="text-muted mb-4">
+                            We couldn't find any work orders or users matching "<strong>{{ query }}</strong>".
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                                <i class="fas fa-home me-1"></i>Back to Dashboard
+                            </a>
+                            <a href="{{ url_for('workorders.list_workorders') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-clipboard-list me-1"></i>View All Work Orders
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.table th {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #6c757d;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Highlight search terms */
+.search-highlight {
+    background-color: #fff3cd;
+    padding: 0.1em 0.2em;
+    border-radius: 0.25rem;
+}
+</style>
+
+<script>
+// Highlight search terms in results
+document.addEventListener('DOMContentLoaded', function() {
+    const query = "{{ query|e }}";
+    if (query && query.length > 2) {
+        // Simple highlighting (can be enhanced)
+        const regex = new RegExp(`(${query})`, 'gi');
+        const elements = document.querySelectorAll('td, .fw-semibold');
+        
+        elements.forEach(element => {
+            if (element.textContent && !element.querySelector('a, button, .badge')) {
+                element.innerHTML = element.innerHTML.replace(regex, '<span class="search-highlight">$1</span>');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

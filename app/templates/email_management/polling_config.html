@@ -1,0 +1,732 @@
+{% extends "base_new.html" %}
+
+{% block title %}Email Polling Configuration{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="h3 mb-0">Email Polling Configuration</h2>
+                    <p class="text-muted">Configure automatic email monitoring and processing</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-info" onclick="checkPollingStatus()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh Status
+                    </button>
+                    <button class="btn btn-success" id="startPollingBtn" onclick="startPolling()">
+                        <i class="fas fa-play me-2"></i>Start Polling
+                    </button>
+                    <button class="btn btn-danger" id="stopPollingBtn" onclick="stopPolling()">
+                        <i class="fas fa-stop me-2"></i>Stop Polling
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status Card -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-heartbeat me-2"></i>Service Status
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="serviceStatus">
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>Statistics
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="pollingStats">
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Polling Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="pollingConfigForm">
+                        <!-- IMAP/POP3 Configuration -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-server me-2"></i>IMAP/POP3 Server Configuration
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-info mb-3">IMAP Settings</h6>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="imapServer" class="form-label">IMAP Server</label>
+                                                    <input type="text" class="form-control" id="imapServer" name="imap_server" 
+                                                           value="{{ config.imap_server or '' }}" placeholder="imap.gmail.com">
+                                                    <small class="form-text text-muted">IMAP server hostname or IP address</small>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="imapPort" class="form-label">IMAP Port</label>
+                                                            <input type="number" class="form-control" id="imapPort" name="imap_port" 
+                                                                   value="{{ config.imap_port or 993 }}" min="1" max="65535">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <div class="form-check mt-4">
+                                                                <input class="form-check-input" type="checkbox" id="imapUseSSL" 
+                                                                       name="imap_use_ssl" {{ 'checked' if config.imap_use_ssl else '' }}>
+                                                                <label class="form-check-label" for="imapUseSSL">
+                                                                    Use SSL/TLS
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="imapUsername" class="form-label">IMAP Username</label>
+                                                    <input type="text" class="form-control" id="imapUsername" name="imap_username" 
+                                                           value="{{ config.imap_username or '' }}" placeholder="username@domain.com">
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="imapPassword" class="form-label">IMAP Password</label>
+                                                    <input type="password" class="form-control" id="imapPassword" name="imap_password" 
+                                                           value="{{ config.imap_password or '' }}" placeholder="Enter password">
+                                                    <small class="form-text text-muted">Use app-specific password for Gmail</small>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-6">
+                                                <h6 class="text-warning mb-3">POP3 Settings</h6>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="pop3Server" class="form-label">POP3 Server</label>
+                                                    <input type="text" class="form-control" id="pop3Server" name="pop3_server" 
+                                                           value="{{ config.pop3_server or '' }}" placeholder="pop.gmail.com">
+                                                    <small class="form-text text-muted">POP3 server hostname or IP address</small>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="pop3Port" class="form-label">POP3 Port</label>
+                                                            <input type="number" class="form-control" id="pop3Port" name="pop3_port" 
+                                                                   value="{{ config.pop3_port or 995 }}" min="1" max="65535">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <div class="form-check mt-4">
+                                                                <input class="form-check-input" type="checkbox" id="pop3UseSSL" 
+                                                                       name="pop3_use_ssl" {{ 'checked' if config.pop3_use_ssl else '' }}>
+                                                                <label class="form-check-label" for="pop3UseSSL">
+                                                                    Use SSL/TLS
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="pop3Username" class="form-label">POP3 Username</label>
+                                                    <input type="text" class="form-control" id="pop3Username" name="pop3_username" 
+                                                           value="{{ config.pop3_username or '' }}" placeholder="username@domain.com">
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="pop3Password" class="form-label">POP3 Password</label>
+                                                    <input type="password" class="form-control" id="pop3Password" name="pop3_password" 
+                                                           value="{{ config.pop3_password or '' }}" placeholder="Enter password">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="preferredProtocol" class="form-label">Preferred Protocol</label>
+                                                    <select class="form-select" id="preferredProtocol" name="preferred_protocol">
+                                                        <option value="imap" {{ 'selected' if config.preferred_protocol == 'imap' else '' }}>IMAP (Recommended)</option>
+                                                        <option value="pop3" {{ 'selected' if config.preferred_protocol == 'pop3' else '' }}>POP3</option>
+                                                    </select>
+                                                    <small class="form-text text-muted">IMAP is recommended for better email management</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="d-flex gap-2 mt-4">
+                                                    <button type="button" class="btn btn-outline-primary" onclick="testIMAPConnection()">
+                                                        <i class="fas fa-plug me-2"></i>Test IMAP
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-warning" onclick="testPOP3Connection()">
+                                                        <i class="fas fa-plug me-2"></i>Test POP3
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Quick Setup for Common Providers -->
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <h6 class="text-secondary mb-2">Quick Setup for Common Providers:</h6>
+                                                <div class="d-flex gap-2 flex-wrap">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setupGmail()">
+                                                        <i class="fab fa-google me-1"></i>Gmail
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setupOutlook()">
+                                                        <i class="fab fa-microsoft me-1"></i>Outlook
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setupYahoo()">
+                                                        <i class="fab fa-yahoo me-1"></i>Yahoo
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setupCustom()">
+                                                        <i class="fas fa-cog me-1"></i>Custom
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Basic Settings -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">Basic Settings</h6>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="pollingEnabled" 
+                                               name="polling_enabled" {{ 'checked' if config.polling_enabled else '' }}>
+                                        <label class="form-check-label" for="pollingEnabled">
+                                            <strong>Enable Email Polling</strong>
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">Turn on/off automatic email checking</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="pollingInterval" class="form-label">Polling Interval (minutes)</label>
+                                    <select class="form-select" id="pollingInterval" name="polling_interval_minutes">
+                                        <option value="1" {{ 'selected' if config.polling_interval_minutes == 1 else '' }}>1 minute</option>
+                                        <option value="2" {{ 'selected' if config.polling_interval_minutes == 2 else '' }}>2 minutes</option>
+                                        <option value="5" {{ 'selected' if config.polling_interval_minutes == 5 else '' }}>5 minutes</option>
+                                        <option value="10" {{ 'selected' if config.polling_interval_minutes == 10 else '' }}>10 minutes</option>
+                                        <option value="15" {{ 'selected' if config.polling_interval_minutes == 15 else '' }}>15 minutes</option>
+                                        <option value="30" {{ 'selected' if config.polling_interval_minutes == 30 else '' }}>30 minutes</option>
+                                        <option value="60" {{ 'selected' if config.polling_interval_minutes == 60 else '' }}>1 hour</option>
+                                    </select>
+                                    <small class="form-text text-muted">How often to check for new emails</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="maxEmails" class="form-label">Max Emails per Poll</label>
+                                    <input type="number" class="form-control" id="maxEmails" name="max_emails_per_poll" 
+                                           value="{{ config.max_emails_per_poll }}" min="1" max="200">
+                                    <small class="form-text text-muted">Maximum number of emails to process in each poll</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Email Processing -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">Email Processing</h6>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="markAsRead" 
+                                               name="mark_as_read" {{ 'checked' if config.mark_as_read else '' }}>
+                                        <label class="form-check-label" for="markAsRead">
+                                            Mark emails as read after processing
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="deleteProcessed" 
+                                               name="delete_processed_emails" {{ 'checked' if config.delete_processed_emails else '' }}>
+                                        <label class="form-check-label" for="deleteProcessed">
+                                            Delete emails after processing
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">⚠️ Use with caution - emails will be permanently deleted</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="processAttachments" 
+                                               name="process_attachments" {{ 'checked' if config.process_attachments else '' }}>
+                                        <label class="form-check-label" for="processAttachments">
+                                            Process email attachments
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="maxAttachmentSize" class="form-label">Max Attachment Size (MB)</label>
+                                    <input type="number" class="form-control" id="maxAttachmentSize" 
+                                           name="max_attachment_size_mb" value="{{ config.max_attachment_size_mb }}" min="1" max="100">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Error Handling -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">Error Handling</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="maxRetry" class="form-label">Max Retry Attempts</label>
+                                    <input type="number" class="form-control" id="maxRetry" name="max_retry_attempts" 
+                                           value="{{ config.max_retry_attempts }}" min="0" max="10">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="retryDelay" class="form-label">Retry Delay (minutes)</label>
+                                    <input type="number" class="form-control" id="retryDelay" name="retry_delay_minutes" 
+                                           value="{{ config.retry_delay_minutes }}" min="1" max="60">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="sendErrorNotifications" 
+                                               name="send_error_notifications" {{ 'checked' if config.send_error_notifications else '' }}>
+                                        <label class="form-check-label" for="sendErrorNotifications">
+                                            Send error notifications
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="errorEmail" class="form-label">Error Notification Email</label>
+                                    <input type="email" class="form-control" id="errorEmail" name="error_notification_email" 
+                                           value="{{ config.error_notification_email or '' }}" placeholder="admin@company.com">
+                                </div>
+                            </div>
+                            
+                            <!-- Performance Settings -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">Performance & Logging</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="connectionTimeout" class="form-label">Connection Timeout (seconds)</label>
+                                    <input type="number" class="form-control" id="connectionTimeout" 
+                                           name="connection_timeout_seconds" value="{{ config.connection_timeout_seconds }}" min="10" max="300">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="readTimeout" class="form-label">Read Timeout (seconds)</label>
+                                    <input type="number" class="form-control" id="readTimeout" name="read_timeout_seconds" 
+                                           value="{{ config.read_timeout_seconds }}" min="30" max="600">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="logProcessed" 
+                                               name="log_processed_emails" {{ 'checked' if config.log_processed_emails else '' }}>
+                                        <label class="form-check-label" for="logProcessed">
+                                            Log all processed emails
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex gap-2 justify-content-end">
+                                    <button type="button" class="btn btn-outline-primary" onclick="testConnection()">
+                                        <i class="fas fa-plug me-2"></i>Test Connection
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info" onclick="manualPoll()">
+                                        <i class="fas fa-sync me-2"></i>Manual Poll
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Save Configuration
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Check polling status on page load
+document.addEventListener('DOMContentLoaded', function() {
+    checkPollingStatus();
+    setInterval(checkPollingStatus, 30000); // Refresh every 30 seconds
+});
+
+function checkPollingStatus() {
+    fetch('/email-management/polling/status')
+    .then(response => response.json())
+    .then(data => {
+        updateStatusDisplay(data);
+        updateButtonStates(data);
+    })
+    .catch(error => {
+        console.error('Error checking status:', error);
+        document.getElementById('serviceStatus').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>Error checking service status
+            </div>
+        `;
+    });
+}
+
+function updateStatusDisplay(data) {
+    const statusDiv = document.getElementById('serviceStatus');
+    const statsDiv = document.getElementById('pollingStats');
+    
+    // Service Status
+    const isRunning = data.running || false;
+    const statusClass = isRunning ? 'success' : 'secondary';
+    const statusIcon = isRunning ? 'play' : 'stop';
+    const statusText = isRunning ? 'Running' : 'Stopped';
+    
+    statusDiv.innerHTML = `
+        <div class="d-flex align-items-center mb-3">
+            <span class="badge bg-${statusClass} fs-6 me-3">
+                <i class="fas fa-${statusIcon} me-2"></i>${statusText}
+            </span>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <small class="text-muted">Interval:</small><br>
+                <strong>${data.polling_interval || 'N/A'} seconds</strong>
+            </div>
+            <div class="col-6">
+                <small class="text-muted">Last Poll:</small><br>
+                <strong>${data.last_poll_time ? new Date(data.last_poll_time).toLocaleString() : 'Never'}</strong>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-6">
+                <small class="text-muted">Servers:</small><br>
+                <strong>${data.configured_servers || 0}</strong>
+            </div>
+            <div class="col-6">
+                <small class="text-muted">Thread:</small><br>
+                <strong>${data.thread_alive ? 'Active' : 'Inactive'}</strong>
+            </div>
+        </div>
+    `;
+    
+    // Statistics
+    statsDiv.innerHTML = `
+        <div class="row">
+            <div class="col-6">
+                <div class="text-center">
+                    <h4 class="text-primary mb-0">${data.total_emails_processed || 0}</h4>
+                    <small class="text-muted">Emails Processed</small>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="text-center">
+                    <h4 class="text-success mb-0">${data.total_incidents_created || 0}</h4>
+                    <small class="text-muted">Incidents Created</small>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-12">
+                <small class="text-muted">Last Successful Poll:</small><br>
+                <strong>${data.last_successful_poll ? new Date(data.last_successful_poll).toLocaleString() : 'Never'}</strong>
+            </div>
+        </div>
+    `;
+}
+
+function updateButtonStates(data) {
+    const startBtn = document.getElementById('startPollingBtn');
+    const stopBtn = document.getElementById('stopPollingBtn');
+    
+    if (data.running) {
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'inline-block';
+    } else {
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+    }
+}
+
+function startPolling() {
+    fetch('/email-management/polling/start', {method: 'POST'})
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            checkPollingStatus();
+        } else {
+            showAlert(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showAlert('Error starting polling service', 'error');
+    });
+}
+
+function stopPolling() {
+    fetch('/email-management/polling/stop', {method: 'POST'})
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            checkPollingStatus();
+        } else {
+            showAlert(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showAlert('Error stopping polling service', 'error');
+    });
+}
+
+function testConnection() {
+    // This would need email config data - simplified for now
+    showAlert('Connection test feature will be implemented when email servers are configured', 'info');
+}
+
+function manualPoll() {
+    fetch('/email-management/polling/manual-poll', {method: 'POST'})
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            setTimeout(checkPollingStatus, 2000); // Refresh status after 2 seconds
+        } else {
+            showAlert(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showAlert('Error triggering manual poll', 'error');
+    });
+}
+
+function showAlert(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'error' ? 'alert-danger' : 'alert-info';
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+    alertDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// IMAP/POP3 Connection Testing Functions
+function testIMAPConnection() {
+    const server = document.getElementById('imapServer').value;
+    const port = document.getElementById('imapPort').value;
+    const username = document.getElementById('imapUsername').value;
+    const password = document.getElementById('imapPassword').value;
+    const useSSL = document.getElementById('imapUseSSL').checked;
+    
+    if (!server || !username || !password) {
+        showAlert('Please fill in all IMAP connection details', 'error');
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Testing...';
+    button.disabled = true;
+    
+    fetch('/email-management/polling/test-connection', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            protocol: 'imap',
+            server: server,
+            port: parseInt(port),
+            username: username,
+            password: password,
+            use_ssl: useSSL
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('IMAP connection successful!', 'success');
+        } else {
+            showAlert(`IMAP connection failed: ${data.error}`, 'error');
+        }
+    })
+    .catch(error => {
+        showAlert('Error testing IMAP connection', 'error');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function testPOP3Connection() {
+    const server = document.getElementById('pop3Server').value;
+    const port = document.getElementById('pop3Port').value;
+    const username = document.getElementById('pop3Username').value;
+    const password = document.getElementById('pop3Password').value;
+    const useSSL = document.getElementById('pop3UseSSL').checked;
+    
+    if (!server || !username || !password) {
+        showAlert('Please fill in all POP3 connection details', 'error');
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Testing...';
+    button.disabled = true;
+    
+    fetch('/email-management/polling/test-connection', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            protocol: 'pop3',
+            server: server,
+            port: parseInt(port),
+            username: username,
+            password: password,
+            use_ssl: useSSL
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('POP3 connection successful!', 'success');
+        } else {
+            showAlert(`POP3 connection failed: ${data.error}`, 'error');
+        }
+    })
+    .catch(error => {
+        showAlert('Error testing POP3 connection', 'error');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Quick Setup Functions for Common Providers
+function setupGmail() {
+    // IMAP Settings
+    document.getElementById('imapServer').value = 'imap.gmail.com';
+    document.getElementById('imapPort').value = '993';
+    document.getElementById('imapUseSSL').checked = true;
+    
+    // POP3 Settings
+    document.getElementById('pop3Server').value = 'pop.gmail.com';
+    document.getElementById('pop3Port').value = '995';
+    document.getElementById('pop3UseSSL').checked = true;
+    
+    // Set preferred protocol to IMAP
+    document.getElementById('preferredProtocol').value = 'imap';
+    
+    showAlert('Gmail server settings configured. Please enter your email and app-specific password.', 'info');
+}
+
+function setupOutlook() {
+    // IMAP Settings
+    document.getElementById('imapServer').value = 'outlook.office365.com';
+    document.getElementById('imapPort').value = '993';
+    document.getElementById('imapUseSSL').checked = true;
+    
+    // POP3 Settings
+    document.getElementById('pop3Server').value = 'outlook.office365.com';
+    document.getElementById('pop3Port').value = '995';
+    document.getElementById('pop3UseSSL').checked = true;
+    
+    // Set preferred protocol to IMAP
+    document.getElementById('preferredProtocol').value = 'imap';
+    
+    showAlert('Outlook/Office365 server settings configured. Please enter your email and password.', 'info');
+}
+
+function setupYahoo() {
+    // IMAP Settings
+    document.getElementById('imapServer').value = 'imap.mail.yahoo.com';
+    document.getElementById('imapPort').value = '993';
+    document.getElementById('imapUseSSL').checked = true;
+    
+    // POP3 Settings
+    document.getElementById('pop3Server').value = 'pop.mail.yahoo.com';
+    document.getElementById('pop3Port').value = '995';
+    document.getElementById('pop3UseSSL').checked = true;
+    
+    // Set preferred protocol to IMAP
+    document.getElementById('preferredProtocol').value = 'imap';
+    
+    showAlert('Yahoo Mail server settings configured. Please enter your email and app-specific password.', 'info');
+}
+
+function setupCustom() {
+    // Clear all fields for custom setup
+    document.getElementById('imapServer').value = '';
+    document.getElementById('imapPort').value = '993';
+    document.getElementById('imapUsername').value = '';
+    document.getElementById('imapPassword').value = '';
+    document.getElementById('imapUseSSL').checked = true;
+    
+    document.getElementById('pop3Server').value = '';
+    document.getElementById('pop3Port').value = '995';
+    document.getElementById('pop3Username').value = '';
+    document.getElementById('pop3Password').value = '';
+    document.getElementById('pop3UseSSL').checked = true;
+    
+    document.getElementById('preferredProtocol').value = 'imap';
+    
+    showAlert('Ready for custom email server configuration. Please enter your server details.', 'info');
+}
+</script>
+{% endblock %}

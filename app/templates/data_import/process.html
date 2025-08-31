@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-play text-success me-2"></i>
+                        Process Import Batch
+                    </h2>
+                    <p class="text-muted">Import approved data for: <strong>{{ batch.batch_name }}</strong></p>
+                </div>
+                <div>
+                    <a href="{{ url_for('data_import.review', batch_id=batch.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Review
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Confirmation -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Final Confirmation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">⚠️ Important Notice</h6>
+                        <p class="mb-0">
+                            You are about to import <strong>{{ batch.valid_rows }} records</strong> into the 
+                            <strong>{{ batch.target_table }}</strong> table. This action cannot be undone.
+                            Please review the summary below before proceeding.
+                        </p>
+                    </div>
+
+                    <!-- Import Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Import Summary</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Target Table:</strong> {{ batch.target_table }}</li>
+                                        <li><strong>Records to Import:</strong> {{ batch.valid_rows }}</li>
+                                        <li><strong>Success Rate:</strong> {{ batch.success_rate }}%</li>
+                                        <li><strong>File:</strong> {{ batch.original_filename }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Approval Details</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Approved By:</strong> 
+                                            {% if batch.approved_by %}
+                                                {{ batch.approved_by.first_name }} {{ batch.approved_by.last_name }}
+                                            {% else %}
+                                                Auto-approved
+                                            {% endif %}
+                                        </li>
+                                        <li><strong>Approved On:</strong> 
+                                            {% if batch.approved_at %}
+                                                {{ batch.approved_at.strftime('%m/%d/%Y at %I:%M %p') }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </li>
+                                        <li><strong>Notes:</strong> {{ batch.approval_notes or 'No notes provided' }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirmation Form -->
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        {{ form.batch_id }}
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.confirm(class="form-check-input") }}
+                                <label class="form-check-label" for="{{ form.confirm.id }}">
+                                    {{ form.confirm.label.text }}
+                                </label>
+                            </div>
+                            {% if form.confirm.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.confirm.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{{ url_for('data_import.review', batch_id=batch.id) }}" 
+                               class="btn btn-outline-secondary btn-lg px-4">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            {{ form.submit(class="btn btn-success btn-lg px-4") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing Information -->
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>What Happens Next?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Import Process</h6>
+                            <ol>
+                                <li>Data validation is re-checked</li>
+                                <li>Records are created in the database</li>
+                                <li>Import results are recorded</li>
+                                <li>You'll be redirected to the results page</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>After Import</h6>
+                            <ul>
+                                <li>New records will be available immediately</li>
+                                <li>Import history is maintained for auditing</li>
+                                <li>Any errors during import will be logged</li>
+                                <li>You can view detailed results in the batch details</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const submitBtn = document.querySelector('{{ form.submit.id }}');
+    
+    form.addEventListener('submit', function(e) {
+        // Disable submit button to prevent double submission
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    });
+});
+</script>
+{% endblock %}

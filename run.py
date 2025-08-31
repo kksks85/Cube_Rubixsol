@@ -74,4 +74,18 @@ def create_default_data():
 if __name__ == '__main__':
     # Create default data on startup
     create_default_data()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    
+    # Initialize email polling service
+    try:
+        from email_polling_startup import setup_email_polling
+        setup_email_polling(app)
+        print("📧 Email polling service initialized")
+    except Exception as e:
+        print(f"⚠️  Email polling service initialization failed: {e}")
+    
+    # Get configuration from environment
+    debug_mode = os.environ.get('FLASK_ENV', 'development') == 'development'
+    host = os.environ.get('FLASK_HOST', '0.0.0.0')
+    port = int(os.environ.get('FLASK_PORT', 5000))
+    
+    app.run(debug=debug_mode, host=host, port=port)

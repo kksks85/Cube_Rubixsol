@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Review Import Batch
+                    </h2>
+                    <p class="text-muted">Review validation results for: <strong>{{ batch.batch_name }}</strong></p>
+                </div>
+                <div>
+                    <a href="{{ url_for('data_import.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Summary -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <strong>Target Table:</strong><br>
+                            <span class="badge bg-primary">{{ batch.target_table }}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Total Rows:</strong><br>
+                            {{ batch.total_rows }}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Valid Rows:</strong><br>
+                            <span class="text-success">{{ batch.valid_rows }}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Invalid Rows:</strong><br>
+                            <span class="text-danger">{{ batch.invalid_rows }}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Success Rate:</strong><br>
+                            <span class="badge bg-{{ 'success' if batch.success_rate >= 90 else 'warning' if batch.success_rate >= 75 else 'danger' }}">
+                                {{ batch.success_rate }}%
+                            </span>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Status:</strong><br>
+                            {% set status_colors = {
+                                'pending': 'secondary',
+                                'processing': 'info',
+                                'validating': 'warning',
+                                'approved': 'success',
+                                'rejected': 'danger',
+                                'completed': 'success',
+                                'failed': 'danger'
+                            } %}
+                            <span class="badge bg-{{ status_colors.get(batch.status.value, 'secondary') }}">
+                                {{ batch.status.value.title() }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex gap-2">
+                {% if batch.status == 'validated' %}
+                    {% if current_user.role.name in ['admin', 'manager'] %}
+                        <a href="{{ url_for('data_import.approve', batch_id=batch.id) }}" class="btn btn-warning">
+                            <i class="fas fa-gavel me-1"></i> Review for Approval
+                        </a>
+                    {% endif %}
+                    <a href="{{ url_for('data_import.process_batch', batch_id=batch.id) }}" class="btn btn-success">
+                        <i class="fas fa-play me-1"></i> Process Import
+                    </a>
+                {% elif batch.status == 'approved' %}
+                    <a href="{{ url_for('data_import.process_batch', batch_id=batch.id) }}" class="btn btn-success">
+                        <i class="fas fa-play me-1"></i> Process Import
+                    </a>
+                {% endif %}
+                
+                <a href="{{ url_for('data_import.mapping', batch_id=batch.id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit me-1"></i> Adjust Mapping
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation Results -->
+    <div class="row">
+        <!-- Valid Rows -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check me-2"></i>Valid Rows ({{ batch.valid_rows }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if valid_rows %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Row #</th>
+                                        <th>Sample Data</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in valid_rows %}
+                                    <tr>
+                                        <td>{{ row.row_number }}</td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {% for key, value in row.mapped_data_dict.items() %}
+                                                    {% if loop.index <= 3 %}
+                                                        <strong>{{ key }}:</strong> {{ value|string|truncate(20) }}{% if not loop.last %}, {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if row.mapped_data_dict|length > 3 %}...{% endif %}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">Valid</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if batch.valid_rows > 100 %}
+                            <div class="card-footer text-muted text-center">
+                                Showing first 100 of {{ batch.valid_rows }} valid rows
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h6 class="text-muted">No Valid Rows</h6>
+                            <p class="text-muted">All rows have validation errors</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Invalid Rows -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Invalid Rows ({{ batch.invalid_rows }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if invalid_rows %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Row #</th>
+                                        <th>Errors</th>
+                                        <th>Sample Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in invalid_rows %}
+                                    <tr>
+                                        <td>{{ row.row_number }}</td>
+                                        <td>
+                                            {% for error in row.validation_errors_list %}
+                                                <small class="text-danger d-block">
+                                                    <i class="fas fa-times me-1"></i>{{ error }}
+                                                </small>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {% for key, value in row.original_data_dict.items() %}
+                                                    {% if loop.index <= 2 %}
+                                                        <strong>{{ key }}:</strong> {{ value|string|truncate(15) }}{% if not loop.last %}, {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if row.original_data_dict|length > 2 %}...{% endif %}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if batch.invalid_rows > 100 %}
+                            <div class="card-footer text-muted text-center">
+                                Showing first 100 of {{ batch.invalid_rows }} invalid rows
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-smile fa-3x text-success mb-3"></i>
+                            <h6 class="text-success">All Rows Valid!</h6>
+                            <p class="text-muted">No validation errors found</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Next Steps -->
+    {% if batch.invalid_rows > 0 %}
+    <div class="row">
+        <div class="col">
+            <div class="alert alert-warning">
+                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Next Steps</h6>
+                <p class="mb-0">
+                    There are {{ batch.invalid_rows }} rows with validation errors. You can:
+                    <ul class="mt-2 mb-0">
+                        <li>Fix the errors in your Excel file and re-upload</li>
+                        <li>Adjust the column mapping to correct field assignments</li>
+                        <li>Proceed with importing only the valid rows ({{ batch.valid_rows }} rows)</li>
+                    </ul>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

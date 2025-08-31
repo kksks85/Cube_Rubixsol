@@ -1620,3 +1620,34 @@ html[data-bs-theme="dark"] .chart-container {
 .form-check-input:focus + .form-check-label {
     color: var(--primary-dark);
 }
+
+/* Dashboard Drill-down Hover Effects */
+.hover-card {
+    transition: all 0.2s ease-in-out;
+    text-decoration: none !important;
+    color: inherit;
+}
+
+.hover-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-decoration: none !important;
+    color: inherit;
+}
+
+.hover-card:hover .stat-number {
+    color: var(--primary-color);
+}
+
+.hover-card:hover .stat-label {
+    color: var(--gray-700);
+}
+
+.hover-card .card {
+    transition: all 0.2s ease-in-out;
+    margin-bottom: 0;
+}
+
+.hover-card:hover .card {
+    border-color: var(--primary-color);
+}

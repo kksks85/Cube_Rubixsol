@@ -27,40 +27,48 @@
 <!-- Statistics Row -->
 <div class="row mb-4 g-3">
     <div class="col-lg-3 col-sm-6">
-        <div class="stat-card card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-clipboard-list stat-icon text-primary"></i>
-                <div class="stat-number text-primary">{{ workorders.total }}</div>
-                <div class="stat-label">Total Orders</div>
+        <a href="{{ url_for('workorders.list_workorders') }}" class="text-decoration-none">
+            <div class="stat-card card h-100 hover-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-clipboard-list stat-icon text-primary"></i>
+                    <div class="stat-number text-primary">{{ workorders.total }}</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-lg-3 col-sm-6">
-        <div class="stat-card card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-clock stat-icon text-warning"></i>
-                <div class="stat-number text-warning">{{ open_count|default(0) }}</div>
-                <div class="stat-label">Open Orders</div>
+        <a href="{{ url_for('workorders.list_workorders', status_id=1) }}" class="text-decoration-none">
+            <div class="stat-card card h-100 hover-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock stat-icon text-warning"></i>
+                    <div class="stat-number text-warning">{{ open_count|default(0) }}</div>
+                    <div class="stat-label">Open Orders</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-lg-3 col-sm-6">
-        <div class="stat-card card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-play stat-icon text-info"></i>
-                <div class="stat-number text-info">{{ in_progress_count|default(0) }}</div>
-                <div class="stat-label">In Progress</div>
+        <a href="{{ url_for('workorders.list_workorders') }}?status=in_progress" class="text-decoration-none">
+            <div class="stat-card card h-100 hover-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-play stat-icon text-info"></i>
+                    <div class="stat-number text-info">{{ in_progress_count|default(0) }}</div>
+                    <div class="stat-label">In Progress</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-lg-3 col-sm-6">
-        <div class="stat-card card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-check-circle stat-icon text-success"></i>
-                <div class="stat-number text-success">{{ completed_count|default(0) }}</div>
-                <div class="stat-label">Completed</div>
+        <a href="{{ url_for('workorders.list_workorders') }}?status=completed" class="text-decoration-none">
+            <div class="stat-card card h-100 hover-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle stat-icon text-success"></i>
+                    <div class="stat-number text-success">{{ completed_count|default(0) }}</div>
+                    <div class="stat-label">Completed</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-file-excel text-success me-2"></i>
+                        Import Templates
+                    </h2>
+                    <p class="text-muted">Download Excel templates for different data tables</p>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if current_user.role.name in ['admin', 'manager'] %}
+                    <a href="{{ url_for('data_import.create_template') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-1"></i> Create Template
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('data_import.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="alert alert-info">
+                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>How to Use Templates</h6>
+                <p class="mb-0">
+                    1. Download the template for your target table<br>
+                    2. Fill in your data following the column headers and sample data<br>
+                    3. Save the file and upload it using the <a href="{{ url_for('data_import.upload') }}">Upload Data</a> feature<br>
+                    4. The system will automatically map columns based on the template structure
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Grid -->
+    <div class="row">
+        {% for template in templates %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-table text-primary me-2"></i>{{ template.name }}
+                    </h6>
+                    <span class="badge bg-primary">{{ template.target_table }}</span>
+                </div>
+                <div class="card-body">
+                    {% if template.description %}
+                    <p class="card-text text-muted">{{ template.description }}</p>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <strong>Target Table:</strong> {{ template.target_table }}<br>
+                            <strong>Version:</strong> {{ template.version }}<br>
+                            <strong>Created:</strong> {{ template.created_at.strftime('%m/%d/%Y') }}
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <div class="d-grid">
+                        <a href="{{ url_for('data_import.download_template', template_id=template.id) }}" 
+                           class="btn btn-success">
+                            <i class="fas fa-download me-1"></i> Download Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not templates %}
+    <!-- No Templates Message -->
+    <div class="row">
+        <div class="col">
+            <div class="text-center py-5">
+                <i class="fas fa-file-excel fa-5x text-muted mb-4"></i>
+                <h4 class="text-muted mb-3">No Templates Available</h4>
+                <p class="text-muted mb-4">
+                    No import templates have been created yet. 
+                    {% if current_user.role.name in ['admin', 'manager'] %}
+                    Create your first template to get started.
+                    {% else %}
+                    Contact your administrator to create templates.
+                    {% endif %}
+                </p>
+                {% if current_user.role.name in ['admin', 'manager'] %}
+                <a href="{{ url_for('data_import.create_template') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Create First Template
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Reference -->
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Available Tables for Import
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Core Tables</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-users text-primary me-2"></i><strong>Users</strong> - System users and accounts</li>
+                                <li><i class="fas fa-building text-primary me-2"></i><strong>Companies</strong> - Customer and vendor companies</li>
+                                <li><i class="fas fa-cogs text-primary me-2"></i><strong>Products</strong> - UAV products and equipment</li>
+                                <li><i class="fas fa-tags text-primary me-2"></i><strong>Product Categories</strong> - Product classification</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Operational Tables</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-boxes text-primary me-2"></i><strong>Inventory Items</strong> - Parts and components</li>
+                                <li><i class="fas fa-folder text-primary me-2"></i><strong>Inventory Categories</strong> - Inventory classification</li>
+                                <li><i class="fas fa-tasks text-primary me-2"></i><strong>Work Orders</strong> - Service requests and tasks</li>
+                                <li><i class="fas fa-plane text-primary me-2"></i><strong>UAV Service Incidents</strong> - Service cases</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

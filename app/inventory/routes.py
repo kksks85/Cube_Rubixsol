@@ -528,19 +528,22 @@ def request_part(work_order_id):
     work_order = WorkOrder.query.get_or_404(work_order_id)
     form = WorkOrderPartRequestForm()
     
-    # Populate inventory item choices (only active items with stock)
+    # Populate inventory item choices (only active items with available stock, excluding damaged)
     items = InventoryItem.query.filter(
         InventoryItem.is_active == True,
-        InventoryItem.quantity_in_stock > 0
-    ).order_by(InventoryItem.name).all()
-    form.inventory_item_id.choices = [(item.id, f"{item.part_number} - {item.name} (Stock: {item.quantity_in_stock})") for item in items]
+        InventoryItem.condition != 'damaged'
+    ).all()
+    
+    # Filter items that have available stock
+    available_items = [item for item in items if item.available_stock > 0]
+    form.inventory_item_id.choices = [(item.id, f"{item.part_number} - {item.name} (Available: {item.available_stock})") for item in available_items]
     
     if form.validate_on_submit():
         item = InventoryItem.query.get(form.inventory_item_id.data)
         
-        # Check if enough stock available
-        if form.quantity_requested.data > item.quantity_in_stock:
-            flash(f'Cannot request {form.quantity_requested.data} units. Only {item.quantity_in_stock} units available.', 'error')
+        # Check if enough available stock (excluding damaged)
+        if form.quantity_requested.data > item.available_stock:
+            flash(f'Cannot request {form.quantity_requested.data} units. Only {item.available_stock} units available (excluding damaged items).', 'error')
             return render_template('inventory/request_part.html', form=form, work_order=work_order)
         
         # Create part request
@@ -575,9 +578,9 @@ def allocate_part(part_id):
     
     item = part.inventory_item
     
-    # Check stock availability
-    if part.quantity_requested > item.quantity_in_stock:
-        flash(f'Cannot allocate {part.quantity_requested} units. Only {item.quantity_in_stock} units available.', 'error')
+    # Check available stock (excluding damaged)
+    if part.quantity_requested > item.available_stock:
+        flash(f'Cannot allocate {part.quantity_requested} units. Only {item.available_stock} units available (excluding damaged items).', 'error')
         return redirect(url_for('inventory.work_order_parts', work_order_id=part.work_order_id))
     
     # Update inventory

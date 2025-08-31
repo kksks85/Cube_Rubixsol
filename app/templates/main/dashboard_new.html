@@ -20,43 +20,51 @@
 <!-- Compact Statistics Cards -->
 <div class="row mb-4 g-3">
     <div class="col-lg-3 col-md-6">
-        <div class="stat-card card">
-            <div class="card-body text-center">
-                <i class="fas fa-clipboard-list stat-icon text-primary"></i>
-                <div class="stat-number">{{ stats.total_workorders if stats else 0 }}</div>
-                <div class="stat-label">Total Orders</div>
+        <a href="{{ url_for('workorders.list_workorders') }}" class="hover-card">
+            <div class="stat-card card">
+                <div class="card-body text-center">
+                    <i class="fas fa-clipboard-list stat-icon text-primary"></i>
+                    <div class="stat-number">{{ stats.total_workorders if stats else 0 }}</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     
     <div class="col-lg-3 col-md-6">
-        <div class="stat-card card">
-            <div class="card-body text-center">
-                <i class="fas fa-clock stat-icon text-warning"></i>
-                <div class="stat-number text-warning">{{ stats.open_workorders if stats else 0 }}</div>
-                <div class="stat-label">Open Orders</div>
+        <a href="{{ url_for('workorders.list_workorders', status_filter='open') }}" class="hover-card">
+            <div class="stat-card card">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock stat-icon text-warning"></i>
+                    <div class="stat-number text-warning">{{ stats.open_workorders if stats else 0 }}</div>
+                    <div class="stat-label">Open Orders</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     
     <div class="col-lg-3 col-md-6">
-        <div class="stat-card card">
-            <div class="card-body text-center">
-                <i class="fas fa-exclamation-circle stat-icon text-danger"></i>
-                <div class="stat-number text-danger">{{ stats.overdue_workorders if stats else 0 }}</div>
-                <div class="stat-label">Overdue</div>
+        <a href="{{ url_for('workorders.list_workorders', overdue='true') }}" class="hover-card">
+            <div class="stat-card card">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-circle stat-icon text-danger"></i>
+                    <div class="stat-number text-danger">{{ stats.overdue_workorders if stats else 0 }}</div>
+                    <div class="stat-label">Overdue</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     
     <div class="col-lg-3 col-md-6">
-        <div class="stat-card card">
-            <div class="card-body text-center">
-                <i class="fas fa-check-circle stat-icon text-success"></i>
-                <div class="stat-number text-success">{{ stats.completed_this_week if stats else 0 }}</div>
-                <div class="stat-label">Completed This Week</div>
+        <a href="{{ url_for('workorders.list_workorders', status_filter='completed') }}" class="hover-card">
+            <div class="stat-card card">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle stat-icon text-success"></i>
+                    <div class="stat-number text-success">{{ stats.completed_this_week if stats else 0 }}</div>
+                    <div class="stat-label">Completed This Week</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

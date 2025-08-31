@@ -10,42 +10,48 @@
 
 <div class="row">
     <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <i class="fas fa-clipboard-list fa-3x text-primary mb-3"></i>
-                <h5 class="card-title">Work Order Summary</h5>
-                <p class="card-text">Overview of work orders by status, priority, and completion rates.</p>
-                <a href="{{ url_for('reports.workorder_summary') }}" class="btn btn-primary">
-                    View Report <i class="fas fa-arrow-right"></i>
-                </a>
+        <a href="{{ url_for('reports.workorder_summary') }}" class="text-decoration-none hover-card">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-clipboard-list fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title text-dark">Work Order Summary</h5>
+                    <p class="card-text">Overview of work orders by status, priority, and completion rates.</p>
+                    <span class="btn btn-primary">
+                        View Report <i class="fas fa-arrow-right"></i>
+                    </span>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     
     <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <i class="fas fa-users fa-3x text-success mb-3"></i>
-                <h5 class="card-title">User Performance</h5>
-                <p class="card-text">Performance metrics and statistics for individual users.</p>
-                <a href="{{ url_for('reports.user_performance') }}" class="btn btn-success">
-                    View Report <i class="fas fa-arrow-right"></i>
-                </a>
+        <a href="{{ url_for('reports.user_performance') }}" class="text-decoration-none hover-card">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-users fa-3x text-success mb-3"></i>
+                    <h5 class="card-title text-dark">User Performance</h5>
+                    <p class="card-text">Performance metrics and statistics for individual users.</p>
+                    <span class="btn btn-success">
+                        View Report <i class="fas fa-arrow-right"></i>
+                    </span>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     
     <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <i class="fas fa-dollar-sign fa-3x text-warning mb-3"></i>
-                <h5 class="card-title">Cost Analysis</h5>
-                <p class="card-text">Financial analysis of work orders including cost estimates and actuals.</p>
-                <a href="{{ url_for('reports.cost_analysis') }}" class="btn btn-warning">
-                    View Report <i class="fas fa-arrow-right"></i>
-                </a>
+        <a href="{{ url_for('reports.cost_analysis') }}" class="text-decoration-none hover-card">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-dollar-sign fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title text-dark">Cost Analysis</h5>
+                    <p class="card-text">Financial analysis of work orders including cost estimates and actuals.</p>
+                    <span class="btn btn-warning">
+                        View Report <i class="fas fa-arrow-right"></i>
+                    </span>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

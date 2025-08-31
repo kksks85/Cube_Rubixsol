@@ -251,7 +251,7 @@ def search():
         db.or_(
             WorkOrder.title.contains(query),
             WorkOrder.description.contains(query),
-            WorkOrder.location.contains(query)
+            WorkOrder.address.contains(query)
         )
     )
     

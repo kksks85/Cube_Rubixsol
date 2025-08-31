@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-upload text-primary me-2"></i>
+                        Upload Data File
+                    </h2>
+                    <p class="text-muted">Upload Excel files for bulk data import</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('data_import.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="alert alert-info">
+                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Upload Instructions</h6>
+                <p class="mb-0">
+                    1. Download the appropriate Excel template for your target table<br>
+                    2. Fill in your data following the template format<br>
+                    3. Upload the completed Excel file using the form below<br>
+                    4. Review and map columns if needed<br>
+                    5. Submit for validation and approval
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-upload me-2"></i>Upload Data File
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.batch_name.id }}" class="form-label">
+                                    {{ form.batch_name.label.text }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.batch_name(class="form-control") }}
+                                {% if form.batch_name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.batch_name.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">A descriptive name for this import batch</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.target_table.id }}" class="form-label">
+                                    {{ form.target_table.label.text }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.target_table(class="form-select") }}
+                                {% if form.target_table.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.target_table.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Select the database table to import data into</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id }}" class="form-label">
+                                {{ form.description.label.text }}
+                            </label>
+                            {{ form.description(class="form-control", rows="3") }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.description.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Optional description of the data being imported</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.file.id }}" class="form-label">
+                                {{ form.file.label.text }} <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form.file(class="form-control") }}
+                                <button type="button" class="btn btn-outline-secondary" id="downloadTemplateBtn">
+                                    <i class="fas fa-download me-1"></i> Get Template
+                                </button>
+                            </div>
+                            {% if form.file.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.file.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Only Excel files (.xlsx, .xls) are supported. 
+                                <a href="{{ url_for('data_import.list_templates') }}">Download template</a> for your target table.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('data_import.dashboard') }}" class="btn btn-outline-secondary me-md-2">
+                                Cancel
+                            </a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Need Help?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Supported Tables</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-table text-primary me-2"></i>Users</li>
+                                <li><i class="fas fa-table text-primary me-2"></i>Products</li>
+                                <li><i class="fas fa-table text-primary me-2"></i>Companies</li>
+                                <li><i class="fas fa-table text-primary me-2"></i>Inventory Items</li>
+                                <li><i class="fas fa-table text-primary me-2"></i>Work Orders</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>File Requirements</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Excel format (.xlsx, .xls)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Maximum file size: 10MB</li>
+                                <li><i class="fas fa-check text-success me-2"></i>First row should contain column headers</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Use provided templates when possible</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle template download
+    const downloadBtn = document.getElementById('downloadTemplateBtn');
+    const targetTableSelect = document.getElementById('{{ form.target_table.id }}');
+    
+    downloadBtn.addEventListener('click', function() {
+        const selectedTable = targetTableSelect.value;
+        if (selectedTable) {
+            // Redirect to template download
+            window.open(`{{ url_for('data_import.list_templates') }}?table=${selectedTable}`, '_blank');
+        } else {
+            alert('Please select a target table first');
+        }
+    });
+});
+</script>
+{% endblock %}

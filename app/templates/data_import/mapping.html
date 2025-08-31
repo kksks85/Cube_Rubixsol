@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-map text-primary me-2"></i>
+                        Column Mapping
+                    </h2>
+                    <p class="text-muted">Map Excel columns to database fields for batch: <strong>{{ batch.batch_name }}</strong></p>
+                </div>
+                <div>
+                    <a href="{{ url_for('data_import.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Information -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Target Table:</strong><br>
+                            <span class="badge bg-primary">{{ batch.target_table }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Total Rows:</strong><br>
+                            {{ analysis.total_rows }} records
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Excel Columns:</strong><br>
+                            {{ analysis.columns|length }} columns
+                        </div>
+                        <div class="col-md-3">
+                            <strong>File:</strong><br>
+                            {{ batch.original_filename }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mapping Interface -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Column Mapping Form -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-arrows-alt-h me-2"></i>Column Mapping
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="mappingForm">
+                        {{ form.hidden_tag() }}
+                        {{ form.batch_id }}
+                        {{ form.mapping_config }}
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="40%">Excel Column</th>
+                                        <th width="40%">Database Field</th>
+                                        <th width="20%">Sample Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mappingTableBody">
+                                    {% for excel_col in analysis.columns %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ excel_col }}</strong>
+                                        </td>
+                                        <td>
+                                            <select class="form-select mapping-select" data-excel-col="{{ excel_col }}">
+                                                <option value="">-- Select Database Field --</option>
+                                                {% for db_field, field_info in analysis.schema.items() %}
+                                                    {% if not field_info.autoincrement and db_field not in ['id', 'created_at', 'updated_at'] %}
+                                                    <option value="{{ db_field }}" 
+                                                        {% if analysis.suggested_mapping.get(excel_col) == db_field %}selected{% endif %}>
+                                                        {{ db_field }}
+                                                        {% if not field_info.nullable %}<span class="text-danger">*</span>{% endif %}
+                                                        ({{ field_info.type }})
+                                                    </option>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {% if analysis.sample_data and analysis.sample_data[0].get(excel_col) %}
+                                                    {{ analysis.sample_data[0][excel_col]|string|truncate(30) }}
+                                                {% else %}
+                                                    <em>No data</em>
+                                                {% endif %}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-outline-primary me-2" id="autoMapBtn">
+                                <i class="fas fa-magic me-1"></i> Auto Map
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary me-2" id="clearMappingBtn">
+                                <i class="fas fa-times me-1"></i> Clear All
+                            </button>
+                            {{ form.submit_mapping(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Database Schema Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-database me-2"></i>Database Schema: {{ batch.target_table }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for field_name, field_info in analysis.schema.items() %}
+                                    {% if not field_info.autoincrement and field_name not in ['id', 'created_at', 'updated_at'] %}
+                                    <tr>
+                                        <td>
+                                            <small>{{ field_name }}</small>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ field_info.type|truncate(10) }}</small>
+                                        </td>
+                                        <td>
+                                            {% if not field_info.nullable %}
+                                                <i class="fas fa-exclamation-circle text-danger" title="Required"></i>
+                                            {% else %}
+                                                <i class="fas fa-circle text-muted" title="Optional"></i>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sample Data Preview -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>Sample Data Preview
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if analysis.sample_data %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        {% for col in analysis.columns[:3] %}
+                                        <th><small>{{ col|truncate(15) }}</small></th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in analysis.sample_data[:5] %}
+                                    <tr>
+                                        {% for col in analysis.columns[:3] %}
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ row.get(col, '')|string|truncate(20) }}
+                                            </small>
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No sample data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mappingSelects = document.querySelectorAll('.mapping-select');
+    const mappingConfigField = document.getElementById('{{ form.mapping_config.id }}');
+    const autoMapBtn = document.getElementById('autoMapBtn');
+    const clearMappingBtn = document.getElementById('clearMappingBtn');
+    
+    // Initialize mapping from suggested mapping
+    const suggestedMapping = {{ analysis.suggested_mapping|tojson|safe }};
+    updateMappingConfig();
+    
+    // Add event listeners to mapping selects
+    mappingSelects.forEach(select => {
+        select.addEventListener('change', updateMappingConfig);
+    });
+    
+    // Auto map button
+    autoMapBtn.addEventListener('click', function() {
+        // Apply suggested mapping
+        mappingSelects.forEach(select => {
+            const excelCol = select.dataset.excelCol;
+            const suggestedField = suggestedMapping[excelCol];
+            if (suggestedField) {
+                select.value = suggestedField;
+            }
+        });
+        updateMappingConfig();
+    });
+    
+    // Clear mapping button
+    clearMappingBtn.addEventListener('click', function() {
+        mappingSelects.forEach(select => {
+            select.value = '';
+        });
+        updateMappingConfig();
+    });
+    
+    function updateMappingConfig() {
+        const mapping = {};
+        mappingSelects.forEach(select => {
+            const excelCol = select.dataset.excelCol;
+            const dbField = select.value;
+            if (dbField) {
+                mapping[excelCol] = dbField;
+            }
+        });
+        mappingConfigField.value = JSON.stringify(mapping);
+    }
+});
+</script>
+{% endblock %}

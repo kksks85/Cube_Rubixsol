@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="GET" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="">All Statuses</option>
+                                <option value="SUCCESS" {{ 'selected' if request.args.get('status') == 'SUCCESS' }}>Success</option>
+                                <option value="FAILED" {{ 'selected' if request.args.get('status') == 'FAILED' }}>Failed</option>
+                                <option value="PARTIAL" {{ 'selected' if request.args.get('status') == 'PARTIAL' }}>Partial</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="from_email" class="form-label">From Email</label>
+                            <input type="email" class="form-control" id="from_email" name="from_email" value="{{ request.args.get('from_email', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_from" class="form-label">Date From</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request.args.get('date_from', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Filter
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email List -->
+    <div class="row">
+        <div class="col-12">
+            {% if emails.items %}
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>Processed Emails
+                        </h5>
+                        <div>
+                            <button class="btn btn-outline-danger btn-sm me-2" onclick="bulkDeleteEmails()" style="display: none;" id="bulkDeleteBtn">
+                                <i class="fas fa-trash me-1"></i>Delete Selected
+                            </button>
+                            <span class="badge bg-info">{{ emails.total }} total</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="50">
+                                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                        </th>
+                                        <th>Date & Time</th>
+                                        <th>From</th>
+                                        <th>Subject</th>
+                                        <th>Rule</th>
+                                        <th>Status</th>
+                                        <th>Incident</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for email in emails.items %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" class="email-checkbox" value="{{ email.id }}" onchange="updateBulkDeleteButton()">
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">{{ email.processed_at.strftime('%m/%d/%Y') if email.processed_at else 'N/A' }}</div>
+                                            <small class="text-muted">{{ email.processed_at.strftime('%I:%M %p') if email.processed_at else '' }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">{{ email.from_email }}</div>
+                                            <small class="text-muted">{{ email.to_email }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 200px;" title="{{ email.subject }}">
+                                                {{ email.subject }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if email.matched_rule %}
+                                                <span class="badge bg-primary">{{ email.matched_rule.name }}</span>
+                                            {% else %}
+                                                <span class="text-muted">No rule</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if email.processing_status == 'SUCCESS' %}
+                                                <span class="badge bg-success">Success</span>
+                                            {% elif email.processing_status == 'FAILED' %}
+                                                <span class="badge bg-danger">Failed</span>
+                                            {% elif email.processing_status == 'PARTIAL' %}
+                                                <span class="badge bg-warning">Partial</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ email.processing_status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if email.created_incident %}
+                                                <a href="#" class="badge bg-success text-decoration-none">
+                                                    {{ email.created_incident.incident_number }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">No incident</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="viewEmailDetails('{{ email.id }}')" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                {% if email.processing_status == 'FAILED' %}
+                                                <button class="btn btn-outline-warning" onclick="retryProcessing('{{ email.id }}')" title="Retry Processing">
+                                                    <i class="fas fa-redo"></i>
+                                                </button>
+                                                {% endif %}
+                                                <button class="btn btn-outline-danger" onclick="deleteProcessedEmail('{{ email.id }}')" title="Delete Record">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if emails.pages > 1 %}
+                    <div class="card-footer">
+                        <nav aria-label="Email pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if emails.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('email_management.processed_emails', page=emails.prev_num, **request.args) }}">Previous</a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for page_num in emails.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != emails.page %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('email_management.processed_emails', page=page_num, **request.args) }}">{{ page_num }}</a>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page_num }}</span>
+                                        </li>
+                                        {% endif %}
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if emails.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('email_management.processed_emails', page=emails.next_num, **request.args) }}">Next</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-envelope-open fa-4x text-muted mb-4"></i>
+                        <h4 class="text-muted">No Processed Emails</h4>
+                        <p class="text-muted">No emails have been processed yet. Start by configuring inbound email rules.</p>
+                        <a href="{{ url_for('email_management.inbound_settings') }}" class="btn btn-primary">
+                            <i class="fas fa-cogs me-2"></i>Configure Rules
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Email Details Modal -->
+<div class="modal fade" id="emailDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email Processing Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="emailDetailsContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Select all/none functionality
+    function toggleSelectAll() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const emailCheckboxes = document.querySelectorAll('.email-checkbox');
+        
+        emailCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        
+        updateBulkDeleteButton();
+    }
+
+    // Update bulk delete button state
+    function updateBulkDeleteButton() {
+        const checkedBoxes = document.querySelectorAll('.email-checkbox:checked');
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        
+        if (checkedBoxes.length > 0) {
+            bulkDeleteBtn.style.display = 'inline-block';
+            bulkDeleteBtn.textContent = `Delete Selected (${checkedBoxes.length})`;
+        } else {
+            bulkDeleteBtn.style.display = 'none';
+        }
+    }
+
+    // Bulk delete selected emails
+    function bulkDeleteEmails() {
+        const checkedBoxes = document.querySelectorAll('.email-checkbox:checked');
+        const emailIds = Array.from(checkedBoxes).map(cb => cb.value);
+        
+        if (emailIds.length === 0) {
+            showAlert('Please select at least one email to delete.', 'warning');
+            return;
+        }
+        
+        if (confirm(`Are you sure you want to delete ${emailIds.length} processed email record(s)? This action cannot be undone.`)) {
+            fetch('/email_management/processed_emails/bulk_delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({ email_ids: emailIds })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred while deleting emails.', 'danger');
+            });
+        }
+    }
+
+    // Delete single processed email
+    function deleteProcessedEmail(emailId) {
+        if (confirm('Are you sure you want to delete this processed email record? This action cannot be undone.')) {
+            fetch(`/email_management/processed_emails/${emailId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred while deleting the email record.', 'danger');
+            });
+        }
+    }
+
+    // View email details
+    function viewEmailDetails(emailId) {
+        fetch(`/email_management/processed_emails/${emailId}/details`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const email = data.email;
+                    let detailsHtml = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Email Information</h6>
+                                <p><strong>From:</strong> ${email.from_email}</p>
+                                <p><strong>To:</strong> ${email.to_email}</p>
+                                <p><strong>Subject:</strong> ${email.subject}</p>
+                                <p><strong>Processed:</strong> ${email.processed_at}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Processing Details</h6>
+                                <p><strong>Status:</strong> <span class="badge bg-${email.processing_status === 'SUCCESS' ? 'success' : email.processing_status === 'FAILED' ? 'danger' : 'warning'}">${email.processing_status}</span></p>
+                                <p><strong>Rule Matched:</strong> ${email.matched_rule_name || 'None'}</p>
+                                <p><strong>Incident Created:</strong> ${email.incident_number || 'None'}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <h6>Email Content</h6>
+                            <div class="border p-3 bg-light">
+                                <pre style="white-space: pre-wrap; max-height: 300px; overflow-y: auto;">${email.email_content || 'No content available'}</pre>
+                            </div>
+                        </div>
+                        ${email.error_message ? `
+                        <div class="mt-3">
+                            <h6>Error Details</h6>
+                            <div class="alert alert-danger">
+                                ${email.error_message}
+                            </div>
+                        </div>
+                        ` : ''}
+                    `;
+                    
+                    document.getElementById('emailDetailsContent').innerHTML = detailsHtml;
+                    const modal = new bootstrap.Modal(document.getElementById('emailDetailsModal'));
+                    modal.show();
+                } else {
+                    showAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred while loading email details.', 'danger');
+            });
+    }
+
+    // Retry processing for failed emails
+    function retryProcessing(emailId) {
+        if (confirm('Retry processing this email? This will attempt to reprocess the email with current rules.')) {
+            fetch(`/email_management/processed_emails/${emailId}/retry`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred while retrying email processing.', 'danger');
+            });
+        }
+    }
+
+    // Utility function to get CSRF token
+    function getCsrfToken() {
+        return document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
+    }
+
+    // Show alert messages
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    // Update bulk delete button on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateBulkDeleteButton();
+    });
+</script>
+{% endblock %}

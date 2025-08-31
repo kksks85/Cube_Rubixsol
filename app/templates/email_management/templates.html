@@ -1,30 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Header Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="page-header p-4 rounded-3 position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); color: white;">
-            <div class="position-relative z-index-2">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="display-6 fw-bold mb-2 animate__animated animate__fadeInLeft">
-                            <i class="fas fa-file-alt me-3"></i>Email Templates
-                        </h1>
-                        <p class="lead mb-0 animate__animated animate__fadeInLeft" style="animation-delay: 0.2s;">
-                            Manage and customize email templates for automated notifications
-                        </p>
-                    </div>
-                    <div class="animate__animated animate__fadeInRight">
-                        <a href="{{ url_for('email_management.dashboard') }}" class="btn btn-light btn-lg shadow-sm">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Templates List -->
 <div class="row">

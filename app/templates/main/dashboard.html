@@ -24,78 +24,90 @@
     <!-- Compact Statistics Cards -->
     <div class="row mb-4 g-3">
         <div class="col-lg-3 col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center py-3">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <i class="fas fa-clipboard-list fa-lg text-primary me-2"></i>
-                        <h5 class="mb-0 fw-semibold" data-stat="total_workorders">{{ stats.total_workorders if stats else 0 }}</h5>
+            <a href="{{ url_for('workorders.list_workorders') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="fas fa-clipboard-list fa-lg text-primary me-2"></i>
+                            <h5 class="mb-0 fw-semibold" data-stat="total_workorders">{{ stats.total_workorders if stats else 0 }}</h5>
+                        </div>
+                        <p class="text-muted mb-0 small">Total Orders</p>
                     </div>
-                    <p class="text-muted mb-0 small">Total Orders</p>
                 </div>
-            </div>
+            </a>
         </div>
         
         <div class="col-lg-3 col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center py-3">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <i class="fas fa-clock fa-lg text-warning me-2"></i>
-                        <h5 class="mb-0 fw-semibold text-warning" data-stat="open_workorders">{{ stats.open_workorders if stats else 0 }}</h5>
+            <a href="{{ url_for('workorders.list_workorders', status_filter='open') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="fas fa-clock fa-lg text-warning me-2"></i>
+                            <h5 class="mb-0 fw-semibold text-warning" data-stat="open_workorders">{{ stats.open_workorders if stats else 0 }}</h5>
+                        </div>
+                        <p class="text-muted mb-0 small">Open Orders</p>
                     </div>
-                    <p class="text-muted mb-0 small">Open Orders</p>
                 </div>
-            </div>
+            </a>
         </div>
         
         <div class="col-lg-3 col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center py-3">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <i class="fas fa-exclamation-triangle fa-lg text-danger me-2"></i>
-                        <h5 class="mb-0 fw-semibold text-danger" data-stat="overdue_workorders">{{ stats.overdue_workorders if stats else 0 }}</h5>
+            <a href="{{ url_for('workorders.list_workorders', overdue='true') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="fas fa-exclamation-triangle fa-lg text-danger me-2"></i>
+                            <h5 class="mb-0 fw-semibold text-danger" data-stat="overdue_workorders">{{ stats.overdue_workorders if stats else 0 }}</h5>
+                        </div>
+                        <p class="text-muted mb-0 small">Overdue</p>
                     </div>
-                    <p class="text-muted mb-0 small">Overdue</p>
                 </div>
-            </div>
+            </a>
         </div>
         
         <div class="col-lg-3 col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center py-3">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <i class="fas fa-check-circle fa-lg text-success me-2"></i>
-                        <h5 class="mb-0 fw-semibold text-success" data-stat="completed_workorders">{{ stats.completed_workorders if stats else 0 }}</h5>
+            <a href="{{ url_for('workorders.list_workorders', status_filter='completed') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="fas fa-check-circle fa-lg text-success me-2"></i>
+                            <h5 class="mb-0 fw-semibold text-success" data-stat="completed_workorders">{{ stats.completed_workorders if stats else 0 }}</h5>
+                        </div>
+                        <p class="text-muted mb-0 small">Completed</p>
                     </div>
-                    <p class="text-muted mb-0 small">Completed</p>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
     <!-- UAV Service Statistics -->
     <div class="row mb-4 g-3">
         <div class="col-lg-6 col-md-6">
-            <div class="card border-0 shadow-sm border-warning border-opacity-25">
-                <div class="card-body text-center py-3">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <i class="fas fa-calendar-alt fa-lg text-warning me-2"></i>
-                        <h5 class="mb-0 fw-semibold text-warning">{{ stats.uavs_service_due_soon if stats else 0 }}</h5>
+            <a href="{{ url_for('products.list_products') }}?service_due=true" class="text-decoration-none">
+                <div class="card border-0 shadow-sm border-warning border-opacity-25 hover-card">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="fas fa-calendar-alt fa-lg text-warning me-2"></i>
+                            <h5 class="mb-0 fw-semibold text-warning">{{ stats.uavs_service_due_soon if stats else 0 }}</h5>
+                        </div>
+                        <p class="text-muted mb-0 small">UAVs Service Due (30 days)</p>
                     </div>
-                    <p class="text-muted mb-0 small">UAVs Service Due (30 days)</p>
                 </div>
-            </div>
+            </a>
         </div>
         
         <div class="col-lg-6 col-md-6">
-            <div class="card border-0 shadow-sm border-danger border-opacity-25">
-                <div class="card-body text-center py-3">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <i class="fas fa-exclamation-circle fa-lg text-danger me-2"></i>
-                        <h5 class="mb-0 fw-semibold text-danger">{{ stats.uavs_service_overdue if stats else 0 }}</h5>
+            <a href="{{ url_for('products.list_products') }}?service_overdue=true" class="text-decoration-none">
+                <div class="card border-0 shadow-sm border-danger border-opacity-25 hover-card">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="fas fa-exclamation-circle fa-lg text-danger me-2"></i>
+                            <h5 class="mb-0 fw-semibold text-danger">{{ stats.uavs_service_overdue if stats else 0 }}</h5>
+                        </div>
+                        <p class="text-muted mb-0 small">UAVs Service Overdue</p>
                     </div>
-                    <p class="text-muted mb-0 small">UAVs Service Overdue</p>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
@@ -336,6 +348,69 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+/* Hover effects for clickable dashboard tiles */
+.hover-card {
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.hover-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+    border-color: var(--bs-primary) !important;
+}
+
+.hover-card:hover .card-body {
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.02) 0%, rgba(var(--bs-primary-rgb), 0.05) 100%);
+}
+
+.hover-card:hover i {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+.hover-card:hover h5 {
+    color: var(--bs-primary) !important;
+}
+
+/* Keep text colors consistent */
+.hover-card a {
+    color: inherit;
+}
+
+.hover-card:hover a {
+    color: inherit;
+}
+
+/* Special hover effects for warning and danger cards */
+.hover-card.border-warning:hover {
+    border-color: var(--bs-warning) !important;
+    box-shadow: 0 8px 25px rgba(var(--bs-warning-rgb), 0.3) !important;
+}
+
+.hover-card.border-danger:hover {
+    border-color: var(--bs-danger) !important;
+    box-shadow: 0 8px 25px rgba(var(--bs-danger-rgb), 0.3) !important;
+}
+
+/* Animation classes */
+@keyframes animate-fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: animate-fade-in-up 0.6s ease-out forwards;
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Priority Distribution Chart

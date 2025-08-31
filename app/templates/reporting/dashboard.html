@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-chart-bar text-primary me-2"></i>
+                        Reporting Dashboard
+                    </h2>
+                    <p class="text-muted">Manage and view your reports and analytics</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('reporting.new_report') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> New Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <a href="{{ url_for('reporting.reports_list') }}" class="text-decoration-none hover-card">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary text-white rounded-circle p-3">
+                                    <i class="fas fa-file-alt fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="text-muted small">Total Reports</div>
+                                <div class="h4 mb-0">{{ stats.total_reports }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <a href="{{ url_for('reporting.reports_list', status='active') }}" class="text-decoration-none hover-card">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success text-white rounded-circle p-3">
+                                    <i class="fas fa-check-circle fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="text-muted small">Active Reports</div>
+                                <div class="h4 mb-0">{{ stats.active_reports }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <a href="{{ url_for('reporting.reports_list', filter='scheduled') }}" class="text-decoration-none hover-card">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-warning text-white rounded-circle p-3">
+                                    <i class="fas fa-clock fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="text-muted small">Scheduled Reports</div>
+                                <div class="h4 mb-0">{{ stats.scheduled_reports }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info text-white rounded-circle p-3">
+                                <i class="fas fa-play fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="text-muted small">Recent Executions</div>
+                            <div class="h4 mb-0">{{ stats.recent_executions }}</div>
+                            <small class="text-muted">Last 7 days</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2 text-primary"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('reporting.new_report') }}" class="text-decoration-none">
+                                <div class="card h-100 border-primary">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-plus fa-2x text-primary mb-2"></i>
+                                        <h6 class="card-title">Create Report</h6>
+                                        <p class="card-text small text-muted">Build a new report from scratch</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('reporting.reports_list') }}" class="text-decoration-none">
+                                <div class="card h-100 border-success">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-list fa-2x text-success mb-2"></i>
+                                        <h6 class="card-title">View All Reports</h6>
+                                        <p class="card-text small text-muted">Browse your existing reports</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-warning">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-calendar fa-2x text-warning mb-2"></i>
+                                    <h6 class="card-title">Schedule Report</h6>
+                                    <p class="card-text small text-muted">Automate report generation</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-download fa-2x text-info mb-2"></i>
+                                    <h6 class="card-title">Export Data</h6>
+                                    <p class="card-text small text-muted">Download reports in various formats</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Reports and Activities -->
+    <div class="row">
+        <!-- Recent Reports -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2 text-primary"></i>Recent Reports
+                    </h5>
+                    <a href="{{ url_for('reporting.reports_list') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_reports %}
+                        <div class="list-group list-group-flush">
+                            {% for report in recent_reports %}
+                            <div class="list-group-item border-0">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <a href="{{ url_for('reporting.report_builder', id=report.id) }}" 
+                                               class="text-decoration-none">{{ report.name }}</a>
+                                        </h6>
+                                        <p class="mb-1 text-muted small">{{ report.description or 'No description' }}</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            Updated {{ report.updated_at.strftime('%m/%d/%Y at %I:%M %p') }}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{{ 'success' if report.status == 'active' else 'secondary' }}">
+                                            {{ report.status or 'Active' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No Reports Yet</h6>
+                            <p class="text-muted">Create your first report to get started</p>
+                            <a href="{{ url_for('reporting.new_report') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Create Report
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Scheduled Reports -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2 text-warning"></i>Scheduled Reports
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if scheduled_reports %}
+                        <div class="list-group list-group-flush">
+                            {% for schedule in scheduled_reports %}
+                            <div class="list-group-item border-0">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ schedule.report.name }}</h6>
+                                        <p class="mb-1 text-muted small">
+                                            <i class="fas fa-repeat me-1"></i>{{ schedule.frequency.title() }}
+                                            {% if schedule.frequency == 'weekly' and schedule.day_of_week %}
+                                                on {{ schedule.day_of_week.title() }}s
+                                            {% elif schedule.frequency == 'monthly' and schedule.day_of_month %}
+                                                on day {{ schedule.day_of_month }}
+                                            {% endif %}
+                                        </p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            Next run: 
+                                            {% if schedule.next_run %}
+                                                {{ schedule.next_run.strftime('%m/%d/%Y at %I:%M %p') }}
+                                            {% else %}
+                                                Not scheduled
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{{ 'success' if schedule.is_active else 'secondary' }}">
+                                            {{ 'Active' if schedule.is_active else 'Inactive' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No Scheduled Reports</h6>
+                            <p class="text-muted">Schedule reports to run automatically</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Executions -->
+    {% if recent_executions %}
+    <div class="row">
+        <div class="col">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2 text-info"></i>Recent Report Executions
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Report</th>
+                                    <th>Executed</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for execution in recent_executions %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ execution.report.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ execution.executed_at.strftime('%m/%d/%Y %I:%M %p') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if execution.execution_time %}
+                                            {{ "%.2f"|format(execution.execution_time) }}s
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if execution.status == 'completed' else 'danger' if execution.status == 'failed' else 'warning' }}">
+                                            {{ execution.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if execution.status == 'completed' and execution.output_file %}
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        {% endif %}
+                                        <a href="{{ url_for('reporting.report_builder', id=execution.report.id) }}" 
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

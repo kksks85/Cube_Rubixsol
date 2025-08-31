@@ -62,15 +62,15 @@
                                     <small class="form-text text-muted">Current status of the repair/maintenance work</small>
                                 </div>
 
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        {{ form.parts_received(class="form-check-input") }}
-                                        {{ form.parts_received.label(class="form-check-label") }}
-                                    </div>
-                                    <small class="form-text text-muted">Check if all required parts have been received</small>
-                                </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.parts_received(class="form-check-input", id="partsReceivedCheck") }}
+                                {{ form.parts_received.label(class="form-check-label") }}
+                            </div>
+                            <small class="form-text text-muted">Check if all required parts have been received</small>
+                        </div>
 
-                                <div class="mb-3">
+                        <div class="row">
                                     {{ form.actual_cost.label(class="form-label") }}
                                     <div class="input-group">
                                         <span class="input-group-text">$</span>
@@ -161,4 +161,18 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Repair maintenance workflow page loaded');
+    
+    // Simple form validation can be added here if needed
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Form submitted');
+        });
+    }
+});
+</script>
 {% endblock %}

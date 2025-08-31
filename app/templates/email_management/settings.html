@@ -2,30 +2,6 @@
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="page-header p-4 rounded-3 position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); color: white;">
-                <div class="position-relative z-index-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="display-6 fw-bold mb-2 animate__animated animate__fadeInLeft">
-                                <i class="fas fa-cog me-3"></i>Email Settings
-                            </h1>
-                            <p class="lead mb-0 animate__animated animate__fadeInLeft" style="animation-delay: 0.2s;">
-                                Configure SMTP settings and email server configuration
-                            </p>
-                        </div>
-                        <div class="animate__animated animate__fadeInRight">
-                            <a href="{{ url_for('email_management.dashboard') }}" class="btn btn-light btn-lg shadow-sm">
-                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="row">
         <div class="col-lg-8">
@@ -42,13 +18,13 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="smtpServer" class="form-label">SMTP Server</label>
-                                    <input type="text" class="form-control" id="smtpServer" value="{{ config.smtp_server if config else 'smtp.gmail.com' }}">
+                                    <input type="text" class="form-control" id="smtpServer" value="{{ config.smtp_server }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="smtpPort" class="form-label">SMTP Port</label>
-                                    <input type="number" class="form-control" id="smtpPort" value="{{ config.smtp_port if config else '587' }}">
+                                    <input type="number" class="form-control" id="smtpPort" value="{{ config.smtp_port }}">
                                 </div>
                             </div>
                         </div>
@@ -57,13 +33,13 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="senderEmail" class="form-label">Sender Email</label>
-                                    <input type="email" class="form-control" id="senderEmail" value="{{ config.sender_email if config else 'noreply@cubeproapp.com' }}">
+                                    <input type="email" class="form-control" id="senderEmail" value="{{ config.sender_email }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="senderName" class="form-label">Sender Name</label>
-                                    <input type="text" class="form-control" id="senderName" value="{{ config.sender_name if config else 'CUBE - PRO System' }}">
+                                    <input type="text" class="form-control" id="senderName" value="{{ config.sender_name }}">
                                 </div>
                             </div>
                         </div>
@@ -72,13 +48,13 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="smtpUsername" class="form-label">SMTP Username</label>
-                                    <input type="text" class="form-control" id="smtpUsername" placeholder="Usually your email address">
+                                    <input type="text" class="form-control" id="smtpUsername" value="{{ config.smtp_username }}" placeholder="Usually your email address">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="smtpPassword" class="form-label">SMTP Password</label>
-                                    <input type="password" class="form-control" id="smtpPassword" placeholder="Your email password or app password">
+                                    <input type="password" class="form-control" id="smtpPassword" value="{{ config.smtp_password }}" placeholder="Your email password or app password">
                                 </div>
                             </div>
                         </div>
@@ -87,7 +63,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="useTLS" checked>
+                                        <input class="form-check-input" type="checkbox" id="useTLS" {% if config.use_tls %}checked{% endif %}>
                                         <label class="form-check-label" for="useTLS">
                                             Use TLS/STARTTLS
                                         </label>
@@ -110,8 +86,20 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Save Configuration
                             </button>
+                            <button type="button" class="btn btn-success" onclick="fastSave()">
+                                <i class="fas fa-bolt me-2"></i>Fast Save
+                            </button>
                             <button type="button" class="btn btn-outline-secondary" onclick="testConnection()">
                                 <i class="fas fa-plug me-2"></i>Test Connection
+                            </button>
+                            <button type="button" class="btn btn-outline-info" onclick="testSaveSpeed()">
+                                <i class="fas fa-tachometer-alt me-2"></i>Test Save Speed
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="testPing()">
+                                Ping
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="testMinimal()">
+                                Minimal
                             </button>
                         </div>
                     </form>
@@ -202,6 +190,27 @@
                             <strong>Last successful:</strong> Never
                         </small>
                     </div>
+                </div>
+            </div>
+
+            <!-- Test Email -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-envelope-open me-2"></i>Test Email
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form id="testEmailForm">
+                        <div class="mb-3">
+                            <label for="testEmail" class="form-label">Recipient Email</label>
+                            <input type="email" class="form-control" id="testEmail" placeholder="test@example.com" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-paper-plane me-2"></i>Send Test Email
+                        </button>
+                    </form>
+                    <div id="testEmailResult" class="mt-3" style="display: none;"></div>
                 </div>
             </div>
 
@@ -311,46 +320,127 @@ function testConnection() {
     const statusIndicator = document.getElementById('statusIndicator');
     const statusText = document.getElementById('statusText');
     const statusDetails = document.getElementById('statusDetails');
+    const testBtn = document.querySelector('button[onclick="testConnection()"]');
     
     // Show testing state
     statusIndicator.className = 'status-indicator bg-warning';
     statusText.textContent = 'Testing...';
     statusDetails.textContent = 'Verifying SMTP connection';
     
-    // Simulate connection test
-    setTimeout(() => {
-        const success = Math.random() > 0.3; // 70% success rate for demo
-        
-        if (success) {
+    // Disable button during test
+    const originalText = testBtn.innerHTML;
+    testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Testing...';
+    testBtn.disabled = true;
+    
+    // Test connection
+    fetch('{{ url_for("email_management.test_smtp_connection") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
             statusIndicator.className = 'status-indicator bg-success';
             statusText.textContent = 'Connected';
-            statusDetails.textContent = 'SMTP connection successful';
+            statusDetails.textContent = data.details || 'SMTP connection successful';
         } else {
             statusIndicator.className = 'status-indicator bg-danger';
             statusText.textContent = 'Connection Failed';
-            statusDetails.textContent = 'Unable to connect to SMTP server';
+            statusDetails.textContent = data.details || 'Unable to connect to SMTP server';
         }
-    }, 2000);
+    })
+    .catch(error => {
+        statusIndicator.className = 'status-indicator bg-danger';
+        statusText.textContent = 'Connection Failed';
+        statusDetails.textContent = 'Network error or server unavailable';
+        console.error('Connection test error:', error);
+    })
+    .finally(() => {
+        // Restore button
+        testBtn.innerHTML = originalText;
+        testBtn.disabled = false;
+    });
 }
 
 document.getElementById('smtpConfigForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Collect form data
-    const formData = {
-        smtp_server: document.getElementById('smtpServer').value,
-        smtp_port: document.getElementById('smtpPort').value,
-        sender_email: document.getElementById('senderEmail').value,
-        sender_name: document.getElementById('senderName').value,
-        smtp_username: document.getElementById('smtpUsername').value,
-        smtp_password: document.getElementById('smtpPassword').value,
-        use_tls: document.getElementById('useTLS').checked,
-        use_ssl: document.getElementById('useSSL').checked
-    };
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+    submitBtn.disabled = true;
     
-    // Here you would send the data to the server
-    console.log('Saving SMTP configuration:', formData);
-    alert('SMTP configuration saved successfully!');
+    // Collect form data
+    const formData = new FormData();
+    formData.append('smtp_server', document.getElementById('smtpServer').value);
+    formData.append('smtp_port', document.getElementById('smtpPort').value);
+    formData.append('sender_email', document.getElementById('senderEmail').value);
+    formData.append('sender_name', document.getElementById('senderName').value);
+    formData.append('smtp_username', document.getElementById('smtpUsername').value);
+    formData.append('smtp_password', document.getElementById('smtpPassword').value);
+    if (document.getElementById('useTLS').checked) {
+        formData.append('use_tls', 'on');
+    }
+    
+    // Send data to server with fast timeout
+    fetch('{{ url_for("email_management.email_settings") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert alert at the top of the form
+            const cardBody = this.closest('.card-body');
+            cardBody.insertBefore(alertDiv, cardBody.firstChild);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        } else {
+            // Show error message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const cardBody = this.closest('.card-body');
+            cardBody.insertBefore(alertDiv, cardBody.firstChild);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i>Network error. Please try again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const cardBody = this.closest('.card-body');
+        cardBody.insertBefore(alertDiv, cardBody.firstChild);
+    })
+    .finally(() => {
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
 });
 
 function showHelp() {
@@ -363,6 +453,140 @@ function showTroubleshooting() {
 
 function contactSupport() {
     alert('Support contact information would be displayed here');
+}
+
+// Test Email Form Handler
+document.getElementById('testEmailForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    const resultDiv = document.getElementById('testEmailResult');
+    const testEmail = document.getElementById('testEmail').value;
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+    submitBtn.disabled = true;
+    resultDiv.style.display = 'none';
+    
+    // Send test email
+    const formData = new FormData();
+    formData.append('test_email', testEmail);
+    
+    fetch('{{ url_for("email_management.send_test_email") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        resultDiv.style.display = 'block';
+        
+        if (data.success) {
+            resultDiv.className = 'alert alert-success mt-3';
+            resultDiv.innerHTML = `<i class="fas fa-check-circle me-2"></i>${data.message}`;
+        } else {
+            resultDiv.className = 'alert alert-danger mt-3';
+            resultDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${data.message}`;
+        }
+    })
+    .catch(error => {
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'alert alert-danger mt-3';
+        resultDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Failed to send test email. Please try again.';
+        console.error('Test email error:', error);
+    })
+    .finally(() => {
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+// Test save speed function
+function testSaveSpeed() {
+    console.log('Testing save speed...');
+    
+    const startTime = performance.now();
+    
+    const formData = new FormData();
+    formData.append('smtp_server', 'test.server.com');
+    formData.append('smtp_port', '587');
+    formData.append('sender_email', 'test@test.com');
+    
+    fetch('/email_management/test-save', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        const networkTime = performance.now() - startTime;
+        console.log('Network round trip time:', networkTime, 'ms');
+        return response.json();
+    })
+    .then(data => {
+        const totalTime = performance.now() - startTime;
+        console.log('Total test time:', totalTime, 'ms');
+        console.log('Server response:', data);
+        
+        alert(`Save speed test completed!\nNetwork time: ${networkTime.toFixed(1)}ms\nTotal time: ${totalTime.toFixed(1)}ms\nServer message: ${data.message}`);
+    })
+    .catch(error => {
+        console.error('Save speed test failed:', error);
+        alert('Save speed test failed: ' + error.message);
+    });
+}
+
+// Fast save function
+function fastSave() {
+    const formData = new FormData();
+    formData.append('smtp_server', document.getElementById('smtpServer').value);
+    formData.append('smtp_port', document.getElementById('smtpPort').value);
+    formData.append('sender_email', document.getElementById('senderEmail').value);
+    formData.append('sender_name', document.getElementById('senderName').value);
+    formData.append('smtp_username', document.getElementById('smtpUsername').value);
+    formData.append('smtp_password', document.getElementById('smtpPassword').value);
+    if (document.getElementById('useTLS').checked) {
+        formData.append('use_tls', 'on');
+    }
+    
+    fetch('/email_management/save-config', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ ' + data.message);
+        } else {
+            alert('❌ ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Network error: ' + error.message);
+    });
+}
+
+// Test ping function
+function testPing() {
+    const start = performance.now();
+    fetch('/email_management/ping', { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+        const time = performance.now() - start;
+        alert(`Ping: ${time.toFixed(1)}ms`);
+    })
+    .catch(error => alert('Ping failed: ' + error.message));
+}
+
+// Test minimal save function
+function testMinimal() {
+    const start = performance.now();
+    fetch('/email_management/minimal-save', { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+        const time = performance.now() - start;
+        alert(`Minimal save: ${time.toFixed(1)}ms`);
+    })
+    .catch(error => alert('Minimal save failed: ' + error.message));
 }
 </script>
 {% endblock %}

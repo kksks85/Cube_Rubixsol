@@ -51,6 +51,25 @@ def list_workorders():
         query = query.filter_by(status_id=int(request.args.get('status_id')))
         filter_form.status_id.data = int(request.args.get('status_id'))
     
+    # Handle special status filters
+    if request.args.get('status_filter'):
+        status_filter = request.args.get('status_filter')
+        if status_filter == 'open':
+            # Filter for non-final statuses (open work orders)
+            query = query.join(WorkOrderStatus).filter(~WorkOrderStatus.is_final)
+        elif status_filter == 'completed':
+            # Filter for final statuses (completed work orders)
+            query = query.join(WorkOrderStatus).filter(WorkOrderStatus.is_final)
+    
+    # Handle overdue filter
+    if request.args.get('overdue'):
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc)
+        query = query.join(WorkOrderStatus).filter(
+            ~WorkOrderStatus.is_final,
+            WorkOrder.due_date < today
+        )
+    
     if request.args.get('priority_id') and int(request.args.get('priority_id')) > 0:
         query = query.filter_by(priority_id=int(request.args.get('priority_id')))
         filter_form.priority_id.data = int(request.args.get('priority_id'))
